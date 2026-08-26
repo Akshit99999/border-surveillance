@@ -26,7 +26,7 @@ The source technology stack is documented in `IBVAP_Tech_Stack.docx`. That docum
 | AI/CV | Python, PyTorch, YOLOv8/v9, ByteTrack/DeepSORT | Detect and track people and vehicles |
 | Specialized CV | RetinaFace/MTCNN, ArcFace, EasyOCR/PaddleOCR | Face matching and ANPR |
 | Inference optimization | ONNX Runtime, TensorRT, NVIDIA Triton | Serve and optimize models for central or Jetson inference |
-| Backend API | FastAPI, REST, WebSockets | Camera configuration, orchestration, and live alert delivery |
+| Backend API | Django, Django REST Framework, Django Channels | Camera configuration, orchestration, REST APIs, and live alert delivery |
 | Event bus | Kafka or RabbitMQ | Move detection events between inference services and the backend |
 | Data and media | Firebase Firestore, Storage, FCM, Auth, Cloud Functions | Persist alerts, media, users, notifications, and serverless triggers |
 | Frontend | React/Next.js, TypeScript | Command-and-control dashboard |
@@ -39,7 +39,9 @@ The source technology stack is documented in `IBVAP_Tech_Stack.docx`. That docum
 ```text
 .
 ├── backend/
-│   ├── app/
+│   ├── manage.py
+│   ├── config/
+│   └── app/
 │   │   ├── api/
 │   │   │   └── routes/
 │   │   ├── core/
@@ -82,8 +84,14 @@ The backend is a thin orchestration layer between the AI services and Firebase. 
 
 ```text
 backend/
+├── manage.py                    # Django management entry point
+├── config/                      # Django project configuration
+│   ├── settings.py              # Environment, apps, middleware, and Firebase settings
+│   ├── urls.py                  # Root URL routing
+│   ├── asgi.py                  # ASGI entry point for Channels/WebSockets
+│   └── wsgi.py                  # WSGI entry point for deployment
 ├── app/
-│   ├── main.py                    # FastAPI application and lifecycle hooks
+│   ├── apps.py                    # Django application configuration
 │   ├── api/
 │   │   ├── deps.py                # Shared dependencies and auth context
 │   │   └── routes/
@@ -119,7 +127,7 @@ backend/
 3. The event consumer sends detection events to the rule engine.
 4. The rule engine debounces repeated detections and creates alert-worthy events.
 5. The backend persists structured alerts in `/alerts/{alertId}`, stores snapshots/clips in Firebase Storage, and sends FCM notifications when required.
-6. REST endpoints serve configuration and history; WebSockets provide live alert updates.
+6. Django REST Framework endpoints serve configuration and history; Django Channels provides live alert updates over WebSockets.
 
 Raw per-frame bounding boxes should be batched to Cloud Storage or BigQuery rather than written directly to Firestore. Firestore should contain alert-worthy events, camera configuration, watchlists, users, and sector/BOP metadata.
 
