@@ -29,6 +29,7 @@ The source technology stack is documented in `IBVAP_Tech_Stack.docx`. That docum
 | Backend API | Django, Django REST Framework, Django Channels | Camera configuration, orchestration, REST APIs, and live alert delivery |
 | Event bus | Kafka or RabbitMQ | Move detection events between inference services and the backend |
 | Data and media | Firebase Firestore, Storage, FCM, Auth, Cloud Functions | Persist alerts, media, users, notifications, and serverless triggers |
+| Evidence integrity | IPFS, smart contracts, blockchain | Maintain a tamper-evident, decentralized incident ledger |
 | Frontend | React/Next.js, TypeScript | Command-and-control dashboard |
 | Maps and video | Leaflet or Mapbox GL, WebRTC | Sector/fence visualization and live video wall |
 | Deployment | Vercel, GitHub Actions | Web application deployment and CI/CD |
@@ -155,6 +156,41 @@ The frontend uses Next.js/React with TypeScript. Firestore real-time listeners d
 - Use GeoPoint with a geospatial helper such as GeoFirestore for radius queries.
 - Use Firebase Authentication roles for Guard, Operator, Admin, and Command Center users.
 - Use Cloud Functions for media post-processing and forwarding critical alerts to external command-and-control systems.
+
+## Blockchain: immutable evidence vault
+
+### Core use case
+
+Firebase remains the operational data layer for live alerts and dashboard responsiveness, while blockchain acts as the immutable evidence vault. When an intrusion is recorded on-chain, the evidence reference and incident metadata become tamper-evident: any later attempt to alter a CCTV snapshot or replace an alert can be detected cryptographically.
+
+Only the evidence hash and essential incident metadata should be committed on-chain. Images and video clips stay off-chain to avoid exposing sensitive data or paying prohibitive storage costs.
+
+### Evidence logging flow
+
+1. **Trigger:** the AI pipeline detects a suspicious person or vehicle crossing a virtual fence.
+2. **Off-chain storage:** Django uploads the event snapshot or clip to IPFS. IPFS returns a content identifier (CID) that uniquely represents that exact evidence file.
+3. **On-chain logging:** Django calls the deployed smart contract with the camera ID, timestamp, GPS coordinates, alert type, and IPFS CID.
+4. **Verification:** the dashboard retrieves the blockchain incident reference and recomputes the file hash/CID for the evidence being viewed. A mismatch proves the file has been altered or replaced.
+
+```text
+AI/CV detection -> Django alert service -> IPFS evidence upload -> CID
+                                             |
+                                             v
+                                     Smart-contract incident log
+                                             |
+                                             v
+                                  Command dashboard verification
+```
+
+### Resilience and cybersecurity value
+
+Border outposts are sensitive targets. If a local server is compromised, destroyed, or controlled by an insider, a traditional local database can be edited or lost. A distributed blockchain ledger preserves an independently verifiable incident record across network nodes, so high command can still verify that a breach was logged even when a local system is unavailable.
+
+This is a genuine **Blockchain & Cybersecurity** use case for Problem Statement 187: blockchain is not used as a generic feature, but as a decentralized evidence vault that addresses insider manipulation, evidence tampering, and a single point of failure.
+
+### 30-second pitch
+
+> Our AI handles the surveillance, but our blockchain integration secures the evidence. Whenever a camera detects a threat, the event data and image hashes are committed to a smart contract. This ensures zero-trust security: even if a central server is hacked or an insider tries to cover their tracks, the intrusion log remains immutable, transparent, and mathematically verifiable by border security commanders.
 
 ## Deployment
 
