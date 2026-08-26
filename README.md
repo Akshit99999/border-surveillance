@@ -31,7 +31,7 @@ The source technology stack is documented in `IBVAP_Tech_Stack.docx`. That docum
 | Data and media | Firebase Firestore, Storage, FCM, Auth, Cloud Functions | Persist alerts, media, users, notifications, and serverless triggers |
 | Frontend | React/Next.js, TypeScript | Command-and-control dashboard |
 | Maps and video | Leaflet or Mapbox GL, WebRTC | Sector/fence visualization and live video wall |
-| Deployment | Docker, K3s/Kubernetes, GitHub Actions | Central and edge deployment plus CI/CD |
+| Deployment | Vercel, GitHub Actions | Web application deployment and CI/CD |
 | Monitoring | Prometheus, Grafana, Firebase Crashlytics/Performance | Infrastructure and dashboard health |
 
 ## Repository structure
@@ -158,11 +158,11 @@ The frontend uses Next.js/React with TypeScript. Firestore real-time listeners d
 
 ## Deployment
 
-- Central prototype: run the stack on one GPU-enabled machine with Docker.
-- Remote BOPs: run containerized inference on Jetson Orin/Xavier edge nodes and sync alerts rather than raw video when uplink is limited.
-- Orchestration: K3s at the edge and Kubernetes centrally.
-- CI/CD: GitHub Actions.
-- Monitoring: Prometheus and Grafana for camera/node health.
+- Vercel: deploy the Next.js command-and-control dashboard and web-facing application.
+- Django API: expose the production API through the configured backend URL consumed by the Vercel deployment.
+- Remote BOPs: run inference on Jetson Orin/Xavier edge nodes and sync alerts rather than raw video when uplink is limited.
+- CI/CD: use GitHub Actions for checks, builds, and Vercel deployment integration.
+- Monitoring: use Prometheus and Grafana for camera/node health.
 
 ## Recommended build order
 
