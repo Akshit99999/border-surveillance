@@ -157,40 +157,30 @@ The frontend uses Next.js/React with TypeScript. Firestore real-time listeners d
 - Use Firebase Authentication roles for Guard, Operator, Admin, and Command Center users.
 - Use Cloud Functions for media post-processing and forwarding critical alerts to external command-and-control systems.
 
-## Blockchain: immutable evidence vault
+## Blockchain evidence integrity
 
-### Core use case
+The platform uses blockchain as a decentralized evidence vault for high-value incidents. Firebase continues to support fast dashboard queries, user access, notifications, and operational alert state; the blockchain stores a permanent proof that an incident and its evidence existed in a particular form.
 
-Firebase remains the operational data layer for live alerts and dashboard responsiveness, while blockchain acts as the immutable evidence vault. When an intrusion is recorded on-chain, the evidence reference and incident metadata become tamper-evident: any later attempt to alter a CCTV snapshot or replace an alert can be detected cryptographically.
+When the AI pipeline confirms a virtual-fence breach, Django performs the following sequence:
 
-Only the evidence hash and essential incident metadata should be committed on-chain. Images and video clips stay off-chain to avoid exposing sensitive data or paying prohibitive storage costs.
-
-### Evidence logging flow
-
-1. **Trigger:** the AI pipeline detects a suspicious person or vehicle crossing a virtual fence.
-2. **Off-chain storage:** Django uploads the event snapshot or clip to IPFS. IPFS returns a content identifier (CID) that uniquely represents that exact evidence file.
-3. **On-chain logging:** Django calls the deployed smart contract with the camera ID, timestamp, GPS coordinates, alert type, and IPFS CID.
-4. **Verification:** the dashboard retrieves the blockchain incident reference and recomputes the file hash/CID for the evidence being viewed. A mismatch proves the file has been altered or replaced.
+1. Captures the alert metadata and event snapshot.
+2. Uploads the snapshot or clip to IPFS and receives its content identifier (CID).
+3. Records the camera ID, timestamp, GPS location, alert type, and CID in the incident smart contract.
+4. Stores the transaction ID with the corresponding Firebase alert.
+5. Lets commanders verify the evidence by comparing the current file’s CID with the CID recorded on-chain.
 
 ```text
-AI/CV detection -> Django alert service -> IPFS evidence upload -> CID
-                                             |
-                                             v
-                                     Smart-contract incident log
-                                             |
-                                             v
-                                  Command dashboard verification
+AI detection -> Django alert service -> IPFS evidence -> smart contract
+                                      |                    |
+                                      +-> Firebase alert <- transaction ID
+                                                           |
+                                                           v
+                                                Dashboard verification
 ```
 
-### Resilience and cybersecurity value
+The actual images and clips remain off-chain because they may contain sensitive operational information. Only the minimum metadata and cryptographic evidence reference are written to the ledger. If a database administrator, attacker, or insider edits an alert or replaces its media, the CID comparison exposes the change. If a border-post server is lost, the on-chain incident record remains independently verifiable from the distributed ledger.
 
-Border outposts are sensitive targets. If a local server is compromised, destroyed, or controlled by an insider, a traditional local database can be edited or lost. A distributed blockchain ledger preserves an independently verifiable incident record across network nodes, so high command can still verify that a breach was logged even when a local system is unavailable.
-
-This is a genuine **Blockchain & Cybersecurity** use case for Problem Statement 187: blockchain is not used as a generic feature, but as a decentralized evidence vault that addresses insider manipulation, evidence tampering, and a single point of failure.
-
-### 30-second pitch
-
-> Our AI handles the surveillance, but our blockchain integration secures the evidence. Whenever a camera detects a threat, the event data and image hashes are committed to a smart contract. This ensures zero-trust security: even if a central server is hacked or an insider tries to cover their tracks, the intrusion log remains immutable, transparent, and mathematically verifiable by border security commanders.
+This makes blockchain a direct cybersecurity control for the project: it protects incident history and evidence integrity against tampering and local-server failure, rather than using blockchain as a separate or decorative feature.
 
 ## Deployment
 
