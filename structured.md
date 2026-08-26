@@ -10,9 +10,11 @@ IP cameras (RTSP/ONVIF)
         v
 Video ingestion -> AI/CV inference -> Event bus -> Django rule engine
                                                        |
-                                                       v
-                         Firestore + Storage + FCM + Django Channels
-                                                       |
+                           +---------------------------+---------------------------+
+                           v                                                       v
+             Firestore + Storage + FCM + Django Channels             Evidence smart contract
+                           |                                           (custody + provenance)
+                           +---------------------------+---------------------------+
                                                        v
                               Next.js dashboard deployed on Vercel
 ```
@@ -26,6 +28,7 @@ Video ingestion -> AI/CV inference -> Event bus -> Django rule engine
 | Event transport | Move detection events between services | Kafka or RabbitMQ |
 | Django backend | Authenticated APIs, rule evaluation, persistence orchestration, and live updates | Django, Django REST Framework, Django Channels |
 | Firebase | Alerts, media, users, notifications, and real-time dashboard data | Firestore, Storage, Auth, FCM, Cloud Functions |
+| Evidence ledger | Preserve evidence custody and high-severity model provenance | Smart contract, blockchain |
 | Frontend | Command-and-control dashboard, maps, video wall, and operator workflows | Next.js/React, TypeScript, WebRTC |
 | Edge runtime | Run inference near remote border posts and sync alerts | Jetson Orin/Xavier |
 | Web deployment | Host the dashboard and web-facing application | Vercel |
@@ -97,6 +100,7 @@ Video ingestion -> AI/CV inference -> Event bus -> Django rule engine
 | `api/views/detections.py` | Receive normalized detection events and provide history |
 | `api/views/sectors.py` | Manage BOPs, sectors, and virtual-fence polygons |
 | `api/views/watchlist.py` | Manage approved face and plate watchlist entries |
+| `api/views/evidence.py` | Return evidence verification history for an alert |
 | `api/consumers/alerts.py` | Push live alert updates through Django Channels |
 | `api/permissions.py` | Enforce Guard, Operator, Admin, and Command Center roles |
 
@@ -108,6 +112,7 @@ Use Django REST Framework routers and version the public API under `/api/v1/`.
 - `services/rules`: polygon/line-crossing checks, night movement rules, suspicious-activity rules, and cooldown/debounce logic.
 - `services/alerts`: normalize detections into alerts, assign severity, deduplicate events, and manage lifecycle transitions.
 - `services/notifications`: FCM notifications and optional external command-and-control webhooks.
+- `services/evidence`: calculate evidence hashes, submit custody/provenance records, and retrieve verification history.
 - `db/repositories`: isolate Firestore and Storage access from views and business logic.
 - `workers/event_consumer.py`: consume Kafka/RabbitMQ messages and hand normalized events to the rule service.
 - `workers/media_processor.py`: upload snapshots, face/plate crops, and short clips to Firebase Storage.
@@ -122,6 +127,7 @@ Use Django REST Framework routers and version the public API under `/api/v1/`.
 | `GET` | `/api/v1/alerts/` | Filter alerts by sector, type, severity, status, and time |
 | `POST` | `/api/v1/alerts/{alert_id}/acknowledge/` | Acknowledge an alert |
 | `POST` | `/api/v1/events/detections/` | Ingest a normalized detection event |
+| `GET` | `/api/v1/alerts/{alert_id}/evidence/` | Return custody events and model provenance |
 | `GET/POST` | `/api/v1/sectors/` | Manage sectors, BOPs, and virtual fences |
 | `GET/POST` | `/api/v1/watchlist/` | Manage face and plate watchlist entries |
 | `WS` | `/ws/alerts/` | Stream authorized live alert updates |
@@ -169,6 +175,39 @@ Recommended alert statuses are `open`, `acknowledged`, `investigating`, `resolve
 4. Batch raw analytics to Cloud Storage or BigQuery when required.
 5. Keep media in Firebase Storage and save only stable references in the alert document.
 6. Use GeoPoint plus a geospatial helper for sector/radius queries.
+
+### Blockchain evidence accountability
+
+The blockchain integration has two explicit responsibilities. It does not store video, images, biometric data, or complete user identities.
+
+#### Chain of custody
+
+When evidence is created, viewed, downloaded, assigned, or resolved, `services/evidence` appends a smart-contract custody event containing:
+
+```text
+alert_id, evidence_id, action, timestamp, actor_role, evidence_hash, previous_transaction_id
+```
+
+The evidence hash is calculated from the stored media file. The related Firebase alert stores the resulting transaction ID. During review, the dashboard retrieves the ordered custody records and compares a newly calculated file hash with the hash recorded in the creation event. This reveals evidence replacement or tampering without placing the evidence itself on-chain.
+
+#### AI model provenance
+
+For a high-severity alert, the backend appends a provenance record that binds the alert to the inference artefact that generated it:
+
+```text
+alert_id, model_id, model_version, model_artifact_hash,
+confidence, decision_threshold, inference_timestamp, transaction_id
+```
+
+The model artifact hash identifies the approved model build. Recording it alongside the alert lets an auditor verify that the decision was generated by the expected model version and not by an untracked or modified model.
+
+#### Smart-contract flow
+
+1. AI inference produces a normalized detection event with its model metadata.
+2. Django applies rules and creates the Firebase alert and protected media reference.
+3. For a high-severity alert, Django hashes the media and records model provenance on-chain.
+4. Each later evidence action adds a custody event to the same on-chain incident trail.
+5. The dashboard reads the Firebase alert for live operations and the blockchain transaction IDs for verification.
 
 ## 5. AI/CV implementation order
 

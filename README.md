@@ -29,7 +29,7 @@ The source technology stack is documented in `IBVAP_Tech_Stack.docx`. That docum
 | Backend API | Django, Django REST Framework, Django Channels | Camera configuration, orchestration, REST APIs, and live alert delivery |
 | Event bus | Kafka or RabbitMQ | Move detection events between inference services and the backend |
 | Data and media | Firebase Firestore, Storage, FCM, Auth, Cloud Functions | Persist alerts, media, users, notifications, and serverless triggers |
-| Evidence integrity | IPFS, smart contracts, blockchain | Maintain a tamper-evident, decentralized incident ledger |
+| Evidence accountability | Smart contracts, blockchain | Maintain tamper-evident evidence custody and AI-model provenance |
 | Frontend | React/Next.js, TypeScript | Command-and-control dashboard |
 | Maps and video | Leaflet or Mapbox GL, WebRTC | Sector/fence visualization and live video wall |
 | Deployment | Vercel, GitHub Actions | Web application deployment and CI/CD |
@@ -157,30 +157,31 @@ The frontend uses Next.js/React with TypeScript. Firestore real-time listeners d
 - Use Firebase Authentication roles for Guard, Operator, Admin, and Command Center users.
 - Use Cloud Functions for media post-processing and forwarding critical alerts to external command-and-control systems.
 
-## Blockchain evidence integrity
+## Blockchain-backed accountability
 
-The platform uses blockchain as a decentralized evidence vault for high-value incidents. Firebase continues to support fast dashboard queries, user access, notifications, and operational alert state; the blockchain stores a permanent proof that an incident and its evidence existed in a particular form.
+Blockchain is used only for records that must remain independently verifiable after an incident. Firebase remains the operational store for alerts, media, users, and dashboard data; the blockchain records proof of evidence handling and the AI model that produced a high-severity detection.
 
-When the AI pipeline confirms a virtual-fence breach, Django performs the following sequence:
+### Evidence chain of custody
 
-1. Captures the alert metadata and event snapshot.
-2. Uploads the snapshot or clip to IPFS and receives its content identifier (CID).
-3. Records the camera ID, timestamp, GPS location, alert type, and CID in the incident smart contract.
-4. Stores the transaction ID with the corresponding Firebase alert.
-5. Lets commanders verify the evidence by comparing the current file’s CID with the CID recorded on-chain.
+When an alert creates or changes an evidence item, Django hashes the media file and appends a custody event to the smart contract. Each event records the alert/evidence reference, action, timestamp, user role, and evidence hash. The supported actions are `created`, `viewed`, `downloaded`, `assigned`, and `resolved`.
+
+This gives commanders an auditable sequence of who handled the evidence and when. Altering a Firebase alert, replacing a stored image, or removing a local log cannot rewrite the on-chain custody history; a recalculated file hash will no longer match the recorded evidence hash.
+
+### AI model provenance
+
+For every high-severity alert, Django also records the inference model identifier, model version, model artifact hash, confidence score, and decision threshold. This links the incident to the exact approved model build that generated it, so reviewers can verify the origin of a detection and distinguish an authorised deployment from an untracked or altered model.
 
 ```text
-AI detection -> Django alert service -> IPFS evidence -> smart contract
-                                      |                    |
-                                      +-> Firebase alert <- transaction ID
-                                                           |
-                                                           v
-                                                Dashboard verification
+AI inference -> high-severity alert -> Django evidence service
+                                      |               |
+                                      |               +-> record model provenance on-chain
+                                      v
+                          store media + alert in Firebase
+                                      |
+                                      +-> append custody actions on-chain
 ```
 
-The actual images and clips remain off-chain because they may contain sensitive operational information. Only the minimum metadata and cryptographic evidence reference are written to the ledger. If a database administrator, attacker, or insider edits an alert or replaces its media, the CID comparison exposes the change. If a border-post server is lost, the on-chain incident record remains independently verifiable from the distributed ledger.
-
-This makes blockchain a direct cybersecurity control for the project: it protects incident history and evidence integrity against tampering and local-server failure, rather than using blockchain as a separate or decorative feature.
+Media files, personally identifiable data, and full user identities remain off-chain. Firebase stores the protected operational data; the smart contract stores only hashes, action metadata, role information, model provenance, and transaction IDs. The Firebase alert links to its blockchain transaction IDs so the dashboard can show both the live incident and its verification trail.
 
 ## Deployment
 
