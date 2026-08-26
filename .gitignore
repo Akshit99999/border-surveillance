@@ -1,0 +1,29 @@
+# Source document used to define the technology stack
+IBVAP_Tech_Stack.docx
+
+# Microsoft Word temporary lock files
+~$*.docx
+
+# Local document QA output
+docx-qa/
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+
+# Node.js / Next.js
+node_modules/
+.next/
+out/
+
+# Environment files
+.env
+.env.*
+!.env.example
+
+# OS/editor files
+.DS_Store
+Thumbs.db
+.vscode/
