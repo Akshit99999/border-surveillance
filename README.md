@@ -25,7 +25,7 @@ The source technology stack is documented in `IBVAP_Tech_Stack.docx`. That docum
 | Live video relay | Go2RTC or MediaMTX | Relay RTSP streams to the dashboard over WebRTC |
 | AI/CV | Python, PyTorch, YOLOv8/v9, ByteTrack/DeepSORT | Detect and track people and vehicles |
 | Specialized CV | RetinaFace/MTCNN, ArcFace, EasyOCR/PaddleOCR | Face matching and ANPR |
-| Inference optimization | ONNX Runtime, TensorRT, NVIDIA Triton | Serve and optimize models for central or Jetson inference |
+| Inference optimization | ONNX Runtime, TensorRT, NVIDIA Triton | Serve and optimize models on approved local or central servers |
 | Backend API | Django, Django REST Framework, Django Channels | Camera configuration, orchestration, REST APIs, and live alert delivery |
 | Event bus | Kafka or RabbitMQ | Move detection events between inference services and the backend |
 | Data and media | Firebase Firestore, Storage, FCM, Auth, Cloud Functions | Persist alerts, media, users, notifications, and serverless triggers |
@@ -187,7 +187,7 @@ Media files, personally identifiable data, and full user identities remain off-c
 
 - Vercel: deploy the Next.js command-and-control dashboard and web-facing application.
 - Django API: expose the production API through the configured backend URL consumed by the Vercel deployment.
-- Remote BOPs: run inference on Jetson Orin/Xavier edge nodes and sync alerts rather than raw video when uplink is limited.
+- Remote BOPs: use the existing CCTV/NVR for recording and an approved local border-post server for AI inference where offline detection is required; otherwise synchronize recorded footage when uplink is restored.
 - CI/CD: use GitHub Actions for checks, builds, and Vercel deployment integration.
 - Monitoring: use Prometheus and Grafana for camera/node health.
 

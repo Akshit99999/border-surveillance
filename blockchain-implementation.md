@@ -1,12 +1,14 @@
 # Blockchain and Local Storage Implementation
 
-This document explains where surveillance data is stored and how the blockchain layer works with Django, Firebase, Pinata, and the edge devices.
+This document explains where surveillance data is stored and how the blockchain layer works with Django, Firebase, Pinata, and the existing border surveillance infrastructure.
 
 ## 1. Where data is stored locally
 
-Local storage belongs on the Jetson edge gateway at each border outpost. The IP camera should stream data to the gateway; it should not be treated as the durable database.
+Local storage belongs on the existing local border-post server, CCTV/NVR server, or approved control-room computer at each surveillance location. The IP camera should stream data to that approved local system; the camera itself should not be treated as the durable database.
 
-Recommended production location on a Linux-based Jetson device:
+The existing NVR can continue recording camera footage, while the surveillance application runs on an approved local or central server. If a camera/NVR has no built-in analytics and there is no local server running the AI service, a network outage will stop new AI detections; only recording can continue. Local AI alerting during an outage therefore requires either camera-native analytics or an approved local server.
+
+Recommended production location on the local Linux-based border-post server:
 
 ```text
 /var/lib/border-surveillance/
@@ -20,10 +22,10 @@ Recommended production location on a Linux-based Jetson device:
 ├── models/
 │   └── approved/               # Read-only AI model files
 └── logs/
-    └── edge-service.log        # Rotating local service logs
+    └── local-service.log       # Rotating local service logs
 ```
 
-Use an encrypted SSD attached to the Jetson for `media/`, not the device’s small system disk. For a single edge gateway, SQLite is sufficient for event metadata and the durable outbox. Use local PostgreSQL when multiple cameras and workers require higher concurrent write capacity.
+Use an encrypted SSD or approved encrypted local storage volume for `media/`, rather than an unprotected system disk. For a single local server, SQLite is sufficient for event metadata and the durable outbox. Use local PostgreSQL when multiple cameras and workers require higher concurrent write capacity.
 
 Redis Streams can be used for fast frame/event processing, but it must not be the only copy of an unsynchronized alert. The SQLite/PostgreSQL outbox is the recovery source after a restart or power failure.
 
@@ -46,7 +48,7 @@ Local paths are for runtime data and must never be committed to Git. Development
 IP camera (RTSP/ONVIF)
         |
         v
-Jetson edge gateway
+Local border-post server / CCTV-NVR server
   - runs AI inference
   - hashes and signs evidence
   - saves event to durable outbox
@@ -71,7 +73,7 @@ Jetson edge gateway
 
 ## 3. What the blockchain stores
 
-The blockchain is not stored on the Jetson, Firebase, or Vercel. It is a distributed ledger maintained by the selected blockchain network. The edge device stores only pending events, synchronization state, and confirmed transaction IDs.
+The blockchain is not stored on the local border-post server, Firebase, or Vercel. It is a distributed ledger maintained by the selected blockchain network. The local server stores only pending events, synchronization state, and confirmed transaction IDs.
 
 The smart contract should store minimum, non-sensitive information:
 
@@ -121,10 +123,10 @@ Only the authorized Django blockchain service account can submit transactions. D
 ### A. Threat detection
 
 1. The AI model detects a person, vehicle, or virtual-fence violation.
-2. The edge gateway captures the snapshot and calculates its SHA-256 hash.
-3. The gateway records the model version and model artifact hash.
-4. The gateway stores the complete event in the local durable outbox.
-5. The gateway records `captured_at` and `queued_at` timestamps and continues monitoring if the network is unavailable.
+2. The local surveillance server captures the snapshot and calculates its SHA-256 hash.
+3. The local server records the model version and model artifact hash.
+4. The local server stores the complete event in the local durable outbox.
+5. The local server records `captured_at` and `queued_at` timestamps and continues monitoring if the network is unavailable.
 
 ### B. Synchronization after an outage
 
@@ -163,7 +165,7 @@ anchored_at       = blockchain transaction confirmed
 verified_at       = evidence hash checked by a commander
 ```
 
-Also store a per-camera `sequence_number` and an edge-device signature. Sequence numbers help reconstruct order when events arrive late or out of order; signatures help show that the event originated from an approved edge device.
+Also store a per-camera `sequence_number` and a local-server or camera-service signature. Sequence numbers help reconstruct order when events arrive late or out of order; signatures help show that the event originated from an approved surveillance system.
 
 ## 7. Failure handling
 
@@ -177,7 +179,7 @@ pending_local
 
 If any step fails, retain the event locally and retry with exponential backoff. Move events that exceed the retry limit to `failed-events/` and show them for operator review. Do not delete local evidence until the required confirmations are complete.
 
-For critical deployments, replicate signed pending events to a nearby edge gateway or command post. This protects against loss of the Jetson or its local SSD before synchronization.
+For critical deployments, replicate signed pending events to another approved local server or command post. This protects against loss of the primary surveillance server or its local storage before synchronization.
 
 ## 8. Security requirements
 
@@ -213,7 +215,7 @@ backend/app/services/
 For the prototype, implement one complete vertical slice:
 
 ```text
-One camera -> one Jetson -> one snapshot -> Pinata CID
+One camera -> one local border server -> one snapshot -> Pinata CID
 -> Django alert -> smart-contract evidence hash
 -> Firebase transaction link -> dashboard verification
 ```

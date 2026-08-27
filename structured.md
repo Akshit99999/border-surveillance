@@ -30,7 +30,7 @@ Video ingestion -> AI/CV inference -> Event bus -> Django rule engine
 | Firebase | Alerts, media, users, notifications, and real-time dashboard data | Firestore, Storage, Auth, FCM, Cloud Functions |
 | Evidence ledger | Preserve evidence custody and high-severity model provenance | Smart contract, blockchain |
 | Frontend | Command-and-control dashboard, maps, video wall, and operator workflows | Next.js/React, TypeScript, WebRTC |
-| Edge runtime | Run inference near remote border posts and sync alerts | Jetson Orin/Xavier |
+| Local surveillance runtime | Run inference near remote border posts and sync alerts | Existing CCTV/NVR or approved local server |
 | Web deployment | Host the dashboard and web-facing application | Vercel |
 
 ## 2. Repository implementation layout
@@ -220,7 +220,7 @@ The model artifact hash identifies the approved model build. Recording it alongs
 7. Face detection and watchlist matching using RetinaFace/MTCNN plus ArcFace embeddings.
 8. Night-time movement using low-light enhancement or IR feeds.
 9. Suspicious-activity classification using pose estimation plus LSTM or ST-GCN.
-10. ONNX Runtime/TensorRT optimization and Jetson edge packaging.
+10. ONNX Runtime/TensorRT optimization and packaging for the approved local or central server environment.
 
 ## 6. Frontend implementation
 
@@ -266,7 +266,7 @@ The model artifact hash identifies the approved model build. Recording it alongs
 ### Django and edge services
 
 - Run the Django API and event workers as separately managed services reachable by the Vercel application.
-- Run inference locally on Jetson Orin/Xavier nodes at remote BOPs when uplink is limited.
+- Use existing CCTV/NVR recording and an approved border-post server for local inference when offline detection is required; if no local compute is available, synchronize recorded footage after uplink is restored.
 - Synchronize alert metadata and selected media rather than raw video from edge nodes.
 - Use GitHub Actions for backend checks, frontend checks, image/model packaging, and deployment triggers.
 
@@ -333,4 +333,4 @@ The first vertical slice is complete when a single camera can produce a human-de
 | 4 | Dashboard | Operators can see cameras, alerts, and map data |
 | 5 | Specialized detection | ANPR, face, fence, night, and activity modules are independently testable |
 | 6 | Production web deployment | Vercel preview and production deployments work with environment configuration |
-| 7 | Edge deployment | Jetson node can infer locally and synchronize alert data |
+| 7 | Local deployment | Border-post server can infer locally and synchronize alert data |
