@@ -7,6 +7,9 @@ IBVAP_Tech_Stack.docx
 # Local document QA output
 docx-qa/
 
+# Local edge/development runtime data
+.localdata/
+
 # Python
 __pycache__/
 *.py[cod]
