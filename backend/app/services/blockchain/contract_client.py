@@ -71,7 +71,6 @@ class BlockchainReceipt:
 EVIDENCE_REGISTRY_ABI = [
     {
         "inputs": [
-            {"internalType": "bytes32", "name": "custodyEventId", "type": "bytes32"},
             {"internalType": "bytes32", "name": "incidentReferenceHash", "type": "bytes32"},
             {"internalType": "bytes32", "name": "evidenceHash", "type": "bytes32"},
             {"internalType": "uint64", "name": "capturedAt", "type": "uint64"},
@@ -107,6 +106,20 @@ EVIDENCE_REGISTRY_ABI = [
         "name": "appendCustodyEvent",
         "outputs": [],
         "stateMutability": "nonpayable",
+        "type": "function",
+    },
+    {
+        "inputs": [{"internalType": "bytes32", "name": "", "type": "bytes32"}],
+        "name": "registeredIncidents",
+        "outputs": [{"internalType": "bool", "name": "", "type": "bool"}],
+        "stateMutability": "view",
+        "type": "function",
+    },
+    {
+        "inputs": [{"internalType": "bytes32", "name": "", "type": "bytes32"}],
+        "name": "incidentEvidenceHashes",
+        "outputs": [{"internalType": "bytes32", "name": "", "type": "bytes32"}],
+        "stateMutability": "view",
         "type": "function",
     },
 ]
@@ -205,6 +218,19 @@ class Web3EvidenceClient:
             status=status,
             confirmed_at=datetime.now(timezone.utc),
         )
+
+    @property
+    def network_chain_id(self) -> int:
+        return int(self._web3.eth.chain_id)
+
+    def verify_incident(self, incident_reference_hash: str, evidence_sha256: str) -> bool:
+        """Verify the append-only on-chain incident hash pair."""
+
+        reference = _bytes32(incident_reference_hash)
+        expected = _bytes32(evidence_sha256)
+        registered = bool(self._contract.functions.registeredIncidents(reference).call())
+        stored = self._contract.functions.incidentEvidenceHashes(reference).call()
+        return registered and bytes(stored) == expected
 
     def _send(self, function: Any) -> str:
         try:

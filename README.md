@@ -18,6 +18,8 @@ The source technology stack is documented in `IBVAP_Tech_Stack.docx`. That docum
 
 See [hardware-and-deployment.md](hardware-and-deployment.md) for the local, cloud, and hybrid deployment recommendation, hardware profiles, offline behavior, and data placement plan.
 
+The downloaded Next.js command center is now integrated under `frontend/`. It hydrates from the Django API by default and falls back to the typed mock fixtures only when the API is unavailable or `NEXT_PUBLIC_USE_MOCK_DATA=true`.
+
 ## Technology stack
 
 | Layer | Technology | Purpose |
@@ -200,3 +202,30 @@ Media files, personally identifiable data, and full user identities remain off-c
 3. ANPR and face-detection modules.
 4. Virtual fences, night-mode detection, and suspicious-activity detection.
 5. Edge deployment and ONNX/TensorRT optimization.
+
+## Run the integrated command center locally
+
+```powershell
+python -m venv .venv
+.\.venv\Scripts\pip install -r backend\requirements-web.txt
+.\.venv\Scripts\pip install -r backend\requirements-services.txt
+\.venv\Scripts\python backend\manage.py runserver 127.0.0.1:8000
+```
+
+In a second terminal:
+
+```powershell
+npm ci --prefix frontend
+npm run dev --prefix frontend
+```
+
+The frontend reads `frontend/.env.example`. For blockchain verification and anchoring, copy the backend placeholders from `backend/.env.example` into the Django deployment secret manager. The wallet private key is never sent to Vercel or the browser.
+
+### Backend API surface
+
+- `GET /api/bootstrap` — dashboard data, system state, and blockchain status.
+- `POST /api/alerts/{id}/action` — acknowledge or escalate an alert.
+- `POST /api/alerts/{id}/anchor` — backend-signed EvidenceRegistry transaction.
+- `GET /api/alerts/{id}/verification` — compare the evidence digest with the contract.
+- `PATCH /api/cameras/{id}`, `PATCH /api/guards/{id}`, and `PATCH /api/shifts/{id}` — persist console configuration changes.
+- `POST /api/sync` — idempotently flush alerts and activity captured during an outage.
