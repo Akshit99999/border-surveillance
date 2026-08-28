@@ -19,6 +19,9 @@ class FakeService:
     def process_frame(self, frame: Any) -> list[InferenceDetection]:
         return self.detections
 
+    def warmup(self) -> None:
+        return None
+
 
 class LiveInferenceTests(unittest.TestCase):
     def config(self) -> LiveInferenceConfig:
@@ -36,6 +39,7 @@ class LiveInferenceTests(unittest.TestCase):
             anpr_vehicle_confidence=0.70,
             anpr_plate_confidence=0.25,
             anpr_image_size=640,
+            max_frame_dimension=640,
         )
 
     def test_combines_person_face_and_anpr_results(self) -> None:

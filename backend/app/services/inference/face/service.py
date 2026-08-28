@@ -31,6 +31,11 @@ class FaceDetectionService:
             )
         return detections
 
+    def warmup(self) -> None:
+        """Load the face detector before the first live frame."""
+
+        self._ensure_loaded()
+
     def _ensure_loaded(self) -> None:
         if self._model is None:
             from ultralytics import YOLO

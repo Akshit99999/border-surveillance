@@ -4,13 +4,18 @@ import React, { useCallback, useEffect, useRef, useState } from "react";
 import { Camera, CameraOff, CheckCircle2, RefreshCw, ShieldAlert } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { TacticalButton } from "@/components/shared/TacticalButton";
-import { backendApi, FrameDetection, FrameInferenceModule } from "@/lib/api/client";
+import {
+  backendApi,
+  FrameDetection,
+  FrameInferenceModule,
+  InferenceWarmupResponse,
+} from "@/lib/api/client";
 
 interface LocalCameraFeedProps {
   className?: string;
 }
 
-type CameraState = "idle" | "starting" | "live" | "error";
+type CameraState = "idle" | "starting" | "warming" | "live" | "error";
 type InferenceState = "idle" | "analyzing" | "ready" | "error";
 
 const canvasToBlob = (canvas: HTMLCanvasElement) =>
@@ -20,6 +25,7 @@ export const LocalCameraFeed: React.FC<LocalCameraFeedProps> = ({ className }) =
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const streamRef = useRef<MediaStream | null>(null);
+  const warmupPromiseRef = useRef<Promise<InferenceWarmupResponse> | null>(null);
   const [cameraState, setCameraState] = useState<CameraState>("idle");
   const [error, setError] = useState<string>("");
   const [devices, setDevices] = useState<MediaDeviceInfo[]>([]);
@@ -65,6 +71,18 @@ export const LocalCameraFeed: React.FC<LocalCameraFeedProps> = ({ className }) =
         });
         streamRef.current = stream;
         if (videoRef.current) videoRef.current.srcObject = stream;
+        setCameraState("warming");
+        try {
+          const warmup = warmupPromiseRef.current ?? backendApi.warmupInference();
+          warmupPromiseRef.current = warmup;
+          const result = await warmup;
+          setModelName(result.model);
+          setModules(result.modules);
+        } catch (warmupError) {
+          setInferenceError(
+            warmupError instanceof Error ? warmupError.message : "AI model warm-up failed."
+          );
+        }
         setCameraState("live");
         await listDevices();
       } catch (cameraError) {
@@ -88,6 +106,25 @@ export const LocalCameraFeed: React.FC<LocalCameraFeedProps> = ({ className }) =
   }, [listDevices, stopStream]);
 
   useEffect(() => {
+    let cancelled = false;
+    const warmup = warmupPromiseRef.current ?? backendApi.warmupInference();
+    warmupPromiseRef.current = warmup;
+    void warmup
+      .then((result) => {
+        if (cancelled) return;
+        setModelName(result.model);
+        setModules(result.modules);
+      })
+      .catch(() => {
+        // The camera can still be previewed; the frame request will report
+        // the exact module error when the operator enables the camera.
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  useEffect(() => {
     if (videoRef.current && streamRef.current) videoRef.current.srcObject = streamRef.current;
   }, [cameraState]);
 
@@ -95,7 +132,6 @@ export const LocalCameraFeed: React.FC<LocalCameraFeedProps> = ({ className }) =
     if (cameraState !== "live") {
       setDetections([]);
       setInferenceState("idle");
-      setModules([]);
       return;
     }
 
@@ -143,12 +179,14 @@ export const LocalCameraFeed: React.FC<LocalCameraFeedProps> = ({ className }) =
     };
 
     void analyzeCurrentFrame();
-    const interval = window.setInterval(() => void analyzeCurrentFrame(), 1600);
+    const interval = window.setInterval(() => void analyzeCurrentFrame(), 1000);
     return () => {
       cancelled = true;
       window.clearInterval(interval);
     };
   }, [cameraState]);
+
+  const cameraVisible = cameraState === "live" || cameraState === "warming";
 
   return (
     <section
@@ -162,18 +200,22 @@ export const LocalCameraFeed: React.FC<LocalCameraFeedProps> = ({ className }) =
           <span
             className={cn(
               "w-2 h-2 rounded-full shrink-0",
-              cameraState === "live" ? "bg-emerald-400 animate-pulse" : "bg-slate-500"
+              cameraState === "live"
+                ? "bg-emerald-400 animate-pulse"
+                : cameraState === "warming"
+                ? "bg-amber-400 animate-pulse"
+                : "bg-slate-500"
             )}
           />
           <span className="font-bold tracking-wider text-cyan-300 truncate">LOCAL DEVICE CAMERA</span>
         </div>
-        <span className={cn("text-[10px] font-bold", cameraState === "live" ? "text-emerald-400" : "text-slate-400")}>
-          {cameraState === "live" ? "LIVE" : cameraState === "starting" ? "OPENING" : cameraState === "error" ? "UNAVAILABLE" : "READY"}
+        <span className={cn("text-[10px] font-bold", cameraState === "live" ? "text-emerald-400" : cameraState === "warming" ? "text-amber-400" : "text-slate-400")}>
+          {cameraState === "live" ? "LIVE" : cameraState === "warming" ? "WARMING AI" : cameraState === "starting" ? "OPENING" : cameraState === "error" ? "UNAVAILABLE" : "READY"}
         </span>
       </div>
 
       <div className="relative aspect-video min-h-[220px] bg-black flex items-center justify-center overflow-hidden">
-        <video ref={videoRef} autoPlay muted playsInline className={cn("w-full h-full object-cover", cameraState !== "live" && "hidden")} />
+        <video ref={videoRef} autoPlay muted playsInline className={cn("w-full h-full object-cover", !cameraVisible && "hidden")} />
         <canvas ref={canvasRef} className="hidden" />
         {cameraState === "live" && (
           <>
@@ -213,7 +255,14 @@ export const LocalCameraFeed: React.FC<LocalCameraFeedProps> = ({ className }) =
             </div>
           </>
         )}
-        {cameraState !== "live" && (
+        {cameraState === "warming" && (
+          <div className="absolute inset-0 flex items-center justify-center bg-slate-950/45 pointer-events-none">
+            <div className="border border-amber-400/60 bg-slate-950/85 px-3 py-2 text-center text-[10px] text-amber-300 uppercase tracking-wider">
+              Loading person, face, and ANPR models…
+            </div>
+          </div>
+        )}
+        {!cameraVisible && (
           <div className="p-6 text-center max-w-md">
             {cameraState === "error" ? (
               <CameraOff className="w-10 h-10 mx-auto mb-3 text-rose-400" />
@@ -245,7 +294,7 @@ export const LocalCameraFeed: React.FC<LocalCameraFeedProps> = ({ className }) =
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 mt-2">
           {modules.length === 0 && (
             <div className="sm:col-span-3 border border-dashed border-slate-800 rounded-sm px-2 py-2 text-[10px] text-slate-500">
-              Enable the local camera to start person tracking, face detection, and Indian ANPR.
+              AI models are preloaded when this page opens so the first camera frame is analyzed without a cold-start delay.
             </div>
           )}
           {modules.map((module) => (
@@ -269,7 +318,9 @@ export const LocalCameraFeed: React.FC<LocalCameraFeedProps> = ({ className }) =
       <div className="border-t border-slate-800 bg-slate-950/95 px-3 py-2 flex flex-wrap items-center justify-between gap-2 text-[10px] text-slate-400">
         <span className="flex items-center gap-1.5">
           {cameraState === "live" ? <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" /> : <ShieldAlert className="w-3.5 h-3.5 text-amber-400" />}
-          {cameraState !== "live"
+          {cameraState === "warming"
+            ? "LOADING AI MODELS — CAMERA PREVIEW IS READY"
+            : cameraState !== "live"
             ? "PERMISSION REQUIRED FOR LOCAL PREVIEW"
             : inferenceState === "error"
             ? inferenceError
