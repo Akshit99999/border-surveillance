@@ -3,8 +3,13 @@
 from pathlib import Path
 import os
 
+from dotenv import load_dotenv
 
 BASE_DIR = Path(__file__).resolve().parent.parent
+
+# Load the local backend environment when present. Production deployments may
+# inject the same variables through their secret manager instead.
+load_dotenv(BASE_DIR / ".env", override=False)
 
 SECRET_KEY = os.getenv("DJANGO_SECRET_KEY", "local-development-only")
 DEBUG = os.getenv("DJANGO_DEBUG", "false").lower() in {"1", "true", "yes"}
