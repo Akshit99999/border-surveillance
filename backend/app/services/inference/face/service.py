@@ -19,7 +19,7 @@ class FaceDetectionService:
         """Return detected face locations for a single BGR frame."""
 
         self._ensure_loaded()
-        result = self._model(frame, conf=self.confidence)[0]
+        result = self._model(frame, conf=self.confidence, verbose=False)[0]
         detections: List[InferenceDetection] = []
         for x1, y1, x2, y2, score, _class_id in result.boxes.data.tolist():
             detections.append(

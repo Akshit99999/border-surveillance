@@ -65,8 +65,20 @@ export interface BootstrapResponse {
 
 export interface FrameDetection {
   label: string;
+  source: "person_tracking" | "face_detection" | "anpr" | string;
   confidence: number;
   box: { x: number; y: number; width: number; height: number };
+  trackId?: string | null;
+  attributes?: Record<string, unknown>;
+}
+
+export interface FrameInferenceModule {
+  id: "person_tracking" | "face_detection" | "anpr" | string;
+  label: string;
+  model: string;
+  status: "active" | "disabled" | "unavailable" | string;
+  detectionCount: number;
+  message?: string;
 }
 
 export interface FrameInferenceResponse {
@@ -78,6 +90,7 @@ export interface FrameInferenceResponse {
   frameWidth: number;
   frameHeight: number;
   detections: FrameDetection[];
+  modules: FrameInferenceModule[];
 }
 
 export class ApiError extends Error {

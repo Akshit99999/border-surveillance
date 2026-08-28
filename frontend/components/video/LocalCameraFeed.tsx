@@ -4,7 +4,7 @@ import React, { useCallback, useEffect, useRef, useState } from "react";
 import { Camera, CameraOff, CheckCircle2, RefreshCw, ShieldAlert } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { TacticalButton } from "@/components/shared/TacticalButton";
-import { backendApi, FrameDetection } from "@/lib/api/client";
+import { backendApi, FrameDetection, FrameInferenceModule } from "@/lib/api/client";
 
 interface LocalCameraFeedProps {
   className?: string;
@@ -29,6 +29,7 @@ export const LocalCameraFeed: React.FC<LocalCameraFeedProps> = ({ className }) =
   const [inferenceError, setInferenceError] = useState("");
   const [modelName, setModelName] = useState("");
   const [inferenceMs, setInferenceMs] = useState<number | null>(null);
+  const [modules, setModules] = useState<FrameInferenceModule[]>([]);
 
   const stopStream = useCallback(() => {
     streamRef.current?.getTracks().forEach((track) => track.stop());
@@ -94,6 +95,7 @@ export const LocalCameraFeed: React.FC<LocalCameraFeedProps> = ({ className }) =
     if (cameraState !== "live") {
       setDetections([]);
       setInferenceState("idle");
+      setModules([]);
       return;
     }
 
@@ -127,6 +129,7 @@ export const LocalCameraFeed: React.FC<LocalCameraFeedProps> = ({ className }) =
           setDetections(result.detections);
           setModelName(result.model);
           setInferenceMs(result.inferenceMs);
+          setModules(result.modules);
           setInferenceState("ready");
         }
       } catch (analysisError) {
@@ -176,8 +179,14 @@ export const LocalCameraFeed: React.FC<LocalCameraFeedProps> = ({ className }) =
           <>
             {detections.map((detection, index) => (
               <div
-                key={`${detection.label}-${index}`}
-                className="absolute border-2 border-rose-400 shadow-[0_0_12px_rgba(251,113,133,0.75)] pointer-events-none"
+                key={`${detection.source}-${detection.label}-${index}`}
+                className={`absolute border-2 shadow-[0_0_12px_rgba(251,113,133,0.75)] pointer-events-none ${
+                  detection.source === "face_detection"
+                    ? "border-violet-400"
+                    : detection.source === "anpr"
+                    ? "border-amber-400"
+                    : "border-rose-400"
+                }`}
                 style={{
                   left: `${detection.box.x}%`,
                   top: `${detection.box.y}%`,
@@ -185,8 +194,17 @@ export const LocalCameraFeed: React.FC<LocalCameraFeedProps> = ({ className }) =
                   height: `${detection.box.height}%`,
                 }}
               >
-                <span className="absolute -top-5 left-0 whitespace-nowrap bg-rose-500 text-white px-1.5 py-0.5 text-[10px] font-bold uppercase">
-                  {detection.label} {(detection.confidence * 100).toFixed(0)}%
+                <span className={`absolute -top-5 left-0 whitespace-nowrap text-white px-1.5 py-0.5 text-[10px] font-bold uppercase ${
+                  detection.source === "face_detection"
+                    ? "bg-violet-500"
+                    : detection.source === "anpr"
+                    ? "bg-amber-500"
+                    : "bg-rose-500"
+                }`}>
+                  {detection.attributes?.plate_number
+                    ? String(detection.attributes.plate_number)
+                    : detection.label}
+                  {detection.trackId ? ` #${detection.trackId}` : ""} {(detection.confidence * 100).toFixed(0)}%
                 </span>
               </div>
             ))}
@@ -217,6 +235,35 @@ export const LocalCameraFeed: React.FC<LocalCameraFeedProps> = ({ className }) =
             )}
           </div>
         )}
+      </div>
+
+      <div className="border-t border-slate-800 bg-slate-950/95 px-3 py-2.5 font-mono">
+        <div className="flex items-center justify-between gap-2 text-[10px] text-slate-400 uppercase tracking-wider">
+          <span className="text-cyan-300 font-bold">AI MODULE PIPELINE</span>
+          <span>{modelName || "Waiting for frame analysis"}</span>
+        </div>
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 mt-2">
+          {modules.length === 0 && (
+            <div className="sm:col-span-3 border border-dashed border-slate-800 rounded-sm px-2 py-2 text-[10px] text-slate-500">
+              Enable the local camera to start person tracking, face detection, and Indian ANPR.
+            </div>
+          )}
+          {modules.map((module) => (
+            <div key={module.id} className="border border-slate-800 rounded-sm bg-slate-900/70 px-2 py-1.5 min-w-0">
+              <div className="flex items-center justify-between gap-2">
+                <span className="text-[10px] text-slate-200 truncate">{module.label}</span>
+                <span className={`text-[9px] font-bold uppercase ${
+                  module.status === "active" ? "text-emerald-400" : module.status === "unavailable" ? "text-rose-400" : "text-slate-500"
+                }`}>{module.status}</span>
+              </div>
+              <div className="flex items-center justify-between gap-2 mt-1 text-[9px] text-slate-500">
+                <span className="truncate">{module.model}</span>
+                <span>{module.detectionCount} found</span>
+              </div>
+              {module.message && <p className="mt-1 text-[9px] text-rose-300 truncate" title={module.message}>{module.message}</p>}
+            </div>
+          ))}
+        </div>
       </div>
 
       <div className="border-t border-slate-800 bg-slate-950/95 px-3 py-2 flex flex-wrap items-center justify-between gap-2 text-[10px] text-slate-400">

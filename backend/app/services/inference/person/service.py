@@ -34,7 +34,7 @@ class PersonTrackingService:
         """Return confirmed person tracks for the next frame of one camera."""
 
         self._ensure_loaded()
-        result = self._model(frame, conf=self.confidence)[0]
+        result = self._model(frame, conf=self.confidence, verbose=False)[0]
         tracker_input = []
         for x1, y1, x2, y2, score, class_id in result.boxes.data.tolist():
             if int(class_id) != self.PERSON_CLASS_ID:

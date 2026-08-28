@@ -45,7 +45,7 @@ class AnprService:
         detections: List[InferenceDetection] = []
 
         plate_result = self._plate_model(
-            frame, conf=self.plate_confidence, imgsz=self.image_size
+            frame, conf=self.plate_confidence, imgsz=self.image_size, verbose=False
         )[0]
         for x1, y1, x2, y2, confidence, _class_id in plate_result.boxes.data.tolist():
             plate_box = BoundingBox(int(x1), int(y1), int(x2), int(y2))
@@ -84,7 +84,7 @@ class AnprService:
 
     def _vehicle_boxes(self, frame: Any) -> Iterable[BoundingBox]:
         result = self._vehicle_model(
-            frame, conf=self.vehicle_confidence, imgsz=self.image_size
+            frame, conf=self.vehicle_confidence, imgsz=self.image_size, verbose=False
         )[0]
         for x1, y1, x2, y2, _confidence, class_id in result.boxes.data.tolist():
             if int(class_id) in self.VEHICLE_CLASS_IDS:

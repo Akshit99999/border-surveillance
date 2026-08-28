@@ -36,7 +36,13 @@ Create one service instance per camera worker. A tracker keeps state across sequ
 
 ## Local browser inference endpoint
 
-For local debugging, Django exposes `POST /api/inference/frame`. It accepts one JPEG frame, lazily loads `PERSON_MODEL_PATH` (or `backend/.localdata/models/yolov8n.pt` by default), runs YOLO detection, and returns normalized bounding boxes, labels, confidence scores, model name, device, and inference time. The endpoint does not create alerts or persist frames; the alert pipeline should consume only detections that pass its camera-zone, confidence, and persistence rules.
+For local debugging, Django exposes `POST /api/inference/frame`. It accepts one JPEG frame and runs the enabled modules together:
+
+- person detection plus DeepSORT tracking using `PERSON_MODEL_PATH`;
+- face location detection using `FACE_MODEL_PATH` (identity matching is not enabled);
+- Indian ANPR using `ANPR_VEHICLE_MODEL_PATH`, `ANPR_PLATE_MODEL_PATH`, and EasyOCR, retaining only validated Indian plate formats.
+
+The response includes normalized boxes, confidence scores, track IDs, recognized plate attributes, per-module status, model names, device, and inference time. The endpoint does not create alerts or persist frames; the alert pipeline should consume only detections that pass its camera-zone, confidence, and persistence rules.
 
 ## Privacy and retention
 
