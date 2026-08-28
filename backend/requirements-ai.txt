@@ -7,3 +7,5 @@ opencv-python-headless>=4.8,<5.0
 numpy>=1.24,<2.0
 torch>=2.2
 torchvision>=0.17
+# deep-sort-realtime currently imports pkg_resources, removed by Setuptools 81+.
+setuptools>=77,<81
