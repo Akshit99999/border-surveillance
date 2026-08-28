@@ -17,7 +17,7 @@ import {
   Search,
 } from "lucide-react";
 import { useIBVAPStore } from "@/lib/store/useIBVAPStore";
-import { Camera, TriggerAction } from "@/lib/mock/types";
+import { Camera, TriggerAction } from "@/lib/types";
 import { StatusPill } from "@/components/shared/StatusPill";
 import { TacticalButton } from "@/components/shared/TacticalButton";
 import { TacticalCard } from "@/components/shared/TacticalCard";
@@ -34,6 +34,18 @@ export default function CameraManagementPage() {
   const [activeTab, setActiveTab] = useState<"detection_studio" | "registry">("detection_studio");
 
   const selectedCamera = cameras.find((c) => c.id === selectedCameraId) || cameras[0];
+
+  if (!selectedCamera) {
+    return (
+      <div className="min-h-[360px] flex items-center justify-center bg-slate-900/70 border border-slate-800 rounded-sm p-8 text-center font-mono">
+        <div>
+          <CameraIcon className="w-10 h-10 mx-auto mb-3 text-cyan-400 opacity-70" />
+          <h1 className="text-sm font-bold text-slate-200 uppercase tracking-widest">No cameras configured</h1>
+          <p className="text-xs text-slate-400 mt-2 max-w-md">Register a real CCTV source through Django before editing detection zones or camera settings.</p>
+        </div>
+      </div>
+    );
+  }
 
   const filteredCameras = cameras.filter((c) => {
     const matchSector = sectorFilter === "ALL" || c.sector.includes(sectorFilter);

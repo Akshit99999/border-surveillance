@@ -13,19 +13,15 @@ export interface Guard {
   badgeId: string;
   photoUrl: string;
   phone: string;
-  emergencyContact: {
-    name: string;
-    phone: string;
-    relation: string;
-  };
+  emergencyContact: { name: string; phone: string; relation: string };
   callSign: string;
   certifications: string[];
   bloodGroup: string;
   status: GuardStatus;
   currentPostId: string | null;
   currentSector: string | null;
-  shiftStart: string; // ISO
-  shiftEnd: string;   // ISO
+  shiftStart: string;
+  shiftEnd: string;
   assignedWeapon?: string;
   radioFrequency?: string;
   attendanceHistory: AttendanceRecord[];
@@ -37,8 +33,8 @@ export interface Shift {
   guardName: string;
   sector: string;
   postId: string;
-  start: string; // ISO
-  end: string;   // ISO
+  start: string;
+  end: string;
   day: "Mon" | "Tue" | "Wed" | "Thu" | "Fri" | "Sat" | "Sun";
   shiftName: "Morning (06:00–14:00)" | "Evening (14:00–22:00)" | "Night (22:00–06:00)";
 }
@@ -57,7 +53,7 @@ export type ActionType =
 
 export interface ActivityLogEntry {
   id: string;
-  timestamp: string; // ISO
+  timestamp: string;
   actorId: string | "SYSTEM";
   actorName: string;
   actionType: ActionType;
@@ -69,27 +65,23 @@ export interface ActivityLogEntry {
 
 export type AlertLevel = "critical" | "high" | "medium";
 export type AlertStatus = "open" | "acknowledged" | "escalated";
-export type ObjectClass = "Person" | "Vehicle" | "Weapon" | "Drone" | "Animal / False Alarm";
+export type ObjectClass = "Person" | "Vehicle" | "Weapon" | "Drone" | "Animal / False Alarm" | "Unknown";
 
 export interface Alert {
   id: string;
   level: AlertLevel;
-  timestamp: string; // ISO
+  timestamp: string;
   sourceCameraId: string;
   sourceCameraName: string;
   eventType: string;
   confidence: number;
-  coordinates: {
-    lat: number;
-    lng: number;
-  };
+  coordinates: { lat: number; lng: number };
   objectClass: ObjectClass;
   evidenceUrl: string;
   status: AlertStatus;
   acknowledgedBy: string | null;
   sector: string;
   notes?: string;
-  isSimulatedPending?: boolean;
   blockchainStatus?: "anchored" | "queued" | "not_anchored" | string;
   blockchainTxId?: string | null;
   blockchainBlockNumber?: number | null;
@@ -103,10 +95,7 @@ export type CameraType = "ptz" | "fixed" | "thermal";
 export type CameraStatus = "online" | "offline" | "signal_lost";
 export type TriggerAction = "Siren Alarm" | "QRF Dispatch" | "Guard Ping" | "Floodlight Trigger";
 
-export interface Point2D {
-  x: number;
-  y: number;
-}
+export interface Point2D { x: number; y: number }
 
 export interface Camera {
   id: string;
@@ -118,7 +107,7 @@ export interface Camera {
   personDetection: boolean;
   vehicleDetection: boolean;
   weaponDetection?: boolean;
-  confidenceThreshold: number; // 0 to 100
+  confidenceThreshold: number;
   minObjectSizePx: number;
   zonePolygon: Point2D[];
   triggerAction: TriggerAction;
@@ -127,10 +116,7 @@ export interface Camera {
   fps: number;
   resolution: string;
   fovAngle: number;
-  coordinates: {
-    lat: number;
-    lng: number;
-  };
+  coordinates: { lat: number; lng: number };
   pan?: number;
   tilt?: number;
   zoom?: number;

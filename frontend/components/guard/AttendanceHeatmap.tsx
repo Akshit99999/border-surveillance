@@ -1,5 +1,5 @@
 import React from "react";
-import { AttendanceRecord } from "@/lib/mock/types";
+import { AttendanceRecord } from "@/lib/types";
 import { cn } from "@/lib/utils";
 
 interface AttendanceHeatmapProps {

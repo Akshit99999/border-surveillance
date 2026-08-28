@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { Link2, RefreshCw, ShieldCheck, UploadCloud } from "lucide-react";
-import { Alert } from "@/lib/mock/types";
+import { Alert } from "@/lib/types";
 import { backendApi, VerificationResult } from "@/lib/api/client";
 import { useIBVAPStore } from "@/lib/store/useIBVAPStore";
 

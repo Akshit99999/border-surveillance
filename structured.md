@@ -82,6 +82,12 @@ Video ingestion -> AI/CV inference -> Event bus -> Django rule engine
 
 ## 3. Django backend implementation
 
+### Data-state rule and local camera path
+
+The repository contains no seeded operational records. Django starts with empty alerts, cameras, guards, sectors, and activity collections, and the Next.js client renders an explicit empty state until real records are registered or produced by the inference pipeline. The old ignored runtime state is rejected when it does not match the current state schema, preventing stale seed data from reappearing.
+
+The Live Cameras page also provides a browser-local camera preview. `frontend/components/video/LocalCameraFeed.tsx` requests `getUserMedia` only after the operator clicks **Enable Local Camera**, attaches the stream to a native video element, and stops it when the page closes. This is a local testing path; it does not upload video to Django. Production CCTV/RTSP sources still enter through the approved local ingestion service and a WebRTC/HLS relay.
+
 ### Project configuration
 
 - `manage.py`: Django command entry point.

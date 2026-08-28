@@ -16,7 +16,7 @@ import {
   Filter,
 } from "lucide-react";
 import { useIBVAPStore } from "@/lib/store/useIBVAPStore";
-import { Guard, ActivityLogEntry } from "@/lib/mock/types";
+import { Guard, ActivityLogEntry } from "@/lib/types";
 import { StatusPill } from "@/components/shared/StatusPill";
 import { TacticalButton } from "@/components/shared/TacticalButton";
 import { Modal } from "@/components/shared/Modal";

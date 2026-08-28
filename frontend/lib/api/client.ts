@@ -5,7 +5,7 @@ import {
   Guard,
   Sector,
   Shift,
-} from "@/lib/mock/types";
+} from "@/lib/types";
 
 export interface BlockchainStatus {
   configured: boolean;

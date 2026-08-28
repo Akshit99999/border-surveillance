@@ -15,6 +15,7 @@ import {
 } from "lucide-react";
 import { useIBVAPStore } from "@/lib/store/useIBVAPStore";
 import { CameraVideoFeed } from "@/components/video/CameraVideoFeed";
+import { LocalCameraFeed } from "@/components/video/LocalCameraFeed";
 import { TacticalCard } from "@/components/shared/TacticalCard";
 import { StatusPill } from "@/components/shared/StatusPill";
 import { tacticalSound } from "@/lib/sound";
@@ -46,9 +47,13 @@ export default function LiveFeedPage() {
       : filteredCameras;
 
   const focusCamera = cameras.find((c) => c.id === focusCameraId) || cameras[0];
+  const onlineCameraCount = cameras.filter((camera) => camera.status === "online").length;
+  const signalLostCameraCount = cameras.filter((camera) => camera.status === "signal_lost").length;
 
   return (
     <div className="space-y-4 font-mono">
+      <LocalCameraFeed className="w-full" />
+
       {/* Top Controls Toolbar */}
       <div className="bg-slate-900/90 border border-slate-800 rounded p-3 flex flex-wrap items-center justify-between gap-3 text-xs shadow-xl">
         {/* Left: Sector & Type Filter */}
@@ -63,7 +68,7 @@ export default function LiveFeedPage() {
               }}
               className="bg-slate-950 border border-slate-700 rounded px-2 py-1 text-xs text-cyan-300 focus:outline-none focus:border-cyan-500 font-mono"
             >
-              <option value="ALL">ALL SECTORS (15 FEEDS)</option>
+              <option value="ALL">ALL SECTORS ({cameras.length} CONFIGURED)</option>
               {sectors.map((s) => (
                 <option key={s.id} value={s.code}>
                   {s.code}: {s.name}
@@ -134,8 +139,14 @@ export default function LiveFeedPage() {
         </div>
       </div>
 
+      {cameras.length === 0 && (
+        <div className="p-6 bg-slate-900/70 border border-slate-800 rounded text-center text-xs text-slate-400">
+          No backend CCTV cameras are configured. The local device camera above is available for browser-side testing.
+        </div>
+      )}
+
       {/* Main Video Feeds Layout */}
-      {layout === "focus" ? (
+      {cameras.length > 0 && (layout === "focus" ? (
         /* Focus Mode: 1 Large Feed + Sidebar Thumbnails */
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-4">
           {/* Main Focus Viewport */}
@@ -156,7 +167,7 @@ export default function LiveFeedPage() {
               SELECT ACTIVE STREAM ({filteredCameras.length})
             </span>
             {filteredCameras.map((cam) => {
-              const isSelected = cam.id === focusCamera.id;
+              const isSelected = cam.id === focusCamera?.id;
               return (
                 <div
                   key={cam.id}
@@ -200,17 +211,17 @@ export default function LiveFeedPage() {
             />
           ))}
         </div>
-      )}
+      ))}
 
       {/* Footer Telemetry Banner */}
       <div className="p-3 bg-slate-900/60 border border-slate-800 rounded flex flex-wrap items-center justify-between text-[11px] text-slate-400">
         <div className="flex items-center gap-3">
-          <span className="text-emerald-400 font-bold">14/15 SENSORS OPERATIONAL</span>
-          <span>•</span>
-          <span className="text-rose-400 font-semibold">1 RECONNECTING: CAM-A04-NORTH</span>
+          <span className="text-emerald-400 font-bold">{onlineCameraCount}/{cameras.length} CONFIGURED CAMERAS ONLINE</span>
+          {signalLostCameraCount > 0 && <><span>•</span><span className="text-rose-400 font-semibold">{signalLostCameraCount} SIGNAL LOST</span></>}
+          {cameras.length === 0 && <span className="text-amber-300">No backend CCTV cameras configured.</span>}
         </div>
         <div className="flex items-center gap-2">
-          <span>AI INFERENCE ENGINE: YOLOv8-X + THERMAL DETECTOR</span>
+          <span>AI OVERLAYS REQUIRE A CONNECTED VIDEO SOURCE</span>
         </div>
       </div>
     </div>

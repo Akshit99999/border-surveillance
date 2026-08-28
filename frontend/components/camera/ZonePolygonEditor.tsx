@@ -1,5 +1,5 @@
 import React, { useState, useRef } from "react";
-import { Point2D } from "@/lib/mock/types";
+import { Point2D } from "@/lib/types";
 import { TacticalButton } from "../shared/TacticalButton";
 import { Save, RotateCcw, Plus, Trash2, CheckCircle2 } from "lucide-react";
 import { tacticalSound } from "@/lib/sound";

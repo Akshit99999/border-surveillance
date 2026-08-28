@@ -8,12 +8,7 @@ import {
   Sector,
   GuardStatus,
   Point2D,
-} from "../mock/types";
-import { MOCK_GUARDS, MOCK_SHIFTS } from "../mock/guards";
-import { MOCK_CAMERAS } from "../mock/cameras";
-import { MOCK_ALERTS } from "../mock/alerts";
-import { MOCK_ACTIVITY_LOG } from "../mock/activityLog";
-import { MOCK_SECTORS } from "../mock/sectors";
+} from "../types";
 import { tacticalSound } from "../sound";
 import { generateId } from "../utils";
 import { backendApi, BlockchainStatus, BootstrapData } from "../api/client";
@@ -25,7 +20,7 @@ interface UserProfile {
   role: string;
 }
 
-type BackendStatus = "loading" | "online" | "offline" | "mock";
+type BackendStatus = "loading" | "online" | "offline";
 
 const DEFAULT_BLOCKCHAIN_STATUS: BlockchainStatus = {
   configured: false,
@@ -46,7 +41,6 @@ interface IBVAPState {
   cameras: Camera[];
   sectors: Sector[];
 
-  offlineSimulated: boolean;
   offlineQueue: Alert[];
   offlineLogQueue: ActivityLogEntry[];
   lockdownActive: boolean;
@@ -64,7 +58,6 @@ interface IBVAPState {
   setDefconLevel: (level: 1 | 2 | 3 | 4 | 5) => void;
   triggerLockdown: () => void;
   abortLockdown: () => void;
-  toggleOfflineSimulation: () => void;
   flushOfflineQueue: () => void;
 
   acknowledgeAlert: (alertId: string, actorName?: string) => void;
@@ -88,10 +81,8 @@ interface IBVAPState {
   commitZoneMap: (cameraId: string, polygon: Point2D[], actorName?: string) => void;
 
   addActivityLog: (entry: Omit<ActivityLogEntry, "id" | "timestamp">) => void;
-  resetMockData: () => void;
+  resetData: () => void;
 }
-
-const useMockData = process.env.NEXT_PUBLIC_USE_MOCK_DATA === "true";
 
 const makeActivity = (
   entry: Omit<ActivityLogEntry, "id" | "timestamp">
@@ -125,7 +116,7 @@ export const useIBVAPStore = create<IBVAPState>((set, get) => {
 
   const addLocalActivity = (entry: Omit<ActivityLogEntry, "id" | "timestamp">) => {
     const activity = makeActivity(entry);
-    if (get().offlineSimulated) {
+    if (get().backendStatus === "offline") {
       set((state) => ({ offlineLogQueue: [activity, ...state.offlineLogQueue] }));
     } else {
       set((state) => ({ activityLog: [activity, ...state.activityLog] }));
@@ -134,33 +125,32 @@ export const useIBVAPStore = create<IBVAPState>((set, get) => {
   };
 
   return {
-    guards: MOCK_GUARDS,
-    shifts: MOCK_SHIFTS,
-    activityLog: MOCK_ACTIVITY_LOG,
-    alerts: MOCK_ALERTS,
-    cameras: MOCK_CAMERAS,
-    sectors: MOCK_SECTORS,
+    guards: [],
+    shifts: [],
+    activityLog: [],
+    alerts: [],
+    cameras: [],
+    sectors: [],
 
-    offlineSimulated: false,
     offlineQueue: [],
     offlineLogQueue: [],
     lockdownActive: false,
     defconLevel: 2,
     soundMuted: false,
     currentUser: {
-      name: "Sub-Inspector Rajesh Sharma",
-      rank: "Sub-Inspector",
-      badgeId: "SSB-SI-4921",
-      role: "Sector Command Officer",
+      name: "Local operator",
+      rank: "Operator",
+      badgeId: "LOCAL-OPERATOR",
+      role: "Local command console",
     },
-    backendStatus: useMockData ? "mock" : "loading",
-    isHydrated: useMockData,
+    backendStatus: "loading",
+    isHydrated: false,
     isHydrating: false,
     lastSyncAt: null,
     blockchainStatus: DEFAULT_BLOCKCHAIN_STATUS,
 
     hydrateFromBackend: async () => {
-      if (useMockData || get().isHydrating) return;
+      if (get().isHydrating) return;
       set({ isHydrating: true });
       try {
         const response = await backendApi.getBootstrap();
@@ -171,7 +161,16 @@ export const useIBVAPStore = create<IBVAPState>((set, get) => {
           lastSyncAt: response.meta.generatedAt,
         });
       } catch {
-        set({ backendStatus: "offline", isHydrated: true });
+        set({
+          backendStatus: "offline",
+          isHydrated: true,
+          guards: [],
+          shifts: [],
+          activityLog: [],
+          alerts: [],
+          cameras: [],
+          sectors: [],
+        });
       } finally {
         set({ isHydrating: false });
       }
@@ -195,7 +194,7 @@ export const useIBVAPStore = create<IBVAPState>((set, get) => {
         sector: "All Sectors",
         details: `Alert state changed to DEFCON ${level}. Automated perimeter protocols activated.`,
       });
-      if (!get().offlineSimulated && !useMockData) {
+      if (get().backendStatus !== "offline") {
         refreshAfter(backendApi.systemAction("defcon", level, get().currentUser.name));
       }
     },
@@ -212,7 +211,7 @@ export const useIBVAPStore = create<IBVAPState>((set, get) => {
         sector: "All Sectors",
         details: "Global perimeter lockdown initiated. QRF units mobilized.",
       });
-      if (!get().offlineSimulated && !useMockData) {
+      if (get().backendStatus !== "offline") {
         refreshAfter(backendApi.systemAction("lockdown", undefined, get().currentUser.name));
       }
     },
@@ -229,17 +228,8 @@ export const useIBVAPStore = create<IBVAPState>((set, get) => {
         sector: "All Sectors",
         details: "Perimeter lockdown stand-down confirmed. Standard protocols restored.",
       });
-      if (!get().offlineSimulated && !useMockData) {
+      if (get().backendStatus !== "offline") {
         refreshAfter(backendApi.systemAction("abort_lockdown", undefined, get().currentUser.name));
-      }
-    },
-
-    toggleOfflineSimulation: () => {
-      const next = !get().offlineSimulated;
-      tacticalSound.playClick();
-      set({ offlineSimulated: next });
-      if (!next && (get().offlineQueue.length > 0 || get().offlineLogQueue.length > 0)) {
-        get().flushOfflineQueue();
       }
     },
 
@@ -249,15 +239,6 @@ export const useIBVAPStore = create<IBVAPState>((set, get) => {
       const count = alerts.length + activityLog.length;
       if (count === 0) return;
       tacticalSound.playAlert();
-      if (useMockData) {
-        set((state) => ({
-          alerts: [...alerts, ...state.alerts],
-          activityLog: [...activityLog, ...state.activityLog],
-          offlineQueue: [],
-          offlineLogQueue: [],
-        }));
-        return;
-      }
       void backendApi
         .sync(alerts, activityLog)
         .then((response) => {
@@ -293,7 +274,7 @@ export const useIBVAPStore = create<IBVAPState>((set, get) => {
         sector: target.sector,
         details: `Acknowledged alert ${alertId}: ${target.eventType}.`,
       });
-      if (!get().offlineSimulated && !useMockData) {
+      if (get().backendStatus !== "offline") {
         refreshAfter(backendApi.actionAlert(alertId, "acknowledge", actor));
       }
     },
@@ -319,7 +300,7 @@ export const useIBVAPStore = create<IBVAPState>((set, get) => {
         sector: target.sector,
         details: `Escalated alert ${alertId} (${target.eventType}) to QRF.`,
       });
-      if (!get().offlineSimulated && !useMockData) {
+      if (get().backendStatus !== "offline") {
         refreshAfter(backendApi.actionAlert(alertId, "escalate", actor));
       }
     },
@@ -333,7 +314,7 @@ export const useIBVAPStore = create<IBVAPState>((set, get) => {
         acknowledgedBy: null,
       };
       tacticalSound.playAlert();
-      if (get().offlineSimulated) {
+      if (get().backendStatus === "offline") {
         set((state) => ({ offlineQueue: [newAlert, ...state.offlineQueue] }));
         return;
       }
@@ -347,7 +328,7 @@ export const useIBVAPStore = create<IBVAPState>((set, get) => {
         sector: newAlert.sector,
         details: `Detected ${newAlert.level.toUpperCase()}: ${newAlert.eventType}. Confidence: ${newAlert.confidence}%.`,
       });
-      if (!useMockData) refreshAfter(backendApi.createAlert(newAlert));
+      refreshAfter(backendApi.createAlert(newAlert));
     },
 
     updateGuardStatus: (guardId, status) => {
@@ -366,7 +347,7 @@ export const useIBVAPStore = create<IBVAPState>((set, get) => {
         sector: guard.currentSector || "Base",
         details: `Guard ${guard.name} status changed to ${status.toUpperCase().replace("_", " ")}.`,
       });
-      if (!get().offlineSimulated && !useMockData) {
+      if (get().backendStatus !== "offline") {
         refreshAfter(backendApi.updateGuard(guardId, { status }));
       }
     },
@@ -395,7 +376,7 @@ export const useIBVAPStore = create<IBVAPState>((set, get) => {
         sector,
         details: `Shift turnover at ${postId}: ${outgoing.name} handed over to ${incoming.name}. ${notes || "Turnover complete."}`,
       });
-      if (!get().offlineSimulated && !useMockData) {
+      if (get().backendStatus !== "offline") {
         refreshAfter(backendApi.handover({ outgoingGuardId, incomingGuardId, notes }));
       }
     },
@@ -423,7 +404,7 @@ export const useIBVAPStore = create<IBVAPState>((set, get) => {
         sector: shift.sector,
         details: `Roster updated: shift ${shiftId} assigned to ${newGuardName}.`,
       });
-      if (!get().offlineSimulated && !useMockData) {
+      if (get().backendStatus !== "offline") {
         refreshAfter(backendApi.updateShift(shiftId, { guardId: newGuardId, guardName: newGuardName }));
       }
     },
@@ -444,7 +425,7 @@ export const useIBVAPStore = create<IBVAPState>((set, get) => {
         sector: camera.sector,
         details: `Camera ${camera.name} toggled ${status.toUpperCase()}.`,
       });
-      if (!get().offlineSimulated && !useMockData) refreshAfter(backendApi.updateCamera(cameraId, changes));
+      if (get().backendStatus !== "offline") refreshAfter(backendApi.updateCamera(cameraId, changes));
     },
 
     setCameraSensitivity: (cameraId, threshold) => {
@@ -461,13 +442,13 @@ export const useIBVAPStore = create<IBVAPState>((set, get) => {
         sector: camera.sector,
         details: `Camera ${camera.name} sensitivity adjusted to ${threshold}%.`,
       });
-      if (!get().offlineSimulated && !useMockData) refreshAfter(backendApi.updateCamera(cameraId, changes));
+      if (get().backendStatus !== "offline") refreshAfter(backendApi.updateCamera(cameraId, changes));
     },
 
     updateCameraDetection: (cameraId, updates) => {
       tacticalSound.playClick();
       set((state) => ({ cameras: state.cameras.map((camera) => camera.id === cameraId ? { ...camera, ...updates } : camera) }));
-      if (!get().offlineSimulated && !useMockData) refreshAfter(backendApi.updateCamera(cameraId, updates));
+      if (get().backendStatus !== "offline") refreshAfter(backendApi.updateCamera(cameraId, updates));
     },
 
     commitZoneMap: (cameraId, polygon, actorName) => {
@@ -486,30 +467,29 @@ export const useIBVAPStore = create<IBVAPState>((set, get) => {
         sector: camera.sector,
         details: `Committed new detection zone polygon (${polygon.length} coordinates) for ${camera.name}.`,
       });
-      if (!get().offlineSimulated && !useMockData) refreshAfter(backendApi.updateCamera(cameraId, changes));
+      if (get().backendStatus !== "offline") refreshAfter(backendApi.updateCamera(cameraId, changes));
     },
 
     addActivityLog: (entry) => {
       const activity = addLocalActivity(entry);
-      if (!get().offlineSimulated && !useMockData) refreshAfter(backendApi.addActivity(activity));
+      if (get().backendStatus !== "offline") refreshAfter(backendApi.addActivity(activity));
     },
 
-    resetMockData: () => {
+    resetData: () => {
       tacticalSound.playClick();
       set({
-        guards: MOCK_GUARDS,
-        shifts: MOCK_SHIFTS,
-        activityLog: MOCK_ACTIVITY_LOG,
-        alerts: MOCK_ALERTS,
-        cameras: MOCK_CAMERAS,
-        sectors: MOCK_SECTORS,
+        guards: [],
+        shifts: [],
+        activityLog: [],
+        alerts: [],
+        cameras: [],
+        sectors: [],
         offlineQueue: [],
         offlineLogQueue: [],
-        offlineSimulated: false,
         lockdownActive: false,
         defconLevel: 2,
       });
-      if (!useMockData) refreshAfter(backendApi.reset());
+      refreshAfter(backendApi.reset());
     },
   };
 });

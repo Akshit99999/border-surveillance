@@ -16,7 +16,7 @@ from .repository import repository
 
 @require_http_methods(["GET"])
 def health(request: HttpRequest) -> JsonResponse:
-    return JsonResponse({"status": "ok", "service": "border-surveillance-django", "storage": "local-demo-state"})
+    return JsonResponse({"status": "ok", "service": "border-surveillance-django", "storage": "local-state"})
 
 
 @require_http_methods(["GET"])

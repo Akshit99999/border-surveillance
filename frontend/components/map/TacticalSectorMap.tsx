@@ -5,7 +5,7 @@ import {
   Guard,
   Sector,
   Tripwire,
-} from "@/lib/mock/types";
+} from "@/lib/types";
 import {
   Video,
   ShieldAlert,

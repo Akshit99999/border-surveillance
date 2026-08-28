@@ -17,14 +17,6 @@ import {
   ChevronRight,
   UserCheck,
 } from "lucide-react";
-import {
-  AreaChart,
-  Area,
-  XAxis,
-  YAxis,
-  Tooltip,
-  ResponsiveContainer,
-} from "recharts";
 import { useIBVAPStore } from "@/lib/store/useIBVAPStore";
 import { TacticalCard } from "@/components/shared/TacticalCard";
 import { TacticalButton } from "@/components/shared/TacticalButton";
@@ -50,16 +42,8 @@ export default function DashboardPage() {
     (g) => g.status === "on_post" || g.status === "patrolling" || g.status === "unreachable"
   );
 
-  const trendData = [
-    { time: "00:00", alerts: 3 },
-    { time: "04:00", alerts: 4 },
-    { time: "08:00", alerts: 6 },
-    { time: "12:00", alerts: 8 },
-    { time: "16:00", alerts: 4 },
-    { time: "20:00", alerts: 5 },
-  ];
-
   const previewCameras = cameras.slice(0, 4);
+  const unstaffedGuardCount = Math.max(guards.length - onDutyGuards.length, 0);
 
   return (
     <div className="space-y-5 font-mono">
@@ -71,7 +55,7 @@ export default function DashboardPage() {
           </div>
           <div>
             <h1 className="text-sm font-black text-slate-100 uppercase tracking-widest">
-              BORDER COMMAND DASHBOARD // ALPHA SECTOR
+              BORDER COMMAND DASHBOARD // CONFIGURED AREA
             </h1>
             <p className="text-xs text-slate-400 mt-0.5 font-sans">
               Live automated surveillance overview & on-duty guard post readiness.
@@ -82,8 +66,8 @@ export default function DashboardPage() {
         {/* Quick Link to Guard Duty */}
         <Link href="/guard-duty">
           <div className="flex items-center gap-2 px-4 py-2 bg-amber-950 hover:bg-amber-900 border border-amber-500 rounded text-xs font-black text-amber-200 transition-colors min-h-[40px]">
-            <AlertTriangle className="w-4 h-4 text-amber-400 animate-pulse" />
-            <span>5 OF 6 POSTS STAFFED (1 GAP)</span>
+            <AlertTriangle className="w-4 h-4 text-amber-400" />
+            <span>{guards.length > 0 ? `${onDutyGuards.length}/${guards.length} POSTS ON DUTY` : "NO ROSTER DATA"}</span>
             <ChevronRight className="w-3.5 h-3.5" />
           </div>
         </Link>
@@ -118,8 +102,8 @@ export default function DashboardPage() {
               <Users className="w-5 h-5 text-amber-400" />
             </div>
             <div className="mt-2 flex items-baseline justify-between">
-              <span className="text-3xl font-black text-amber-300">5 / 6</span>
-              <span className="text-xs text-amber-300 font-bold">1 Unstaffed</span>
+              <span className="text-3xl font-black text-amber-300">{onDutyGuards.length} / {guards.length}</span>
+              <span className="text-xs text-amber-300 font-bold">{guards.length > 0 ? `${unstaffedGuardCount} Unstaffed` : "No roster"}</span>
             </div>
             <span className="text-[11px] text-cyan-400 mt-2 block group-hover:underline">
               Manage Roster →
@@ -138,7 +122,7 @@ export default function DashboardPage() {
               <span className="text-3xl font-black text-cyan-300">
                 {onlineCameras.length}/{cameras.length}
               </span>
-              <span className="text-xs text-emerald-400 font-bold">14 Live Feeds</span>
+              <span className="text-xs text-emerald-400 font-bold">{cameras.length} Configured</span>
             </div>
             <span className="text-[11px] text-cyan-400 mt-2 block group-hover:underline">
               Open Camera Matrix →
@@ -154,10 +138,10 @@ export default function DashboardPage() {
           </div>
           <div className="mt-2 flex items-baseline justify-between">
             <span className="text-3xl font-black text-slate-100">DEFCON {defconLevel}</span>
-            <span className="text-xs text-emerald-400 font-bold">Tripwires Armed</span>
+            <span className="text-xs text-emerald-400 font-bold">API reported</span>
           </div>
           <span className="text-[11px] text-slate-400 mt-2 block">
-            Mesh Status: Optimal
+            System state from Django
           </span>
         </div>
       </div>
@@ -170,14 +154,14 @@ export default function DashboardPage() {
             <div className="flex items-center gap-2">
               <span className="w-2 h-2 rounded-full bg-cyan-400 animate-pulse" />
               <h2 className="text-xs font-black uppercase tracking-wider text-slate-200">
-                LIVE CAMERA STREAMS (SECTORS ALPHA 1–4)
+                LIVE CAMERA STREAMS
               </h2>
             </div>
             <Link
               href="/live-feed"
               className="text-xs text-cyan-400 hover:text-cyan-300 font-bold"
             >
-              All 15 Feeds →
+              {cameras.length > 0 ? `View ${cameras.length} Cameras →` : "Open Live Camera →"}
             </Link>
           </div>
 
@@ -190,6 +174,11 @@ export default function DashboardPage() {
                 className="aspect-video"
               />
             ))}
+            {previewCameras.length === 0 && (
+              <div className="sm:col-span-2 p-8 bg-slate-900 border border-slate-800 rounded text-center text-xs text-slate-400">
+                No backend CCTV cameras are configured. Use Live Cameras to preview the local browser camera.
+              </div>
+            )}
           </div>
         </div>
 
@@ -252,6 +241,9 @@ export default function DashboardPage() {
                 )}
               </div>
             ))}
+            {alerts.length === 0 && (
+              <div className="p-8 text-center text-xs text-slate-500">No alerts received from Django.</div>
+            )}
           </div>
         </div>
       </div>
@@ -303,6 +295,11 @@ export default function DashboardPage() {
               </div>
             );
           })}
+          {onDutyGuards.length === 0 && (
+            <div className="sm:col-span-2 lg:col-span-4 p-8 bg-slate-900 border border-slate-800 rounded text-center text-xs text-slate-500">
+              No guard roster records received from Django.
+            </div>
+          )}
         </div>
       </div>
     </div>

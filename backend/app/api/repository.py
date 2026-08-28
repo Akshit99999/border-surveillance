@@ -10,7 +10,31 @@ from pathlib import Path
 from threading import RLock
 from typing import Any, Iterable, Optional
 
-from .demo_data import initial_state
+
+
+STATE_SCHEMA_VERSION = 2
+
+
+def empty_state() -> dict[str, Any]:
+    """Return a clean outpost state with no fabricated operational records."""
+    return {
+        "schemaVersion": STATE_SCHEMA_VERSION,
+        "currentUser": {
+            "name": "Local operator",
+            "rank": "Operator",
+            "badgeId": "LOCAL-OPERATOR",
+            "role": "Local command console",
+        },
+        "guards": [],
+        "shifts": [],
+        "activityLog": [],
+        "alerts": [],
+        "cameras": [],
+        "sectors": [],
+        "pois": [],
+        "anprRecords": [],
+        "system": {"lockdownActive": False, "defconLevel": 2},
+    }
 
 
 class ApiRepository:
@@ -26,7 +50,7 @@ class ApiRepository:
 
     def reset(self) -> dict[str, Any]:
         with self._lock:
-            self._state = initial_state()
+            self._state = empty_state()
             self._persist()
             return deepcopy(self._state)
 
@@ -99,11 +123,11 @@ class ApiRepository:
     def _load(self) -> dict[str, Any]:
         try:
             payload = json.loads(self.path.read_text(encoding="utf-8"))
-            if isinstance(payload, dict) and "alerts" in payload and "cameras" in payload:
+            if isinstance(payload, dict) and payload.get("schemaVersion") == STATE_SCHEMA_VERSION:
                 return payload
         except (OSError, ValueError, TypeError):
             pass
-        return initial_state()
+        return empty_state()
 
     def _persist(self) -> None:
         try:
@@ -112,8 +136,8 @@ class ApiRepository:
             temporary.write_text(json.dumps(self._state, indent=2), encoding="utf-8")
             temporary.replace(self.path)
         except OSError:
-            # The in-memory state still serves the demo if the deployment has
-            # read-only or ephemeral storage.
+            # The in-memory state still serves the request if storage is
+            # read-only or ephemeral.
             return
 
 

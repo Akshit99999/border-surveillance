@@ -17,10 +17,12 @@ import { useIBVAPStore } from "@/lib/store/useIBVAPStore";
 
 export const ConsoleSidebar: React.FC = () => {
   const pathname = usePathname();
-  const { alerts, guards } = useIBVAPStore();
+  const { alerts, guards, cameras } = useIBVAPStore();
 
   const openAlertsCount = alerts.filter((a) => a.status === "open").length;
   const criticalCount = alerts.filter((a) => a.status === "open" && a.level === "critical").length;
+  const onlineCameraCount = cameras.filter((camera) => camera.status === "online").length;
+  const onDutyGuardCount = guards.filter((guard) => ["on_post", "patrolling", "unreachable"].includes(guard.status)).length;
 
   // Simplified 6 primary navigation items - high contrast, large touch targets
   const navItems = [
@@ -34,8 +36,8 @@ export const ConsoleSidebar: React.FC = () => {
       name: "Live Cameras",
       href: "/live-feed",
       icon: Video,
-      desc: "15 Video Feeds",
-      badge: "15 LIVE",
+      desc: `${cameras.length} configured cameras`,
+      badge: cameras.length > 0 ? `${onlineCameraCount} ONLINE` : "NO CAMERAS",
       badgeColor: "bg-emerald-950 text-emerald-300 border-emerald-600",
     },
     {
@@ -60,7 +62,7 @@ export const ConsoleSidebar: React.FC = () => {
       href: "/guard-duty",
       icon: Users,
       desc: "Sentries, Handover & Audit",
-      badge: "5/6 POSTS",
+      badge: guards.length > 0 ? `${onDutyGuardCount}/${guards.length} ON DUTY` : "NO ROSTER",
       badgeColor: "bg-amber-950 text-amber-300 border-amber-600",
     },
     {

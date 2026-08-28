@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { Modal } from "../shared/Modal";
 import { TacticalButton } from "../shared/TacticalButton";
-import { Guard } from "@/lib/mock/types";
+import { Guard } from "@/lib/types";
 import { ArrowRight, CheckSquare, Square, ShieldCheck, UserCheck } from "lucide-react";
 import { tacticalSound } from "@/lib/sound";
 

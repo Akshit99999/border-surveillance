@@ -1,4 +1,4 @@
-"""Small Django configuration for the API and local outpost demo."""
+"""Small Django configuration for the API and local outpost service."""
 
 from pathlib import Path
 import os
@@ -6,7 +6,7 @@ import os
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-SECRET_KEY = os.getenv("DJANGO_SECRET_KEY", "border-surveillance-demo-only")
+SECRET_KEY = os.getenv("DJANGO_SECRET_KEY", "local-development-only")
 DEBUG = os.getenv("DJANGO_DEBUG", "false").lower() in {"1", "true", "yes"}
 ALLOWED_HOSTS = [
     host.strip()
@@ -40,7 +40,7 @@ USE_TZ = True
 STATIC_URL = "static/"
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
-# The API is intentionally open for the hackathon demo. Put the deployed
+# The API is intentionally open for local development. Put the deployed
 # Vercel origin here and add authentication before production use.
 CSRF_TRUSTED_ORIGINS = [
     origin.strip()

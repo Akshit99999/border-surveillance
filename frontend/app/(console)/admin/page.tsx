@@ -13,7 +13,7 @@ export default function CameraSettingsAdminPage() {
     setCameraSensitivity,
     soundMuted,
     toggleSound,
-    resetMockData,
+    resetData,
   } = useIBVAPStore();
 
   return (
@@ -54,12 +54,12 @@ export default function CameraSettingsAdminPage() {
           </button>
 
           <button
-            onClick={resetMockData}
+            onClick={resetData}
             className="px-3 py-2 bg-slate-950 hover:bg-slate-800 text-slate-300 border border-slate-700 rounded text-xs font-bold flex items-center gap-1.5 min-h-[40px]"
-            title="Reset to default settings"
+            title="Clear server-managed records"
           >
             <RotateCcw className="w-3.5 h-3.5 text-amber-400" />
-            <span>RESET SETTINGS</span>
+            <span>CLEAR SERVER DATA</span>
           </button>
         </div>
       </div>

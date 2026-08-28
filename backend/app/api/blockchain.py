@@ -56,7 +56,12 @@ def get_status() -> dict[str, Any]:
 
 
 def evidence_digest(alert: dict[str, Any]) -> str:
-    """Return the demo digest until a real captured evidence file is available."""
+    """Return a supplied evidence hash or a deterministic metadata digest.
+
+    Production capture workers should populate ``evidenceSha256`` after hashing
+    the actual snapshot or clip. The metadata digest keeps manual operator
+    flags verifiable without pretending that they contain a media file.
+    """
 
     existing = str(alert.get("evidenceSha256") or "").strip()
     if existing:
@@ -81,7 +86,7 @@ def anchor(alert: dict[str, Any]) -> dict[str, Any]:
     evidence_hash = evidence_digest(alert)
     captured_at = _parse_timestamp(str(alert.get("timestamp")))
     if str(alert.get("level")) == "critical":
-        model_version = str(alert.get("modelVersion") or "ibvap-yolov8-demo-v1")
+        model_version = str(alert.get("modelVersion") or "unspecified-model")
         model_artifact = str(alert.get("modelArtifactHash") or sha256_text(model_version))
         transaction_hash = client.register_high_severity_incident(
             incident_hash,

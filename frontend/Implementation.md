@@ -1,12 +1,12 @@
 # IBVAP — Full Web Platform Implementation Plan
 ### Intelligent Border Video Analytics Platform (Command Center + Guard Duty System)
-**Status:** Integrated UI → Backend-connected | **Data mode:** Django API with mock fallback | **Owner:** Aki (Lead) + 5-person team
+**Status:** Integrated UI → Backend-connected | **Data mode:** Django API with explicit empty states | **Owner:** Aki (Lead) + 5-person team
 
 ---
 
 ## 0. Why this doc exists
 
-This is the single source of truth for building IBVAP as a **portfolio/demo-grade product**, not a prototype. Every screen, every empty state, every hover — built like it's shipping to a real command center, even though the data behind it is mocked. Treat mock data as a *contract*: it should be shaped exactly like real sensor/event data would be, so swapping in a live feed later is a config change, not a rewrite.
+This is the single source of truth for building IBVAP as a **portfolio/demo-grade product**, not a prototype. Every screen, every empty state, every hover — built like it's shipping to a real command center. The frontend reads Django-owned records and never fabricates operational alerts, cameras, guards, identities, or evidence when the API has no data.
 
 Your 4 reference screens (Alerts, Live Feed / Tactical Matrix, Map, Camera Management) are the visual bar. Nothing we ship should look worse than those.
 
@@ -41,7 +41,7 @@ This is the centerpiece you asked for. Two linked halves: **Live Roster** (who's
 A real-time-feeling board, not a spreadsheet.
 
 **Layout:** Card grid (like the camera cards in Camera Management), one card per active guard:
-- Photo/avatar (mock headshots)
+- Photo/avatar (provided only when a real roster record includes one)
 - Name, rank/designation (e.g., "Head Constable", "Sub-Inspector")
 - Assigned Post / Sector (links to Camera Management sectors — e.g. "Sector Alpha-7, Gate 2")
 - Shift window (e.g. 06:00–14:00 IST) + live countdown "Shift ends in 2h 14m"
@@ -50,7 +50,7 @@ A real-time-feeling board, not a spreadsheet.
 - Quick actions: **Call**, **Message**, **Flag Incident** (pre-fills an Alert tied to that guard)
 
 **Top bar of this page:**
-- "X of Y posts staffed" counter (e.g. "5 of 6 posts staffed") — deliberately show 1 gap, it's realistic and gives you a demo talking point ("here's how the system flags understaffing")
+- "X of Y posts staffed" counter, calculated from roster records returned by Django; show an explicit empty state when no roster is configured
 - Sector filter, status filter, search by name/callsign
 - "Shift Handover" button → opens a modal showing outgoing vs incoming guard for a post, with a handover note field
 
@@ -58,7 +58,7 @@ A real-time-feeling board, not a spreadsheet.
 - Weekly calendar/timeline view (rows = guards, columns = time blocks or days)
 - Color-coded by sector
 - Toggle between "This Week" / "Next Week"
-- Editable in mock mode (drag to reassign — purely local state, no backend write needed for demo)
+- Editable through Django-backed actions; if the API is unavailable, disable persistence actions and show the disconnected state
 
 ### 2.3 Guard Profile page
 Click any guard → detail page:
@@ -72,7 +72,7 @@ This is the audit trail — separate from the guard roster but linked to it.
 
 **Table columns:** Timestamp | Actor (guard name or "SYSTEM") | Action Type | Target (Camera/Alert/Post ID) | Details | Sector
 
-**Action types to mock:**
+**Action types supported by the API:**
 - `Shift Started` / `Shift Ended`
 - `Alert Acknowledged` / `Alert Escalated`
 - `Patrol Check-in` (guard pings a post as "checked", tied to a camera zone)
@@ -118,9 +118,10 @@ Border/CCTV AI demos are common; a **human-accountability layer** (who was on po
 - **UI primitives:** shadcn/ui (matches your dark, precise, tactical aesthetic well)
 - **Charts/heatmaps:** Recharts (attendance heatmap, alert-volume trend)
 - **Maps:** Mapbox GL or Leaflet (dark tactical style tiles) for `/map`
-- **State:** Zustand or React Context — this is a demo, don't over-engineer with Redux
+- **State:** Zustand or React Context — keep the client state focused on current API data and local offline queues
 - **Backend/data layer:** Firebase (Firestore + Auth + Storage + Cloud Functions) — already decided
-- **Data mode:** `lib/mock/` remains a typed fallback fixture set. The default `NEXT_PUBLIC_USE_MOCK_DATA=false` path hydrates the Zustand store from Django's `/api/bootstrap` endpoint; setting it to `true` is useful for a disconnected UI-only demo.
+- **Data mode:** Django's `/api/bootstrap` endpoint is the only operational data source. A disconnected browser shows empty state and local-camera controls; it does not fall back to fixtures.
+- **Local camera:** `components/video/LocalCameraFeed.tsx` requests the operator's browser camera only after an explicit click. The stream remains in that browser and is not sent to Django; RTSP/NVR sources still require a WebRTC/HLS relay.
 - **Backend API:** `frontend/lib/api/client.ts` centralizes requests for alerts, guards, cameras, shifts, system actions, offline sync, and blockchain verification.
 - **Blockchain UI:** incident dossiers call the Django verification endpoint and can request backend-side anchoring. No RPC URL, contract address, or private key is exposed to the browser.
 - **Icons:** lucide-react (already used in your screenshots' style)
@@ -196,14 +197,7 @@ Design these as if they were real Firestore collections. This makes the "no comp
 }
 ```
 
-### Seed volume (make it feel alive, not empty)
-- 6 sectors, 12–15 cameras total
-- 8–10 guards, realistic staggered shifts (not everyone starting at the same hour)
-- 25–30 historical alerts spread over the last 7 days (mix of critical/high/medium, a few resolved)
-- 60–80 activity log entries over the last 7 days
-- 3–4 POI/watchlist entries for Intelligence page
-
-**Realism details that separate "no compromise" from "fine":** shift times overlap slightly (handover windows), one guard shown as "Unreachable" right now, one camera shown "SIGNAL LOST – RECONNECTING…" exactly like your Live Feed screenshot, one post understaffed. Judges/reviewers notice when a demo is *too* clean.
+Operational records are created by the camera/inference pipeline or authenticated operators. Do not seed names, watchlist subjects, camera URLs, coordinates, alerts, or media URLs in the repository. The dashboard renders counts and empty states from the records currently returned by Django.
 
 ---
 
@@ -224,9 +218,9 @@ Assumes the AI/ML side is either already done or running in parallel per your ea
 
 ### Phase 0 — Foundation (Day 1, whole team)
 - Repo setup, Next.js + Tailwind + shadcn scaffold, design tokens (colors/type from section 6)
-- Firestore schema stubbed per section 5, mock data loader (`USE_MOCK_DATA` flag)
+- Firestore schema stubbed per section 5
 - Shared components: `StatusPill`, `DataTable`, `Sidebar`, `TopNav`, `Card`, `Modal`
-- Auth wrapper (mock login is fine — one hardcoded demo user)
+- Auth wrapper should use the configured identity provider; local development may use the neutral local operator profile
 
 ### Phase 1 — Parallel build (Days 2–4)
 | Person | Owns |
@@ -257,7 +251,7 @@ Daily 15-min sync to catch component drift (someone building a second `StatusPil
 
 ## 8. Stretch / Differentiator (from your earlier notes)
 
-**Offline resilience simulation:** on the Live Feed or Alerts page, add a demo toggle "Simulate Connectivity Loss" — when triggered, show alerts queuing locally (a small "3 alerts pending sync" badge) and auto-flush when toggled back online. This directly demos the offline-first design goal you already decided on, and it's a strong live-demo moment for judges since it's interactive, not just a static screen.
+**Offline resilience:** the console may pause synchronization and queue real operator-created events locally, but it must not manufacture a fixed number of pending alerts. The queue count must always be derived from actual queued records.
 
 ---
 
@@ -265,8 +259,8 @@ Daily 15-min sync to catch component drift (someone building a second `StatusPil
 
 A page is NOT done until:
 - [ ] Matches the visual bar in section 6 (density, palette, typography, status pills)
-- [ ] Has a populated, realistic mock-data state AND a deliberate empty/edge state
-- [ ] Every clickable element does something (no dead buttons — even if it's just a toast/modal in mock mode)
+- [ ] Has a deliberate empty/edge state and renders real API records when available
+- [ ] Every clickable element does something (or is disabled with a clear reason when the API/source is unavailable)
 - [ ] Cross-links to at least one other module where it makes sense (guard ↔ alert ↔ camera ↔ sector)
 - [ ] Reviewed by the design-consistency owner before merge
 
@@ -277,4 +271,4 @@ A page is NOT done until:
 1. Configure the Django API URL in `frontend/.env.local` or the Vercel project settings.
 2. Run the Django API and verify `GET /api/health` and `GET /api/bootstrap`.
 3. Configure the blockchain placeholders in the backend secret manager and deploy the `EvidenceRegistry` contract.
-4. Replace the demo repository with Firebase-backed persistence when the authenticated production data layer is ready.
+4. Replace the local JSON repository with Firebase-backed persistence when the authenticated production data layer is ready.

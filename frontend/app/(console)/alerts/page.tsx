@@ -19,7 +19,7 @@ import {
   ChevronUp,
 } from "lucide-react";
 import { useIBVAPStore } from "@/lib/store/useIBVAPStore";
-import { Alert } from "@/lib/mock/types";
+import { Alert } from "@/lib/types";
 import { StatusPill } from "@/components/shared/StatusPill";
 import { TacticalButton } from "@/components/shared/TacticalButton";
 import { Modal } from "@/components/shared/Modal";

@@ -18,7 +18,9 @@ The source technology stack is documented in `IBVAP_Tech_Stack.docx`. That docum
 
 See [hardware-and-deployment.md](hardware-and-deployment.md) for the local, cloud, and hybrid deployment recommendation, hardware profiles, offline behavior, and data placement plan.
 
-The downloaded Next.js command center is now integrated under `frontend/`. It hydrates from the Django API by default and falls back to the typed mock fixtures only when the API is unavailable or `NEXT_PUBLIC_USE_MOCK_DATA=true`.
+The Live Cameras page includes an explicit **Enable Local Camera** control for testing a webcam in the browser. The preview is local to that browser session; real CCTV/RTSP sources still require a configured WebRTC/HLS relay and a Django camera record.
+
+The Next.js command center is integrated under `frontend/`. It hydrates from Django only. When the API is unavailable, the UI shows an explicit disconnected/empty state rather than inventing alerts, cameras, guards, or evidence.
 
 ## Technology stack
 

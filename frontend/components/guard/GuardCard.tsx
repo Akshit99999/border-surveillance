@@ -1,7 +1,7 @@
 import React from "react";
 import Link from "next/link";
 import { Phone, Radio, AlertTriangle, Shield, Clock, MapPin, ChevronRight, MessageSquare } from "lucide-react";
-import { Guard } from "@/lib/mock/types";
+import { Guard } from "@/lib/types";
 import { StatusPill } from "../shared/StatusPill";
 import { calculateTimeRemaining } from "@/lib/utils";
 import { tacticalSound } from "@/lib/sound";

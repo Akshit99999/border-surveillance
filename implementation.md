@@ -6,6 +6,12 @@ This document tracks the practical implementation of the Border Surveillance pla
 
 The existing repository provides the Django backend and Next.js frontend structure. The external module bundle may contain frontend assets, AI models, and backend components. This integration will add only backend-relevant code and configuration that fits the project architecture, while keeping the existing documentation and scaffolding intact.
 
+## Runtime data and local camera behavior
+
+The application no longer ships with seeded alerts, guards, cameras, sectors, identities, or evidence images. Django starts with an empty state and the frontend displays only records returned by the API. The previous ignored API state file was removed so stale seeded records do not return after a restart.
+
+For local testing, the Live Cameras page includes `frontend/components/video/LocalCameraFeed.tsx`. After the operator clicks **Enable Local Camera**, the browser requests an available webcam through `getUserMedia` and renders it locally. The stream is not uploaded to Django. Real CCTV/NVR streams still require a registered camera record and a WebRTC/HLS relay because browsers cannot play RTSP directly.
+
 ## Target backend architecture
 
 ```text

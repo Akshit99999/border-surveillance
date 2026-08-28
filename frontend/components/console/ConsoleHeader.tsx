@@ -24,8 +24,6 @@ export const ConsoleHeader: React.FC = () => {
     setDefconLevel,
     soundMuted,
     toggleSound,
-    offlineSimulated,
-    toggleOfflineSimulation,
     offlineQueue,
     offlineLogQueue,
     alerts,
@@ -72,7 +70,7 @@ export const ConsoleHeader: React.FC = () => {
         </div>
       </div>
 
-      {/* Right: Offline Switch, Audio, Lockdown */}
+      {/* Right: Connection status, Audio, Lockdown */}
       <div className="flex items-center gap-2.5 font-mono">
         <div
           title={blockchainStatus.message}
@@ -87,28 +85,18 @@ export const ConsoleHeader: React.FC = () => {
           <span className="text-slate-500">/ API {backendStatus}</span>
         </div>
 
-        {/* Offline Mode Switch - High Visibility */}
-        <button
-          onClick={toggleOfflineSimulation}
-          className={`text-xs px-3 py-2 rounded border flex items-center gap-2 font-bold min-h-[40px] transition-all ${
-            offlineSimulated
-              ? "bg-rose-950 text-rose-200 border-rose-500 animate-pulse shadow-[0_0_15px_rgba(244,63,94,0.4)]"
-              : "bg-slate-900 hover:bg-slate-800 text-emerald-400 border-slate-700"
+        <div
+          title="Live Django API connection status"
+          className={`text-xs px-3 py-2 rounded border flex items-center gap-2 font-bold min-h-[40px] ${
+            backendStatus === "online"
+              ? "bg-slate-900 text-emerald-400 border-slate-700"
+              : "bg-rose-950 text-rose-200 border-rose-700"
           }`}
-          title="Toggle Offline Network Simulation"
         >
-          {offlineSimulated ? (
-            <>
-              <WifiOff className="w-4 h-4 text-rose-300" />
-              <span>OFFLINE ({totalQueued} WAITING)</span>
-            </>
-          ) : (
-            <>
-              <Wifi className="w-4 h-4 text-emerald-400" />
-              <span className="text-slate-200">ONLINE (SYNCED)</span>
-            </>
-          )}
-        </button>
+          {backendStatus === "online" ? <Wifi className="w-4 h-4" /> : <WifiOff className="w-4 h-4" />}
+          <span>{backendStatus === "online" ? "API ONLINE" : backendStatus === "offline" ? "API OFFLINE" : "CONNECTING"}</span>
+          {totalQueued > 0 && <span className="text-amber-300">{totalQueued} QUEUED</span>}
+        </div>
 
         {/* Audio Toggle */}
         <button
