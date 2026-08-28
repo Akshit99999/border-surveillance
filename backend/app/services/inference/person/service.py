@@ -62,11 +62,6 @@ class PersonTrackingService:
             )
         return detections
 
-    def warmup(self) -> None:
-        """Load the detector and tracker before the first live frame."""
-
-        self._ensure_loaded()
-
     def _ensure_loaded(self) -> None:
         if self._model is not None:
             return

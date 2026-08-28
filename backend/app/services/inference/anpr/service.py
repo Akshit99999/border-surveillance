@@ -71,11 +71,6 @@ class AnprService:
             )
         return detections
 
-    def warmup(self) -> None:
-        """Load the vehicle, plate, and OCR components before live scanning."""
-
-        self._ensure_loaded()
-
     def _ensure_loaded(self) -> None:
         if self._vehicle_model is not None:
             return

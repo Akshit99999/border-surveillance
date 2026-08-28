@@ -93,14 +93,6 @@ export interface FrameInferenceResponse {
   modules: FrameInferenceModule[];
 }
 
-export interface InferenceWarmupResponse {
-  status: string;
-  model: string;
-  device: string;
-  warmupMs: number;
-  modules: FrameInferenceModule[];
-}
-
 export class ApiError extends Error {
   status: number;
 
@@ -143,8 +135,6 @@ export const backendApi = {
       body: frame,
       headers: { "Content-Type": "image/jpeg" },
     }),
-  warmupInference: () =>
-    request<InferenceWarmupResponse>("/inference/warmup", { method: "POST" }),
   verifyAlert: (alertId: string) =>
     request<{ verification: VerificationResult }>(`/alerts/${encodeURIComponent(alertId)}/verification`),
   actionAlert: (alertId: string, action: "acknowledge" | "escalate", actorName: string) =>

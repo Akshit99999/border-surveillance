@@ -75,7 +75,6 @@ class LiveInferenceConfig:
     anpr_vehicle_confidence: float
     anpr_plate_confidence: float
     anpr_image_size: int
-    max_frame_dimension: int
 
     @classmethod
     def from_env(cls, environ: Mapping[str, str] | None = None) -> "LiveInferenceConfig":
@@ -95,7 +94,6 @@ class LiveInferenceConfig:
             anpr_vehicle_confidence=_env_float(values, "AI_ANPR_VEHICLE_CONFIDENCE", 0.70),
             anpr_plate_confidence=_env_float(values, "AI_ANPR_PLATE_CONFIDENCE", 0.25),
             anpr_image_size=_env_int(values, "AI_ANPR_IMAGE_SIZE", 640),
-            max_frame_dimension=_env_int(values, "AI_MAX_FRAME_DIMENSION", 640),
         )
 
 
@@ -143,64 +141,6 @@ class LiveInferencePipeline:
             "detections": detections,
             "modules": modules,
         }
-
-    def warmup(self) -> list[dict[str, Any]]:
-        """Load enabled modules without requiring or persisting a camera frame."""
-
-        return [
-            self._warmup_person(),
-            self._warmup_face(),
-            self._warmup_anpr(),
-        ]
-
-    def _warmup_person(self) -> dict[str, Any]:
-        if not self.config.person_enabled:
-            return _module_result("person_tracking", "Person tracking", self.config.person_model_path, "disabled")
-        try:
-            if self._person_service is None:
-                self._person_service = self._person_factory(
-                    str(self.config.person_model_path), confidence=self.config.person_confidence
-                )
-            self._person_service.warmup()
-            return _module_result("person_tracking", "Person tracking", self.config.person_model_path, "active")
-        except Exception as exc:
-            return _module_result(
-                "person_tracking", "Person tracking", self.config.person_model_path, "unavailable", message=_module_error(exc)
-            )
-
-    def _warmup_face(self) -> dict[str, Any]:
-        if not self.config.face_enabled:
-            return _module_result("face_detection", "Face detection", self.config.face_model_path, "disabled")
-        try:
-            if self._face_service is None:
-                self._face_service = self._face_factory(
-                    str(self.config.face_model_path), confidence=self.config.face_confidence
-                )
-            self._face_service.warmup()
-            return _module_result("face_detection", "Face detection", self.config.face_model_path, "active")
-        except Exception as exc:
-            return _module_result(
-                "face_detection", "Face detection", self.config.face_model_path, "unavailable", message=_module_error(exc)
-            )
-
-    def _warmup_anpr(self) -> dict[str, Any]:
-        if not self.config.anpr_enabled:
-            return _module_result("anpr", "Indian ANPR", self.config.anpr_plate_model_path, "disabled")
-        try:
-            if self._anpr_service is None:
-                self._anpr_service = self._anpr_factory(
-                    str(self.config.anpr_vehicle_model_path),
-                    str(self.config.anpr_plate_model_path),
-                    vehicle_confidence=self.config.anpr_vehicle_confidence,
-                    plate_confidence=self.config.anpr_plate_confidence,
-                    image_size=self.config.anpr_image_size,
-                )
-            self._anpr_service.warmup()
-            return _module_result("anpr", "Indian ANPR", self.config.anpr_plate_model_path, "active")
-        except Exception as exc:
-            return _module_result(
-                "anpr", "Indian ANPR", self.config.anpr_plate_model_path, "unavailable", message=_module_error(exc)
-            )
 
     def _run_person(
         self, frame: Any, width: int, height: int, output: list[dict[str, Any]]
@@ -346,26 +286,4 @@ def detect_frame(frame_bytes: bytes) -> dict[str, Any]:
     frame = cv2.imdecode(np.frombuffer(frame_bytes, dtype=np.uint8), cv2.IMREAD_COLOR)
     if frame is None:
         raise ValueError("The request body is not a readable JPEG frame.")
-    pipeline = _get_pipeline()
-    height, width = frame.shape[:2]
-    max_dimension = pipeline.config.max_frame_dimension
-    if max(width, height) > max_dimension:
-        scale = max_dimension / max(width, height)
-        frame = cv2.resize(frame, (max(1, round(width * scale)), max(1, round(height * scale))))
-    return pipeline.process_frame(frame)
-
-
-def warmup_inference() -> dict[str, Any]:
-    """Load enabled models and return safe module health details."""
-
-    pipeline = _get_pipeline()
-    started = time.perf_counter()
-    modules = pipeline.warmup()
-    unavailable = any(module["status"] == "unavailable" for module in modules)
-    return {
-        "status": "partial" if unavailable else "ready",
-        "model": "person-tracking + face-detection + indian-anpr",
-        "device": _device_name(),
-        "warmupMs": round((time.perf_counter() - started) * 1000, 1),
-        "modules": modules,
-    }
+    return _get_pipeline().process_frame(frame)

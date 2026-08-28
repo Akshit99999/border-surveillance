@@ -12,7 +12,7 @@ from django.views.decorators.http import require_http_methods
 
 from . import blockchain
 from .repository import repository
-from ..services.inference.live import InferenceConfigurationError, detect_frame, warmup_inference
+from ..services.inference.live import InferenceConfigurationError, detect_frame
 from ..services.evidence.firebase import get_status as firebase_status
 
 
@@ -57,17 +57,6 @@ def inference_frame(request: HttpRequest) -> JsonResponse:
         return _error(str(exc), 503)
     except Exception:
         return _error("AI inference failed for this frame", 503)
-
-
-@csrf_exempt
-@require_http_methods(["POST"])
-def inference_warmup(request: HttpRequest) -> JsonResponse:
-    """Load the configured AI modules before the operator starts the camera."""
-
-    try:
-        return JsonResponse(warmup_inference())
-    except Exception:
-        return _error("AI modules could not be warmed up", 503)
 
 
 @csrf_exempt

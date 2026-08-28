@@ -9,7 +9,6 @@ urlpatterns = [
     path("api/blockchain/status", views.blockchain_status),
     path("api/firebase/status", views.firebase_status_view),
     path("api/inference/frame", views.inference_frame),
-    path("api/inference/warmup", views.inference_warmup),
     path("api/alerts", views.alerts),
     path("api/alerts/<str:alert_id>/action", views.alert_action),
     path("api/alerts/<str:alert_id>/anchor", views.anchor_alert),
