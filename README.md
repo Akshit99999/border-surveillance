@@ -16,6 +16,8 @@ Video ingestion -> AI/CV inference -> Event and rule layer -> Firebase
 
 The source technology stack is documented in `IBVAP_Tech_Stack.docx`. That document is intentionally excluded from version control; the stack summary below captures the implementation decisions needed by the repository.
 
+See [hardware-and-deployment.md](hardware-and-deployment.md) for the local, cloud, and hybrid deployment recommendation, hardware profiles, offline behavior, and data placement plan.
+
 ## Technology stack
 
 | Layer | Technology | Purpose |
