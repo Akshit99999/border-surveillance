@@ -92,11 +92,17 @@ Do not store video, images, face embeddings, number plates, full user identities
 
 ## 4. Blockchain implementation
 
-Implement a small non-upgradeable `EvidenceRegistry` smart contract on an EVM-compatible network. It should be append-only: it can register an incident and append audit events, but it must not provide delete or edit functions.
+Implement the non-upgradeable `EvidenceRegistry` contract in `backend/blockchain/contracts/EvidenceRegistry.sol` on an approved EVM-compatible network. It is append-only: it can register an incident and append audit events, but it provides no delete or edit functions.
 
 The contract needs two main operations:
 
 ```text
+registerIncident(
+    incident_reference_hash,
+    evidence_hash,
+    captured_at
+)
+
 registerHighSeverityIncident(
     incident_reference_hash,
     evidence_hash,
@@ -108,6 +114,7 @@ registerHighSeverityIncident(
 )
 
 appendCustodyEvent(
+    custody_event_id,
     incident_reference_hash,
     evidence_hash,
     action,
@@ -115,6 +122,8 @@ appendCustodyEvent(
     occurred_at
 )
 ```
+
+Incident and custody references are deterministic. Repeating a call with the same reference is a safe no-op after a timeout, while a changed evidence hash for an existing incident is rejected.
 
 Only the authorized Django blockchain service account can submit transactions. Django authenticates the user with Firebase, checks the user’s role, and then signs the transaction on the server. The Vercel frontend never receives a blockchain private key.
 
