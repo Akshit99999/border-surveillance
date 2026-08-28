@@ -24,6 +24,8 @@ The Live Cameras page includes an explicit **Enable Local Camera** control for t
 
 The Next.js command center is integrated under `frontend/`. It hydrates from Django only. When the API is unavailable, the UI shows an explicit disconnected/empty state rather than inventing alerts, cameras, guards, or evidence.
 
+The frontend and backend use the environment contract in `backend/.env.example` and `frontend/.env.example`. Firebase Admin credentials and blockchain signer values stay on the Django server; only the public API base URL belongs in the frontend environment.
+
 ## Technology stack
 
 | Layer | Technology | Purpose |

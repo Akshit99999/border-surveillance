@@ -13,6 +13,7 @@ from django.views.decorators.http import require_http_methods
 from . import blockchain
 from .repository import repository
 from ..services.inference.live import InferenceConfigurationError, detect_frame
+from ..services.evidence.firebase import get_status as firebase_status
 
 
 @require_http_methods(["GET"])
@@ -26,12 +27,18 @@ def bootstrap(request: HttpRequest) -> JsonResponse:
         "data": repository.snapshot(),
         "meta": {"source": "django", "generatedAt": _now()},
         "blockchain": blockchain.get_status(),
+        "firebase": firebase_status(),
     })
 
 
 @require_http_methods(["GET"])
 def blockchain_status(request: HttpRequest) -> JsonResponse:
     return JsonResponse(blockchain.get_status())
+
+
+@require_http_methods(["GET"])
+def firebase_status_view(request: HttpRequest) -> JsonResponse:
+    return JsonResponse(firebase_status())
 
 
 @csrf_exempt
@@ -259,13 +266,22 @@ def system_action(request: HttpRequest) -> JsonResponse:
 def sync(request: HttpRequest) -> JsonResponse:
     payload = _body(request)
     result = repository.merge_sync(payload.get("alerts") or [], payload.get("activityLog") or [])
-    return JsonResponse({"accepted": result, "data": repository.snapshot(), "blockchain": blockchain.get_status()})
+    return JsonResponse({
+        "accepted": result,
+        "data": repository.snapshot(),
+        "blockchain": blockchain.get_status(),
+        "firebase": firebase_status(),
+    })
 
 
 @csrf_exempt
 @require_http_methods(["POST"])
 def reset(request: HttpRequest) -> JsonResponse:
-    return JsonResponse({"data": repository.reset(), "blockchain": blockchain.get_status()})
+    return JsonResponse({
+        "data": repository.reset(),
+        "blockchain": blockchain.get_status(),
+        "firebase": firebase_status(),
+    })
 
 
 def _body(request: HttpRequest) -> dict[str, Any]:

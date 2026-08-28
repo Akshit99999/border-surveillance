@@ -18,6 +18,13 @@ export interface BlockchainStatus {
   message: string;
 }
 
+export interface FirebaseStatus {
+  configured: boolean;
+  initialized: boolean;
+  projectId: string | null;
+  message: string;
+}
+
 export interface VerificationResult {
   status: "verified" | "mismatch" | "not_configured" | "unavailable" | "not_anchored" | string;
   verified: boolean;
@@ -53,6 +60,7 @@ export interface BootstrapResponse {
   data: BootstrapData;
   meta: { source: string; generatedAt: string };
   blockchain: BlockchainStatus;
+  firebase: FirebaseStatus;
 }
 
 export interface FrameDetection {
@@ -105,6 +113,7 @@ async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
 export const backendApi = {
   getBootstrap: () => request<BootstrapResponse>("/bootstrap"),
   getBlockchainStatus: () => request<BlockchainStatus>("/blockchain/status"),
+  getFirebaseStatus: () => request<FirebaseStatus>("/firebase/status"),
   analyzeFrame: (frame: Blob) =>
     request<FrameInferenceResponse>("/inference/frame", {
       method: "POST",
@@ -145,7 +154,7 @@ export const backendApi = {
       body: JSON.stringify({ action, level, actorName }),
     }),
   sync: (alerts: Alert[], activityLog: ActivityLogEntry[]) =>
-    request<{ data: BootstrapData; blockchain: BlockchainStatus }>("/sync", {
+    request<{ data: BootstrapData; blockchain: BlockchainStatus; firebase: FirebaseStatus }>("/sync", {
       method: "POST",
       body: JSON.stringify({ alerts, activityLog }),
     }),

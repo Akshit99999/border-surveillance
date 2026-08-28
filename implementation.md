@@ -132,6 +132,8 @@ The Pinata client uses the current private Files API upload operation and create
 
 The synchronization worker also includes a `FirestoreEventSink`; initialize it with the approved Firebase Admin Firestore client so the dashboard receives the latest operational state without exposing local evidence paths.
 
+The ZIP integration's Firebase environment keys are supported without copying its credential values. Use either `GOOGLE_APPLICATION_CREDENTIALS` or all of `FIREBASE_PROJECT_ID`, `FIREBASE_CLIENT_EMAIL`, `FIREBASE_PRIVATE_KEY_ID`, `FIREBASE_PRIVATE_KEY`, and `FIREBASE_CLIENT_ID`. Firebase initialization is lazy and optional for local development; the Django API exposes a safe `/api/firebase/status` health check.
+
 Incident references and custody-event references are deterministic. The contract treats repeated registration or custody submissions with the same reference as safe no-ops, allowing a worker to retry after a timeout without creating conflicting evidence records.
 
 The SQLite outbox repository now persists `evidence_sha256`, `pinata_cid`, `pinata_file_id`, `uploaded_at`, `blockchain_tx_id`, `anchored_at`, custody transaction IDs, model provenance, retry state, and a short worker lease. The worker sequence is:

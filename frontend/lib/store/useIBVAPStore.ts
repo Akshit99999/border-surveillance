@@ -11,7 +11,7 @@ import {
 } from "../types";
 import { tacticalSound } from "../sound";
 import { generateId } from "../utils";
-import { backendApi, BlockchainStatus, BootstrapData } from "../api/client";
+import { backendApi, BlockchainStatus, BootstrapData, FirebaseStatus } from "../api/client";
 
 interface UserProfile {
   name: string;
@@ -33,6 +33,13 @@ const DEFAULT_BLOCKCHAIN_STATUS: BlockchainStatus = {
   message: "Backend blockchain configuration is not present.",
 };
 
+const DEFAULT_FIREBASE_STATUS: FirebaseStatus = {
+  configured: false,
+  initialized: false,
+  projectId: null,
+  message: "Firebase Admin credentials are not configured.",
+};
+
 interface IBVAPState {
   guards: Guard[];
   shifts: Shift[];
@@ -52,6 +59,7 @@ interface IBVAPState {
   isHydrating: boolean;
   lastSyncAt: string | null;
   blockchainStatus: BlockchainStatus;
+  firebaseStatus: FirebaseStatus;
 
   hydrateFromBackend: () => Promise<void>;
   toggleSound: () => void;
@@ -92,7 +100,11 @@ const makeActivity = (
   timestamp: new Date().toISOString(),
 });
 
-const applyBackendData = (data: BootstrapData, blockchainStatus: BlockchainStatus) => ({
+const applyBackendData = (
+  data: BootstrapData,
+  blockchainStatus: BlockchainStatus,
+  firebaseStatus: FirebaseStatus
+) => ({
   guards: data.guards,
   shifts: data.shifts,
   activityLog: data.activityLog,
@@ -103,6 +115,7 @@ const applyBackendData = (data: BootstrapData, blockchainStatus: BlockchainStatu
   lockdownActive: data.system.lockdownActive,
   defconLevel: data.system.defconLevel,
   blockchainStatus,
+  firebaseStatus,
 });
 
 export const useIBVAPStore = create<IBVAPState>((set, get) => {
@@ -148,6 +161,7 @@ export const useIBVAPStore = create<IBVAPState>((set, get) => {
     isHydrating: false,
     lastSyncAt: null,
     blockchainStatus: DEFAULT_BLOCKCHAIN_STATUS,
+    firebaseStatus: DEFAULT_FIREBASE_STATUS,
 
     hydrateFromBackend: async () => {
       if (get().isHydrating) return;
@@ -155,7 +169,7 @@ export const useIBVAPStore = create<IBVAPState>((set, get) => {
       try {
         const response = await backendApi.getBootstrap();
         set({
-          ...applyBackendData(response.data, response.blockchain),
+          ...applyBackendData(response.data, response.blockchain, response.firebase),
           backendStatus: "online",
           isHydrated: true,
           lastSyncAt: response.meta.generatedAt,
@@ -243,7 +257,7 @@ export const useIBVAPStore = create<IBVAPState>((set, get) => {
         .sync(alerts, activityLog)
         .then((response) => {
           set({
-            ...applyBackendData(response.data, response.blockchain),
+            ...applyBackendData(response.data, response.blockchain, response.firebase),
             offlineQueue: [],
             offlineLogQueue: [],
             backendStatus: "online",

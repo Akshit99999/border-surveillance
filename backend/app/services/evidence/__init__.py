@@ -3,6 +3,7 @@
 from .hashing import sha256_bytes, sha256_file, sha256_text, verify_file_hash
 from .custody import CustodyEvent, CustodyRecorder
 from .firestore_sink import FirestoreEventSink
+from .firebase import FirebaseConfig, FirebaseConfigurationError, get_firestore_client
 from .pinata_client import (
     PinataClient,
     PinataConfig,
@@ -18,6 +19,9 @@ __all__ = [
     "PinataError",
     "PinataUpload",
     "FirestoreEventSink",
+    "FirebaseConfig",
+    "FirebaseConfigurationError",
+    "get_firestore_client",
     "CustodyEvent",
     "CustodyRecorder",
     "sha256_bytes",

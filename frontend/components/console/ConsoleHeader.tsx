@@ -30,6 +30,7 @@ export const ConsoleHeader: React.FC = () => {
     currentUser,
     backendStatus,
     blockchainStatus,
+    firebaseStatus,
   } = useIBVAPStore();
 
   const [currentTime, setCurrentTime] = useState<string>("");
@@ -83,6 +84,18 @@ export const ConsoleHeader: React.FC = () => {
           <ShieldCheck className="w-3.5 h-3.5" />
           <span>{blockchainStatus.connected ? "CHAIN LIVE" : "CHAIN STAGED"}</span>
           <span className="text-slate-500">/ API {backendStatus}</span>
+        </div>
+
+        <div
+          title={firebaseStatus.message}
+          className={`hidden 2xl:flex items-center gap-1.5 px-2.5 py-2 rounded border text-[10px] font-black uppercase ${
+            firebaseStatus.initialized
+              ? "bg-emerald-950 text-emerald-300 border-emerald-700"
+              : "bg-slate-900 text-amber-300 border-slate-700"
+          }`}
+        >
+          <span className="w-1.5 h-1.5 rounded-full bg-current" />
+          <span>{firebaseStatus.initialized ? "FIREBASE LIVE" : "FIREBASE STAGED"}</span>
         </div>
 
         <div
