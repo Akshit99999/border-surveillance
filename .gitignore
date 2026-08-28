@@ -10,6 +10,15 @@ docx-qa/
 # Local edge/development runtime data
 .localdata/
 
+# Local inference model weights and generated media
+*.pt
+*.onnx
+*.engine
+*.mp4
+*.avi
+*.mov
+*.gif
+
 # Python
 __pycache__/
 *.py[cod]
