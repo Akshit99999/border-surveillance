@@ -18,6 +18,8 @@ The source technology stack is documented in `IBVAP_Tech_Stack.docx`. That docum
 
 See [hardware-and-deployment.md](hardware-and-deployment.md) for the local, cloud, and hybrid deployment recommendation, hardware profiles, offline behavior, and data placement plan.
 
+See [blockchain-setup.md](blockchain-setup.md) for the step-by-step Anvil/Sepolia deployment, Django environment configuration, synthetic verification test, and production security checklist.
+
 The Live Cameras page includes an explicit **Enable Local Camera** control for testing a webcam in the browser. The video preview stays in the browser, while compressed sample frames are sent to Django's local AI endpoint and returned as detection metadata. Real CCTV/RTSP sources still require a configured WebRTC/HLS relay and a Django camera record.
 
 The Next.js command center is integrated under `frontend/`. It hydrates from Django only. When the API is unavailable, the UI shows an explicit disconnected/empty state rather than inventing alerts, cameras, guards, or evidence.
