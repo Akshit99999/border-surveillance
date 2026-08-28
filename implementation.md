@@ -157,10 +157,4 @@ Any failure keeps the event and local evidence for retry. Local evidence is dele
 
 ## Status
 
-### Local camera debug UI
-
-Implemented a Django local debug dashboard at `http://127.0.0.1:8000/`. It starts and stops the configured OpenCV camera, displays an MJPEG feed with inference overlays, and reports frame/read-error/FPS/detection state through JSON endpoints. The runner executes the person tracker, face detector, and optional Indian ANPR service in memory.
-
-This UI is intentionally isolated from the evidence pipeline. It does not write snapshots, upload to Pinata, write Firestore, append custody events, or submit blockchain transactions. Use `backend/requirements-web.txt` with `backend/requirements-ai.txt` to install the local runtime dependencies.
-
 Backend module integration and the local evidence/blockchain service implementation are complete. Pinata credentials, gateway details, blockchain RPC settings, contract address, and signer key are intentionally left as placeholders. The next steps are to supply approved values, deploy the append-only contract, initialize the Firestore sink with the project’s Firebase Admin client, and validate the full flow with synthetic evidence.
