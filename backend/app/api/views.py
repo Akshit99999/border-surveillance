@@ -12,6 +12,7 @@ from django.views.decorators.http import require_http_methods
 
 from . import blockchain
 from .repository import repository
+from ..services.inference.live import InferenceConfigurationError, detect_frame
 
 
 @require_http_methods(["GET"])
@@ -31,6 +32,24 @@ def bootstrap(request: HttpRequest) -> JsonResponse:
 @require_http_methods(["GET"])
 def blockchain_status(request: HttpRequest) -> JsonResponse:
     return JsonResponse(blockchain.get_status())
+
+
+@csrf_exempt
+@require_http_methods(["POST"])
+def inference_frame(request: HttpRequest) -> JsonResponse:
+    """Run the configured local AI model on one browser-captured JPEG frame."""
+    if not request.body:
+        return _error("frame body is empty")
+    if len(request.body) > 4 * 1024 * 1024:
+        return _error("frame is larger than the 4 MB inference limit", 413)
+    try:
+        return JsonResponse(detect_frame(request.body))
+    except ValueError as exc:
+        return _error(str(exc))
+    except InferenceConfigurationError as exc:
+        return _error(str(exc), 503)
+    except Exception:
+        return _error("AI inference failed for this frame", 503)
 
 
 @csrf_exempt

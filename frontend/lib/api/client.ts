@@ -55,6 +55,23 @@ export interface BootstrapResponse {
   blockchain: BlockchainStatus;
 }
 
+export interface FrameDetection {
+  label: string;
+  confidence: number;
+  box: { x: number; y: number; width: number; height: number };
+}
+
+export interface FrameInferenceResponse {
+  status: string;
+  model: string;
+  device: string;
+  confidenceThreshold: number;
+  inferenceMs: number;
+  frameWidth: number;
+  frameHeight: number;
+  detections: FrameDetection[];
+}
+
 export class ApiError extends Error {
   status: number;
 
@@ -88,6 +105,12 @@ async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
 export const backendApi = {
   getBootstrap: () => request<BootstrapResponse>("/bootstrap"),
   getBlockchainStatus: () => request<BlockchainStatus>("/blockchain/status"),
+  analyzeFrame: (frame: Blob) =>
+    request<FrameInferenceResponse>("/inference/frame", {
+      method: "POST",
+      body: frame,
+      headers: { "Content-Type": "image/jpeg" },
+    }),
   verifyAlert: (alertId: string) =>
     request<{ verification: VerificationResult }>(`/alerts/${encodeURIComponent(alertId)}/verification`),
   actionAlert: (alertId: string, action: "acknowledge" | "escalate", actorName: string) =>

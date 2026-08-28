@@ -18,7 +18,7 @@ The source technology stack is documented in `IBVAP_Tech_Stack.docx`. That docum
 
 See [hardware-and-deployment.md](hardware-and-deployment.md) for the local, cloud, and hybrid deployment recommendation, hardware profiles, offline behavior, and data placement plan.
 
-The Live Cameras page includes an explicit **Enable Local Camera** control for testing a webcam in the browser. The preview is local to that browser session; real CCTV/RTSP sources still require a configured WebRTC/HLS relay and a Django camera record.
+The Live Cameras page includes an explicit **Enable Local Camera** control for testing a webcam in the browser. The video preview stays in the browser, while compressed sample frames are sent to Django's local AI endpoint and returned as detection metadata. Real CCTV/RTSP sources still require a configured WebRTC/HLS relay and a Django camera record.
 
 The Next.js command center is integrated under `frontend/`. It hydrates from Django only. When the API is unavailable, the UI shows an explicit disconnected/empty state rather than inventing alerts, cameras, guards, or evidence.
 
@@ -231,3 +231,4 @@ The frontend reads `frontend/.env.example`. For blockchain verification and anch
 - `GET /api/alerts/{id}/verification` — compare the evidence digest with the contract.
 - `PATCH /api/cameras/{id}`, `PATCH /api/guards/{id}`, and `PATCH /api/shifts/{id}` — persist console configuration changes.
 - `POST /api/sync` — idempotently flush alerts and activity captured during an outage.
+- `POST /api/inference/frame` — run the configured local YOLO model on one JPEG frame and return detection boxes.

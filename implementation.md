@@ -10,7 +10,7 @@ The existing repository provides the Django backend and Next.js frontend structu
 
 The application no longer ships with seeded alerts, guards, cameras, sectors, identities, or evidence images. Django starts with an empty state and the frontend displays only records returned by the API. The previous ignored API state file was removed so stale seeded records do not return after a restart.
 
-For local testing, the Live Cameras page includes `frontend/components/video/LocalCameraFeed.tsx`. After the operator clicks **Enable Local Camera**, the browser requests an available webcam through `getUserMedia` and renders it locally. The stream is not uploaded to Django. Real CCTV/NVR streams still require a registered camera record and a WebRTC/HLS relay because browsers cannot play RTSP directly.
+For local testing, the Live Cameras page includes `frontend/components/video/LocalCameraFeed.tsx`. After the operator clicks **Enable Local Camera**, the browser requests an available webcam through `getUserMedia`, renders it locally, and sends compressed sample frames to Django's `/api/inference/frame` endpoint. Django runs the configured YOLO model and returns detection boxes, confidence, model name, and inference latency; the browser draws the returned boxes. Real CCTV/NVR streams still require a registered camera record and a WebRTC/HLS relay because browsers cannot play RTSP directly.
 
 ## Target backend architecture
 

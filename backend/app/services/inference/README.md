@@ -34,6 +34,10 @@ FACE_MODEL_PATH=
 
 Create one service instance per camera worker. A tracker keeps state across sequential frames, so it must not be shared by unrelated camera streams.
 
+## Local browser inference endpoint
+
+For local debugging, Django exposes `POST /api/inference/frame`. It accepts one JPEG frame, lazily loads `PERSON_MODEL_PATH` (or `backend/.localdata/models/yolov8n.pt` by default), runs YOLO detection, and returns normalized bounding boxes, labels, confidence scores, model name, device, and inference time. The endpoint does not create alerts or persist frames; the alert pipeline should consume only detections that pass its camera-zone, confidence, and persistence rules.
+
 ## Privacy and retention
 
 - Do not commit model weights, videos, result files, or known-face sample images.

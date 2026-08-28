@@ -4,20 +4,31 @@ import React, { useCallback, useEffect, useRef, useState } from "react";
 import { Camera, CameraOff, CheckCircle2, RefreshCw, ShieldAlert } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { TacticalButton } from "@/components/shared/TacticalButton";
+import { backendApi, FrameDetection } from "@/lib/api/client";
 
 interface LocalCameraFeedProps {
   className?: string;
 }
 
 type CameraState = "idle" | "starting" | "live" | "error";
+type InferenceState = "idle" | "analyzing" | "ready" | "error";
+
+const canvasToBlob = (canvas: HTMLCanvasElement) =>
+  new Promise<Blob | null>((resolve) => canvas.toBlob(resolve, "image/jpeg", 0.72));
 
 export const LocalCameraFeed: React.FC<LocalCameraFeedProps> = ({ className }) => {
   const videoRef = useRef<HTMLVideoElement>(null);
+  const canvasRef = useRef<HTMLCanvasElement>(null);
   const streamRef = useRef<MediaStream | null>(null);
   const [cameraState, setCameraState] = useState<CameraState>("idle");
   const [error, setError] = useState<string>("");
   const [devices, setDevices] = useState<MediaDeviceInfo[]>([]);
   const [selectedDeviceId, setSelectedDeviceId] = useState("");
+  const [detections, setDetections] = useState<FrameDetection[]>([]);
+  const [inferenceState, setInferenceState] = useState<InferenceState>("idle");
+  const [inferenceError, setInferenceError] = useState("");
+  const [modelName, setModelName] = useState("");
+  const [inferenceMs, setInferenceMs] = useState<number | null>(null);
 
   const stopStream = useCallback(() => {
     streamRef.current?.getTracks().forEach((track) => track.stop());
@@ -79,6 +90,63 @@ export const LocalCameraFeed: React.FC<LocalCameraFeedProps> = ({ className }) =
     if (videoRef.current && streamRef.current) videoRef.current.srcObject = streamRef.current;
   }, [cameraState]);
 
+  useEffect(() => {
+    if (cameraState !== "live") {
+      setDetections([]);
+      setInferenceState("idle");
+      return;
+    }
+
+    let cancelled = false;
+    let running = false;
+
+    const analyzeCurrentFrame = async () => {
+      const video = videoRef.current;
+      const canvas = canvasRef.current;
+      if (running || !video || !canvas || video.readyState < 2 || video.videoWidth === 0) return;
+
+      running = true;
+      setInferenceState("analyzing");
+      setInferenceError("");
+      canvas.width = video.videoWidth;
+      canvas.height = video.videoHeight;
+      const context = canvas.getContext("2d");
+      if (!context) {
+        running = false;
+        setInferenceState("error");
+        setInferenceError("The browser could not prepare a frame for AI analysis.");
+        return;
+      }
+
+      try {
+        context.drawImage(video, 0, 0, canvas.width, canvas.height);
+        const frame = await canvasToBlob(canvas);
+        if (!frame) throw new Error("Could not encode the camera frame.");
+        const result = await backendApi.analyzeFrame(frame);
+        if (!cancelled) {
+          setDetections(result.detections);
+          setModelName(result.model);
+          setInferenceMs(result.inferenceMs);
+          setInferenceState("ready");
+        }
+      } catch (analysisError) {
+        if (!cancelled) {
+          setInferenceState("error");
+          setInferenceError(analysisError instanceof Error ? analysisError.message : "The AI endpoint is unavailable.");
+        }
+      } finally {
+        running = false;
+      }
+    };
+
+    void analyzeCurrentFrame();
+    const interval = window.setInterval(() => void analyzeCurrentFrame(), 1600);
+    return () => {
+      cancelled = true;
+      window.clearInterval(interval);
+    };
+  }, [cameraState]);
+
   return (
     <section
       className={cn(
@@ -103,6 +171,30 @@ export const LocalCameraFeed: React.FC<LocalCameraFeedProps> = ({ className }) =
 
       <div className="relative aspect-video min-h-[220px] bg-black flex items-center justify-center overflow-hidden">
         <video ref={videoRef} autoPlay muted playsInline className={cn("w-full h-full object-cover", cameraState !== "live" && "hidden")} />
+        <canvas ref={canvasRef} className="hidden" />
+        {cameraState === "live" && (
+          <>
+            {detections.map((detection, index) => (
+              <div
+                key={`${detection.label}-${index}`}
+                className="absolute border-2 border-rose-400 shadow-[0_0_12px_rgba(251,113,133,0.75)] pointer-events-none"
+                style={{
+                  left: `${detection.box.x}%`,
+                  top: `${detection.box.y}%`,
+                  width: `${detection.box.width}%`,
+                  height: `${detection.box.height}%`,
+                }}
+              >
+                <span className="absolute -top-5 left-0 whitespace-nowrap bg-rose-500 text-white px-1.5 py-0.5 text-[10px] font-bold uppercase">
+                  {detection.label} {(detection.confidence * 100).toFixed(0)}%
+                </span>
+              </div>
+            ))}
+            <div className="absolute top-10 left-3 bg-slate-950/85 border border-cyan-500/60 rounded px-2 py-1 text-[10px] text-cyan-300 font-mono">
+              AI {inferenceState === "analyzing" ? "ANALYZING" : inferenceState === "error" ? "UNAVAILABLE" : "ACTIVE"} · {detections.length} OBJECT{detections.length === 1 ? "" : "S"}
+            </div>
+          </>
+        )}
         {cameraState !== "live" && (
           <div className="p-6 text-center max-w-md">
             {cameraState === "error" ? (
@@ -130,7 +222,11 @@ export const LocalCameraFeed: React.FC<LocalCameraFeedProps> = ({ className }) =
       <div className="border-t border-slate-800 bg-slate-950/95 px-3 py-2 flex flex-wrap items-center justify-between gap-2 text-[10px] text-slate-400">
         <span className="flex items-center gap-1.5">
           {cameraState === "live" ? <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" /> : <ShieldAlert className="w-3.5 h-3.5 text-amber-400" />}
-          {cameraState === "live" ? "VIDEO STAYS IN THIS BROWSER" : "PERMISSION REQUIRED FOR LOCAL PREVIEW"}
+          {cameraState !== "live"
+            ? "PERMISSION REQUIRED FOR LOCAL PREVIEW"
+            : inferenceState === "error"
+            ? inferenceError
+            : `AI ${inferenceState === "analyzing" ? "ANALYZING" : "ACTIVE"}${modelName ? ` · ${modelName}` : ""}${inferenceMs !== null ? ` · ${inferenceMs}ms` : ""}`}
         </span>
         {devices.length > 1 && (
           <select
