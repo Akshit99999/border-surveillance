@@ -1,0 +1,2 @@
+# Local Django server for the camera/inference debugging UI.
+Django>=5.1,<6.0

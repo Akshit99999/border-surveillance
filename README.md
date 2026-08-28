@@ -191,6 +191,19 @@ Media files, personally identifiable data, and full user identities remain off-c
 - CI/CD: use GitHub Actions for checks, builds, and Vercel deployment integration.
 - Monitoring: use Prometheus and Grafana for camera/node health.
 
+## Local AI debug UI
+
+The repository includes a Django-powered local dashboard for testing the existing camera and AI modules before the production API and logging pipeline are enabled. It shows the live OpenCV feed with person/DeepSORT, face, and optional Indian ANPR overlays, plus frame rate and detection counters.
+
+Run it from the repository root after placing the ignored model weights in `backend/.localdata/models/`:
+
+```powershell
+.\.venv\Scripts\python.exe -m pip install -r backend\requirements-ai.txt -r backend\requirements-web.txt
+.\.venv\Scripts\python.exe backend\manage.py runserver 127.0.0.1:8000 --noreload
+```
+
+Open [http://127.0.0.1:8000/](http://127.0.0.1:8000/) and press **Start camera**. This debug mode keeps frames in memory only: evidence persistence, audit logging, Firestore, Pinata, and blockchain transactions are disabled.
+
 ## Recommended build order
 
 1. Video ingestion and single-camera human/vehicle detection.

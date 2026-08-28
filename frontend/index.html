@@ -1,0 +1,92 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Border Surveillance · Local AI Debugger</title>
+    <link rel="stylesheet" href="/debug-ui.css" />
+  </head>
+  <body>
+    <div class="shell">
+      <header class="topbar">
+        <div class="brand-lockup">
+          <div class="brand-mark">BS</div>
+          <div>
+            <p class="eyebrow">INDIAN BORDER SURVEILLANCE</p>
+            <h1>Local AI debugger</h1>
+          </div>
+        </div>
+        <div class="mode-pill"><span class="pulse-dot"></span> Logging disabled</div>
+      </header>
+
+      <main class="workspace">
+        <section class="panel video-panel">
+          <div class="panel-heading">
+            <div>
+              <p class="eyebrow">LIVE CAMERA</p>
+              <h2>Detection view</h2>
+            </div>
+            <span id="camera-state" class="state-badge idle">Idle</span>
+          </div>
+
+          <div class="video-frame">
+            <div id="video-placeholder" class="video-placeholder">
+              <div class="camera-glyph">◎</div>
+              <strong>Camera feed is stopped</strong>
+              <span>Choose a camera index and press Start camera.</span>
+            </div>
+            <img id="video-feed" alt="Live camera feed with AI detections" hidden />
+            <div class="video-overlay"><span id="feed-caption">NO SIGNAL</span></div>
+          </div>
+
+          <div class="controls">
+            <label class="field">
+              <span>Camera index</span>
+              <input id="camera-index" type="number" min="0" max="9" value="0" />
+            </label>
+            <label class="switch-field">
+              <input id="enable-anpr" type="checkbox" checked />
+              <span class="switch"></span>
+              <span>Run Indian ANPR</span>
+            </label>
+            <div class="button-row">
+              <button id="start-button" class="button primary">Start camera</button>
+              <button id="stop-button" class="button secondary" disabled>Stop</button>
+            </div>
+          </div>
+          <p id="message" class="message">Ready for a local inference run.</p>
+        </section>
+
+        <aside class="side-column">
+          <section class="metric-grid">
+            <div class="metric-card"><span>Frames</span><strong id="frames">0</strong></div>
+            <div class="metric-card"><span>FPS</span><strong id="fps">0.00</strong></div>
+            <div class="metric-card"><span>Read errors</span><strong id="read-failures">0</strong></div>
+          </section>
+
+          <section class="panel detection-panel">
+            <div class="panel-heading compact">
+              <div><p class="eyebrow">INFERENCE</p><h2>Latest detections</h2></div>
+              <span id="detection-count" class="count-badge">0</span>
+            </div>
+            <div id="detections" class="detections empty-state">No detections yet.</div>
+          </section>
+
+          <section class="panel pipeline-panel">
+            <div class="panel-heading compact">
+              <div><p class="eyebrow">DEBUG PIPELINE</p><h2>Running locally</h2></div>
+            </div>
+            <div class="pipeline-step"><span class="step-number">01</span><div><strong>OpenCV camera</strong><small>Frames stay in memory</small></div><span class="check">✓</span></div>
+            <div class="pipeline-step"><span class="step-number">02</span><div><strong>Person + DeepSORT</strong><small>Tracks people across frames</small></div><span class="check">✓</span></div>
+            <div class="pipeline-step"><span class="step-number">03</span><div><strong>Face detector</strong><small>Returns face boxes only</small></div><span class="check">✓</span></div>
+            <div class="pipeline-step"><span class="step-number">04</span><div><strong>Indian ANPR</strong><small>Vehicle, plate and OCR pass</small></div><span class="check">✓</span></div>
+            <div class="disabled-note"><span>⊘</span> Pinata · Firestore · Blockchain · audit logging are off</div>
+          </section>
+        </aside>
+      </main>
+
+      <footer>Development-only dashboard · no evidence is uploaded or persisted during this run</footer>
+    </div>
+    <script src="/debug-ui.js"></script>
+  </body>
+</html>
