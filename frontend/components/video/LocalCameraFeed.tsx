@@ -16,6 +16,9 @@ type InferenceState = "idle" | "analyzing" | "ready" | "error";
 const canvasToBlob = (canvas: HTMLCanvasElement) =>
   new Promise<Blob | null>((resolve) => canvas.toBlob(resolve, "image/jpeg", 0.72));
 
+const ANPR_INTERVAL_MS = 250;
+const FACE_INTERVAL_MS = 120;
+
 export const LocalCameraFeed: React.FC<LocalCameraFeedProps> = ({ className }) => {
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -30,9 +33,14 @@ export const LocalCameraFeed: React.FC<LocalCameraFeedProps> = ({ className }) =
   const [modelName, setModelName] = useState("");
   const [inferenceMs, setInferenceMs] = useState<number | null>(null);
   const [modules, setModules] = useState<FrameInferenceModule[]>([]);
+  const detectionsBySourceRef = useRef<Record<string, FrameDetection[]>>({});
+  const modulesByIdRef = useRef<Record<string, FrameInferenceModule>>({});
 
   const stopStream = useCallback(() => {
-    streamRef.current?.getTracks().forEach((track) => track.stop());
+    streamRef.current?.getTracks().forEach((track) => {
+      track.onended = null;
+      track.stop();
+    });
     streamRef.current = null;
     if (videoRef.current) videoRef.current.srcObject = null;
   }, []);
@@ -93,28 +101,89 @@ export const LocalCameraFeed: React.FC<LocalCameraFeedProps> = ({ className }) =
 
   useEffect(() => {
     if (cameraState !== "live") {
+      detectionsBySourceRef.current = {};
+      modulesByIdRef.current = {};
       setDetections([]);
       setInferenceState("idle");
       setModules([]);
+      setModelName("");
+      setInferenceMs(null);
       return;
     }
 
     let cancelled = false;
-    let running = false;
+    let personRequestRunning = false;
+    let anprRequestRunning = false;
+    let faceRequestRunning = false;
+    let lastAnprStartedAt = 0;
+    let lastFaceStartedAt = 0;
+    let nextRun: number | null = null;
+
+    const applyResult = (result: Awaited<ReturnType<typeof backendApi.analyzeFrame>>) => {
+      for (const module of result.modules) {
+        modulesByIdRef.current[module.id] = module;
+        detectionsBySourceRef.current[module.id] = result.detections.filter(
+          (detection) => detection.source === module.id
+        );
+      }
+      setDetections(Object.values(detectionsBySourceRef.current).flat());
+      setModules(Object.values(modulesByIdRef.current));
+      setModelName("Person tracking + face detection + Indian ANPR");
+      setInferenceMs(result.inferenceMs);
+      setInferenceState("ready");
+    };
+
+    const analyzePlate = (frame: Blob) => {
+      anprRequestRunning = true;
+      void backendApi
+        .analyzeFrame(frame, ["anpr"])
+        .then((result) => {
+          if (!cancelled) applyResult(result);
+        })
+        .catch((analysisError) => {
+          if (!cancelled) {
+            setInferenceError(analysisError instanceof Error ? analysisError.message : "Indian ANPR is unavailable.");
+          }
+        })
+        .finally(() => {
+          anprRequestRunning = false;
+        });
+    };
+
+    const analyzeFaces = (frame: Blob) => {
+      faceRequestRunning = true;
+      void backendApi
+        .analyzeFrame(frame, ["face_detection"])
+        .then((result) => {
+          if (!cancelled) applyResult(result);
+        })
+        .catch((analysisError) => {
+          if (!cancelled) {
+            setInferenceError(analysisError instanceof Error ? analysisError.message : "Face detection is unavailable.");
+          }
+        })
+        .finally(() => {
+          faceRequestRunning = false;
+        });
+    };
 
     const analyzeCurrentFrame = async () => {
       const video = videoRef.current;
       const canvas = canvasRef.current;
-      if (running || !video || !canvas || video.readyState < 2 || video.videoWidth === 0) return;
+      if (cancelled) return;
+      if (personRequestRunning || !video || !canvas || video.readyState < 2 || video.videoWidth === 0) {
+        nextRun = window.setTimeout(() => void analyzeCurrentFrame(), 50);
+        return;
+      }
 
-      running = true;
+      personRequestRunning = true;
       setInferenceState("analyzing");
       setInferenceError("");
       canvas.width = video.videoWidth;
       canvas.height = video.videoHeight;
       const context = canvas.getContext("2d");
       if (!context) {
-        running = false;
+        personRequestRunning = false;
         setInferenceState("error");
         setInferenceError("The browser could not prepare a frame for AI analysis.");
         return;
@@ -123,14 +192,19 @@ export const LocalCameraFeed: React.FC<LocalCameraFeedProps> = ({ className }) =
       try {
         context.drawImage(video, 0, 0, canvas.width, canvas.height);
         const frame = await canvasToBlob(canvas);
-        if (!frame) throw new Error("Could not encode the camera frame.");
-        const result = await backendApi.analyzeFrame(frame);
+        if (!frame) throw new Error("Could not encode the source frame.");
+        const now = performance.now();
+        if (!anprRequestRunning && now - lastAnprStartedAt >= ANPR_INTERVAL_MS) {
+          lastAnprStartedAt = now;
+          analyzePlate(frame);
+        }
+        if (!faceRequestRunning && now - lastFaceStartedAt >= FACE_INTERVAL_MS) {
+          lastFaceStartedAt = now;
+          analyzeFaces(frame);
+        }
+        const result = await backendApi.analyzeFrame(frame, ["person_tracking"]);
         if (!cancelled) {
-          setDetections(result.detections);
-          setModelName(result.model);
-          setInferenceMs(result.inferenceMs);
-          setModules(result.modules);
-          setInferenceState("ready");
+          applyResult(result);
         }
       } catch (analysisError) {
         if (!cancelled) {
@@ -138,15 +212,17 @@ export const LocalCameraFeed: React.FC<LocalCameraFeedProps> = ({ className }) =
           setInferenceError(analysisError instanceof Error ? analysisError.message : "The AI endpoint is unavailable.");
         }
       } finally {
-        running = false;
+        personRequestRunning = false;
+        if (!cancelled) {
+          nextRun = window.setTimeout(() => void analyzeCurrentFrame(), 10);
+        }
       }
     };
 
     void analyzeCurrentFrame();
-    const interval = window.setInterval(() => void analyzeCurrentFrame(), 1600);
     return () => {
       cancelled = true;
-      window.clearInterval(interval);
+      if (nextRun !== null) window.clearTimeout(nextRun);
     };
   }, [cameraState]);
 
