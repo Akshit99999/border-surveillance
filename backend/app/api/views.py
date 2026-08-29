@@ -49,8 +49,13 @@ def inference_frame(request: HttpRequest) -> JsonResponse:
         return _error("frame body is empty")
     if len(request.body) > 4 * 1024 * 1024:
         return _error("frame is larger than the 4 MB inference limit", 413)
+    requested_modules = [
+        value.strip()
+        for value in request.GET.get("modules", "").split(",")
+        if value.strip()
+    ]
     try:
-        return JsonResponse(detect_frame(request.body))
+        return JsonResponse(detect_frame(request.body, requested_modules or None))
     except ValueError as exc:
         return _error(str(exc))
     except InferenceConfigurationError as exc:

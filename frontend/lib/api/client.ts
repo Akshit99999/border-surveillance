@@ -129,12 +129,18 @@ export const backendApi = {
   getBootstrap: () => request<BootstrapResponse>("/bootstrap"),
   getBlockchainStatus: () => request<BlockchainStatus>("/blockchain/status"),
   getFirebaseStatus: () => request<FirebaseStatus>("/firebase/status"),
-  analyzeFrame: (frame: Blob) =>
-    request<FrameInferenceResponse>("/inference/frame", {
+  analyzeFrame: (frame: Blob, modules?: string[]) =>
+    request<FrameInferenceResponse>(
+      `/inference/frame${modules?.length ? `?modules=${encodeURIComponent(modules.join(","))}` : ""}`,
+      {
       method: "POST",
       body: frame,
-      headers: { "Content-Type": "image/jpeg" },
-    }),
+      // Django reads the JPEG directly from the request body. Using a CORS-
+      // safelisted content type avoids an OPTIONS preflight before every live
+      // frame when Next.js and Django run on different localhost ports.
+      headers: { "Content-Type": "text/plain;charset=UTF-8" },
+      }
+    ),
   verifyAlert: (alertId: string) =>
     request<{ verification: VerificationResult }>(`/alerts/${encodeURIComponent(alertId)}/verification`),
   actionAlert: (alertId: string, action: "acknowledge" | "escalate", actorName: string) =>

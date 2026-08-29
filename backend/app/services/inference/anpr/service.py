@@ -26,6 +26,7 @@ class AnprService:
         plate_confidence: float = 0.25,
         image_size: int = 736,
         use_gpu_for_ocr: bool = False,
+        device: str = "cuda",
     ) -> None:
         self.vehicle_model_path = vehicle_model_path
         self.plate_model_path = plate_model_path
@@ -33,6 +34,7 @@ class AnprService:
         self.plate_confidence = plate_confidence
         self.image_size = image_size
         self.use_gpu_for_ocr = use_gpu_for_ocr
+        self.device = device
         self._vehicle_model: Any = None
         self._plate_model: Any = None
         self._ocr_reader: Any = None
@@ -45,7 +47,11 @@ class AnprService:
         detections: List[InferenceDetection] = []
 
         plate_result = self._plate_model(
-            frame, conf=self.plate_confidence, imgsz=self.image_size, verbose=False
+            frame,
+            conf=self.plate_confidence,
+            imgsz=self.image_size,
+            device=self.device,
+            verbose=False,
         )[0]
         for x1, y1, x2, y2, confidence, _class_id in plate_result.boxes.data.tolist():
             plate_box = BoundingBox(int(x1), int(y1), int(x2), int(y2))
@@ -80,11 +86,17 @@ class AnprService:
 
         self._vehicle_model = YOLO(self.vehicle_model_path)
         self._plate_model = YOLO(self.plate_model_path)
-        self._ocr_reader = easyocr.Reader(["en"], gpu=self.use_gpu_for_ocr)
+        self._ocr_reader = easyocr.Reader(
+            ["en"], gpu=self.use_gpu_for_ocr or self.device == "cuda"
+        )
 
     def _vehicle_boxes(self, frame: Any) -> Iterable[BoundingBox]:
         result = self._vehicle_model(
-            frame, conf=self.vehicle_confidence, imgsz=self.image_size, verbose=False
+            frame,
+            conf=self.vehicle_confidence,
+            imgsz=self.image_size,
+            device=self.device,
+            verbose=False,
         )[0]
         for x1, y1, x2, y2, _confidence, class_id in result.boxes.data.tolist():
             if int(class_id) in self.VEHICLE_CLASS_IDS:
@@ -94,6 +106,7 @@ class AnprService:
     def _containing_vehicle(
         plate_box: BoundingBox, vehicles: Iterable[BoundingBox]
     ) -> Optional[BoundingBox]:
+        """Require the detected plate to be fully inside a detected vehicle."""
         for vehicle in vehicles:
             if (
                 vehicle.left <= plate_box.left

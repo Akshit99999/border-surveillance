@@ -13,10 +13,11 @@ import threading
 import time
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Callable, Mapping
+from typing import Any, Callable, Iterable, Mapping
 
 from .anpr import AnprService
 from .contracts import BoundingBox, InferenceDetection
+from .device import resolve_device
 from .face import FaceDetectionService
 from .person import PersonTrackingService
 
@@ -27,6 +28,7 @@ class InferenceConfigurationError(RuntimeError):
 
 _PIPELINE_LOCK = threading.Lock()
 _PIPELINE: "LiveInferencePipeline | None" = None
+_MODULE_IDS = frozenset({"person_tracking", "face_detection", "anpr"})
 
 
 def _backend_dir() -> Path:
@@ -75,6 +77,7 @@ class LiveInferenceConfig:
     anpr_vehicle_confidence: float
     anpr_plate_confidence: float
     anpr_image_size: int
+    device: str = "cuda"
 
     @classmethod
     def from_env(cls, environ: Mapping[str, str] | None = None) -> "LiveInferenceConfig":
@@ -89,11 +92,12 @@ class LiveInferenceConfig:
             person_enabled=_env_flag(values, "AI_ENABLE_PERSON_TRACKING", True),
             face_enabled=_env_flag(values, "AI_ENABLE_FACE_DETECTION", True),
             anpr_enabled=_env_flag(values, "AI_ENABLE_ANPR", True),
-            person_confidence=_env_float(values, "AI_FRAME_CONFIDENCE", 0.35),
+            person_confidence=_env_float(values, "AI_FRAME_CONFIDENCE", 0.50),
             face_confidence=_env_float(values, "AI_FACE_CONFIDENCE", 0.50),
             anpr_vehicle_confidence=_env_float(values, "AI_ANPR_VEHICLE_CONFIDENCE", 0.70),
             anpr_plate_confidence=_env_float(values, "AI_ANPR_PLATE_CONFIDENCE", 0.25),
-            anpr_image_size=_env_int(values, "AI_ANPR_IMAGE_SIZE", 640),
+            anpr_image_size=_env_int(values, "AI_ANPR_IMAGE_SIZE", 736),
+            device=resolve_device(values.get("AI_DEVICE", "cuda")),
         )
 
 
@@ -120,20 +124,25 @@ class LiveInferencePipeline:
         self._face_service: Any = None
         self._anpr_service: Any = None
 
-    def process_frame(self, frame: Any) -> dict[str, Any]:
+    def process_frame(
+        self, frame: Any, requested_modules: Iterable[str] | None = None
+    ) -> dict[str, Any]:
         height, width = frame.shape[:2]
         started = time.perf_counter()
         detections: list[dict[str, Any]] = []
-        modules = [
-            self._run_person(frame, width, height, detections),
-            self._run_face(frame, width, height, detections),
-            self._run_anpr(frame, width, height, detections),
-        ]
+        selected = _select_modules(requested_modules)
+        modules = []
+        if "person_tracking" in selected:
+            modules.append(self._run_person(frame, width, height, detections))
+        if "face_detection" in selected:
+            modules.append(self._run_face(frame, width, height, detections))
+        if "anpr" in selected:
+            modules.append(self._run_anpr(frame, width, height, detections))
         unavailable = any(module["status"] == "unavailable" for module in modules)
         return {
             "status": "partial" if unavailable else "ok",
-            "model": "person-tracking + face-detection + indian-anpr",
-            "device": _device_name(),
+            "model": " + ".join(module["label"] for module in modules),
+            "device": self.config.device,
             "confidenceThreshold": self.config.person_confidence,
             "inferenceMs": round((time.perf_counter() - started) * 1000, 1),
             "frameWidth": width,
@@ -150,7 +159,9 @@ class LiveInferencePipeline:
         try:
             if self._person_service is None:
                 self._person_service = self._person_factory(
-                    str(self.config.person_model_path), confidence=self.config.person_confidence
+                    str(self.config.person_model_path),
+                    confidence=self.config.person_confidence,
+                    device=self.config.device,
                 )
             detections = self._person_service.process_frame(frame)
             output.extend(_serialize_detection(item, "person_tracking", width, height) for item in detections)
@@ -170,7 +181,9 @@ class LiveInferencePipeline:
         try:
             if self._face_service is None:
                 self._face_service = self._face_factory(
-                    str(self.config.face_model_path), confidence=self.config.face_confidence
+                    str(self.config.face_model_path),
+                    confidence=self.config.face_confidence,
+                    device=self.config.device,
                 )
             detections = self._face_service.process_frame(frame)
             output.extend(_serialize_detection(item, "face_detection", width, height) for item in detections)
@@ -195,6 +208,7 @@ class LiveInferencePipeline:
                     vehicle_confidence=self.config.anpr_vehicle_confidence,
                     plate_confidence=self.config.anpr_plate_confidence,
                     image_size=self.config.anpr_image_size,
+                    device=self.config.device,
                 )
             detections = self._anpr_service.process_frame(frame)
             output.extend(_serialize_detection(item, "anpr", width, height) for item in detections)
@@ -254,13 +268,11 @@ def _module_error(exc: Exception) -> str:
     return message[:220] if message else "Module initialization failed."
 
 
-def _device_name() -> str:
-    try:
-        import torch
-
-        return "cuda" if torch.cuda.is_available() else "cpu"
-    except Exception:
-        return "cpu"
+def _select_modules(requested_modules: Iterable[str] | None) -> frozenset[str]:
+    if requested_modules is None:
+        return _MODULE_IDS
+    selected = frozenset(module for module in requested_modules if module in _MODULE_IDS)
+    return selected or _MODULE_IDS
 
 
 def _get_pipeline() -> LiveInferencePipeline:
@@ -272,7 +284,9 @@ def _get_pipeline() -> LiveInferencePipeline:
         return _PIPELINE
 
 
-def detect_frame(frame_bytes: bytes) -> dict[str, Any]:
+def detect_frame(
+    frame_bytes: bytes, requested_modules: Iterable[str] | None = None
+) -> dict[str, Any]:
     """Run the enabled supplied modules on one browser-captured JPEG frame."""
 
     try:
@@ -286,4 +300,4 @@ def detect_frame(frame_bytes: bytes) -> dict[str, Any]:
     frame = cv2.imdecode(np.frombuffer(frame_bytes, dtype=np.uint8), cv2.IMREAD_COLOR)
     if frame is None:
         raise ValueError("The request body is not a readable JPEG frame.")
-    return _get_pipeline().process_frame(frame)
+    return _get_pipeline().process_frame(frame, requested_modules)

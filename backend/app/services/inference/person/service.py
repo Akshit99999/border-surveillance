@@ -21,12 +21,14 @@ class PersonTrackingService:
         model_path: str,
         confidence: float = 0.50,
         max_age: int = 200,
-        n_init: int = 5,
+        n_init: int = 2,
+        device: str = "cuda",
     ) -> None:
         self.model_path = model_path
         self.confidence = confidence
         self.max_age = max_age
         self.n_init = n_init
+        self.device = device
         self._model: Any = None
         self._tracker: Any = None
 
@@ -34,33 +36,91 @@ class PersonTrackingService:
         """Return confirmed person tracks for the next frame of one camera."""
 
         self._ensure_loaded()
-        result = self._model(frame, conf=self.confidence, verbose=False)[0]
+        result = self._model(frame, conf=self.confidence, device=self.device, verbose=False)[0]
         tracker_input = []
+        current_detections: list[InferenceDetection] = []
         for x1, y1, x2, y2, score, class_id in result.boxes.data.tolist():
             if int(class_id) != self.PERSON_CLASS_ID:
                 continue
+            box = BoundingBox(int(x1), int(y1), int(x2), int(y2))
+            current_detections.append(
+                InferenceDetection(
+                    label="person",
+                    confidence=float(score),
+                    bounding_box=box,
+                )
+            )
             tracker_input.append(
                 (
-                    [int(x1), int(y1), int(x2 - x1), int(y2 - y1)],
+                    [box.left, box.top, box.right - box.left, box.bottom - box.top],
                     float(score),
                     "person",
                 )
             )
 
-        detections: List[InferenceDetection] = []
-        for track in self._tracker.update_tracks(tracker_input, frame=frame):
+        tracks = self._tracker.update_tracks(tracker_input, frame=frame)
+        track_ids = self._track_ids_for_current_detections(tracks, current_detections)
+        return [
+            InferenceDetection(
+                label=detection.label,
+                confidence=detection.confidence,
+                bounding_box=detection.bounding_box,
+                track_id=track_ids.get(index),
+            )
+            for index, detection in enumerate(current_detections)
+        ]
+
+    @staticmethod
+    def _track_ids_for_current_detections(
+        tracks: Any, detections: List[InferenceDetection]
+    ) -> dict[int, str]:
+        """Attach a stable ID when DeepSORT has confirmed the current box.
+
+        Raw YOLO person boxes are deliberately returned immediately. Waiting for
+        DeepSORT confirmation makes a live overlay appear seconds late when
+        frames are sent over HTTP.
+        """
+
+        track_ids: dict[int, str] = {}
+        for track in tracks:
             if not track.is_confirmed():
                 continue
-            left, top, right, bottom = (int(value) for value in track.to_ltrb())
-            detections.append(
-                InferenceDetection(
-                    label="person",
-                    confidence=1.0,
-                    bounding_box=BoundingBox(left, top, right, bottom),
-                    track_id=str(track.track_id),
-                )
+            track_confidence = (
+                track.get_det_conf()
+                if hasattr(track, "get_det_conf")
+                else getattr(track, "det_conf", None)
             )
-        return detections
+            if track_confidence is None or getattr(track, "time_since_update", 0) > 0:
+                continue
+            values = track.to_ltrb(orig=True, orig_strict=True)
+            if values is None:
+                continue
+            track_box = BoundingBox(*(int(value) for value in values))
+            best_index = -1
+            best_overlap = 0.0
+            for index, detection in enumerate(detections):
+                overlap = PersonTrackingService._intersection_over_union(
+                    track_box, detection.bounding_box
+                )
+                if overlap > best_overlap:
+                    best_overlap = overlap
+                    best_index = index
+            if best_index >= 0 and best_overlap >= 0.5:
+                track_ids[best_index] = str(track.track_id)
+        return track_ids
+
+    @staticmethod
+    def _intersection_over_union(first: BoundingBox, second: BoundingBox) -> float:
+        left = max(first.left, second.left)
+        top = max(first.top, second.top)
+        right = min(first.right, second.right)
+        bottom = min(first.bottom, second.bottom)
+        intersection = max(0, right - left) * max(0, bottom - top)
+        if intersection == 0:
+            return 0.0
+        first_area = max(1, (first.right - first.left) * (first.bottom - first.top))
+        second_area = max(1, (second.right - second.left) * (second.bottom - second.top))
+        return intersection / (first_area + second_area - intersection)
 
     def _ensure_loaded(self) -> None:
         if self._model is not None:
