@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "IBVAP — Intelligent Border Video Analytics Platform",
+  title: "BorderLens — Intelligent Border Video Analytics Platform",
   description: "Next-generation tactical command console and human accountability guard duty system for border security surveillance.",
 };
 
