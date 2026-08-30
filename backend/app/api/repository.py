@@ -112,6 +112,12 @@ class ApiRepository:
             self._persist()
             return deepcopy(self._state["system"])
 
+    def update_current_user(self, user: dict[str, Any]) -> dict[str, Any]:
+        with self._lock:
+            self._state["currentUser"] = deepcopy(user)
+            self._persist()
+            return deepcopy(self._state["currentUser"])
+
     def _upsert_locked(self, collection: str, item: dict[str, Any]) -> None:
         items = self._state.setdefault(collection, [])
         for index, existing in enumerate(items):

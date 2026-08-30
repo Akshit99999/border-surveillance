@@ -49,7 +49,7 @@ export default function LandingPage() {
               <Shield className="w-5 h-5 text-white" />
             </div>
             <div>
-              <span className="font-mono font-black tracking-widest text-sm text-slate-100 block">SSB IBVAP</span>
+              <span className="font-mono font-black tracking-widest text-sm text-slate-100 block">SSB BORDERLENS</span>
               <span className="font-mono text-[9px] text-cyan-400 tracking-wider">BORDER COMMAND PLATFORM</span>
             </div>
           </Link>
@@ -145,7 +145,7 @@ export default function LandingPage() {
       <footer className="border-t border-slate-800 py-12 bg-slate-950 text-center font-mono">
         <div className="max-w-7xl mx-auto px-4">
           <Shield className="w-8 h-8 text-cyan-400 mx-auto mb-4" />
-          <h3 className="text-lg font-bold text-slate-100 uppercase">IBVAP — INTELLIGENT BORDER PLATFORM</h3>
+          <h3 className="text-lg font-bold text-slate-100 uppercase">BORDERLENS — INTELLIGENT BORDER PLATFORM</h3>
           <p className="text-xs text-slate-400 mt-1">Indian border surveillance command console with local camera testing and verifiable evidence workflows.</p>
         </div>
       </footer>
