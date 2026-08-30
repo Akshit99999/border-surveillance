@@ -23,6 +23,8 @@ export interface FirebaseStatus {
   initialized: boolean;
   projectId: string | null;
   message: string;
+  alertsSynced?: boolean;
+  alertsCount?: number | null;
 }
 
 export interface VerificationResult {

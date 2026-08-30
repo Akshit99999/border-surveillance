@@ -13,6 +13,7 @@ from django.views.decorators.http import require_http_methods
 from . import blockchain
 from .repository import repository
 from ..services.inference.live import InferenceConfigurationError, detect_frame
+from ..services.evidence.alert_store import get_alert_store
 from ..services.evidence.firebase import get_status as firebase_status
 
 
@@ -23,11 +24,12 @@ def health(request: HttpRequest) -> JsonResponse:
 
 @require_http_methods(["GET"])
 def bootstrap(request: HttpRequest) -> JsonResponse:
+    data, firebase = _snapshot_with_firebase_alerts()
     return JsonResponse({
-        "data": repository.snapshot(),
+        "data": data,
         "meta": {"source": "django", "generatedAt": _now()},
         "blockchain": blockchain.get_status(),
-        "firebase": firebase_status(),
+        "firebase": firebase,
     })
 
 
@@ -68,7 +70,8 @@ def inference_frame(request: HttpRequest) -> JsonResponse:
 @require_http_methods(["GET", "POST"])
 def alerts(request: HttpRequest) -> JsonResponse:
     if request.method == "GET":
-        return JsonResponse({"alerts": repository.snapshot()["alerts"]})
+        data, firebase = _snapshot_with_firebase_alerts()
+        return JsonResponse({"alerts": data["alerts"], "firebase": firebase})
     payload = _body(request)
     alert_id = str(payload.get("id") or f"ALT-{int(datetime.now(timezone.utc).timestamp() * 1000)}")
     alert = {
@@ -78,7 +81,13 @@ def alerts(request: HttpRequest) -> JsonResponse:
         "status": payload.get("status") or "open",
         "acknowledgedBy": payload.get("acknowledgedBy"),
     }
-    return JsonResponse({"alert": repository.upsert("alerts", alert)}, status=201)
+    saved = repository.upsert("alerts", alert)
+    firebase = _save_alert_to_firebase(saved)
+    response_status = 503 if firebase.get("alertsSynced") is False else 201
+    response = {"alert": saved, "firebase": firebase}
+    if response_status == 503:
+        response["error"] = "Alert was saved locally but could not be written to Firebase."
+    return JsonResponse(response, status=response_status)
 
 
 @csrf_exempt
@@ -90,10 +99,14 @@ def alert_action(request: HttpRequest, alert_id: str) -> JsonResponse:
         return _error("action must be acknowledge or escalate")
     alert = repository.get("alerts", alert_id)
     if not alert:
+        _snapshot_with_firebase_alerts()
+        alert = repository.get("alerts", alert_id)
+    if not alert:
         return _error("alert not found", 404)
     actor = str(payload.get("actorName") or repository.snapshot()["currentUser"]["name"])
     status = "acknowledged" if action == "acknowledge" else "escalated"
     updated = repository.update("alerts", alert_id, {"status": status, "acknowledgedBy": actor})
+    firebase = _save_alert_to_firebase(updated or alert)
     log = _activity(
         actor_id=repository.snapshot()["currentUser"]["badgeId"],
         actor_name=actor,
@@ -103,13 +116,20 @@ def alert_action(request: HttpRequest, alert_id: str) -> JsonResponse:
         sector=str(alert.get("sector") or "All Sectors"),
         details=f"{status.title()} alert {alert_id}: {alert.get('eventType', 'incident') }.",
     )
-    return JsonResponse({"alert": updated, "activity": log})
+    response_status = 503 if firebase.get("alertsSynced") is False else 200
+    response = {"alert": updated, "activity": log, "firebase": firebase}
+    if response_status == 503:
+        response["error"] = "Alert status was saved locally but could not be updated in Firebase."
+    return JsonResponse(response, status=response_status)
 
 
 @csrf_exempt
 @require_http_methods(["POST"])
 def anchor_alert(request: HttpRequest, alert_id: str) -> JsonResponse:
     alert = repository.get("alerts", alert_id)
+    if not alert:
+        _snapshot_with_firebase_alerts()
+        alert = repository.get("alerts", alert_id)
     if not alert:
         return _error("alert not found", 404)
     try:
@@ -124,6 +144,7 @@ def anchor_alert(request: HttpRequest, alert_id: str) -> JsonResponse:
         "blockchainIncidentHash": result["incidentReferenceHash"],
         "evidenceSha256": result["evidenceSha256"],
     })
+    firebase = _save_alert_to_firebase(updated or alert)
     log = _activity(
         actor_id="SYSTEM",
         actor_name="BLOCKCHAIN ANCHOR WORKER",
@@ -133,7 +154,11 @@ def anchor_alert(request: HttpRequest, alert_id: str) -> JsonResponse:
         sector=str(alert.get("sector") or "All Sectors"),
         details=f"Evidence hash anchored in EvidenceRegistry. Transaction: {result['transactionHash']}.",
     )
-    return JsonResponse({"alert": updated, "blockchain": result, "activity": log})
+    response_status = 503 if firebase.get("alertsSynced") is False else 200
+    response = {"alert": updated, "blockchain": result, "activity": log, "firebase": firebase}
+    if response_status == 503:
+        response["error"] = "Alert was anchored locally but its Firebase record could not be updated."
+    return JsonResponse(response, status=response_status)
 
 
 @require_http_methods(["GET"])
@@ -271,11 +296,12 @@ def system_action(request: HttpRequest) -> JsonResponse:
 def sync(request: HttpRequest) -> JsonResponse:
     payload = _body(request)
     result = repository.merge_sync(payload.get("alerts") or [], payload.get("activityLog") or [])
+    data, firebase = _snapshot_with_firebase_alerts()
     return JsonResponse({
         "accepted": result,
-        "data": repository.snapshot(),
+        "data": data,
         "blockchain": blockchain.get_status(),
-        "firebase": firebase_status(),
+        "firebase": firebase,
     })
 
 
@@ -311,6 +337,71 @@ def _activity(*, actor_id: str, actor_name: str, action_type: str, target_type: 
         "sector": sector,
         "details": details,
     })
+
+
+def _snapshot_with_firebase_alerts() -> tuple[dict[str, Any], dict[str, Any]]:
+    """Merge Firestore history into the local cache before returning API data."""
+    data = repository.snapshot()
+    firebase = firebase_status()
+    if not firebase.get("initialized"):
+        return data, firebase
+
+    try:
+        store = get_alert_store()
+        remote_alerts = store.list_alerts()
+        remote_ids = {str(alert.get("id")) for alert in remote_alerts}
+        local_alerts = data.get("alerts", [])
+        missing_remote = [alert for alert in local_alerts if str(alert.get("id")) not in remote_ids]
+        if missing_remote:
+            store.upsert_alerts(missing_remote)
+            remote_alerts.extend(missing_remote)
+        for alert in remote_alerts:
+            repository.upsert("alerts", alert)
+        data["alerts"] = sorted(remote_alerts, key=lambda alert: _alert_sort_key(alert.get("timestamp")), reverse=True)
+        return data, {
+            **firebase,
+            "alertsSynced": True,
+            "alertsCount": len(data["alerts"]),
+        }
+    except Exception as exc:
+        return data, {
+            **firebase,
+            "alertsSynced": False,
+            "alertsCount": len(data.get("alerts", [])),
+            "message": f"Firebase alert sync failed: {exc}",
+        }
+
+
+def _save_alert_to_firebase(alert: dict[str, Any]) -> dict[str, Any]:
+    firebase = firebase_status()
+    if not firebase.get("initialized"):
+        return {
+            **firebase,
+            # Firebase remains optional for local-only installations. A
+            # configured-but-unavailable Firebase instance is handled as a
+            # failed write below by returning alertsSynced=False.
+            "alertsSynced": False if firebase.get("configured") else None,
+            "alertsCount": None,
+        }
+    try:
+        get_alert_store().upsert_alert(alert)
+        return {**firebase, "alertsSynced": True}
+    except Exception as exc:
+        return {
+            **firebase,
+            "alertsSynced": False,
+            "message": f"Firebase alert write failed: {exc}",
+        }
+
+
+def _alert_sort_key(value: Any) -> datetime:
+    try:
+        timestamp = datetime.fromisoformat(str(value).replace("Z", "+00:00"))
+    except (TypeError, ValueError):
+        return datetime.min.replace(tzinfo=timezone.utc)
+    if timestamp.tzinfo is None:
+        return timestamp.replace(tzinfo=timezone.utc)
+    return timestamp.astimezone(timezone.utc)
 
 
 def _now() -> str:
