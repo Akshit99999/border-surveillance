@@ -30,7 +30,7 @@ ROOT_URLCONF = "config.urls"
 WSGI_APPLICATION = "config.wsgi.application"
 APPEND_SLASH = False
 
-INSTALLED_APPS = ["app.apps.BorderSurveillanceConfig"]
+INSTALLED_APPS = []
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
     "app.api.middleware.CorsHeadersMiddleware",
@@ -38,13 +38,10 @@ MIDDLEWARE = [
     "django.middleware.csrf.CsrfViewMiddleware",
 ]
 
-LOCAL_DATA_DIR = BASE_DIR / ".localdata"
-LOCAL_DATA_DIR.mkdir(parents=True, exist_ok=True)
-
 DATABASES = {
     "default": {
         "ENGINE": "django.db.backends.sqlite3",
-        "NAME": LOCAL_DATA_DIR / "django.sqlite3",
+        "NAME": BASE_DIR / ".localdata" / "django.sqlite3",
     }
 }
 

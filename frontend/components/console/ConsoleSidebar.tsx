@@ -82,7 +82,7 @@ export const ConsoleSidebar: React.FC = () => {
         </div>
         <div>
           <h1 className="font-mono text-sm font-black tracking-widest text-slate-100 uppercase leading-none">
-            SSB BORDERLENS
+            SSB IBVAP
           </h1>
           <p className="font-mono text-[10px] text-cyan-400 font-bold tracking-wider mt-1">
             BORDER COMMAND OS

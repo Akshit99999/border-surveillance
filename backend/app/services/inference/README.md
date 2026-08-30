@@ -8,7 +8,7 @@ This package converts the reusable material in `IBVAP-modules` into services tha
 | --- | --- | --- |
 | `anpr-module` | `inference/anpr/` | Indian plate format validation and a lazy-loaded YOLO + EasyOCR frame service |
 | `person-detection-module` | `inference/person/` | Lazy-loaded YOLO + DeepSORT frame service; removes hard-coded video/UI behaviour |
-| `face-detection-module` | `inference/face/` | Lazy-loaded YOLO face detection with a bundled OpenCV frontal-face fallback |
+| `face-detection-module` | `inference/face/` | Lazy-loaded face detection service only |
 
 The source `backend/` and `frontend/` folders contained only placeholder files already present in this repository, so they were not duplicated.
 
@@ -20,7 +20,7 @@ Model weights are runtime assets and remain outside Git. Place approved weights 
 backend/.localdata/models/
 ├── yolov8n.pt
 ├── INPD_more_accuracy_n.pt
-└── yolov8n-face-keypoints.pt  # optional; preferred when available
+└── yolov8n-face-keypoints.pt
 ```
 
 Configure their absolute paths through Django environment variables:
@@ -39,8 +39,8 @@ Create one service instance per camera worker. A tracker keeps state across sequ
 For local debugging, Django exposes `POST /api/inference/frame`. It accepts one JPEG frame and runs the enabled modules together:
 
 - person detection plus DeepSORT tracking using `PERSON_MODEL_PATH`;
-- face location detection using `FACE_MODEL_PATH` when present, otherwise OpenCV's bundled frontal-face cascade (identity matching is not enabled);
-- Indian ANPR using `ANPR_VEHICLE_MODEL_PATH`, `ANPR_PLATE_MODEL_PATH`, and EasyOCR, retaining only validated Indian plate formats. If the plate weight is absent, the general vehicle boxes are scanned with OCR as a lower-accuracy fallback.
+- face location detection using `FACE_MODEL_PATH` (identity matching is not enabled);
+- Indian ANPR using `ANPR_VEHICLE_MODEL_PATH`, `ANPR_PLATE_MODEL_PATH`, and EasyOCR, retaining only validated Indian plate formats.
 
 The response includes normalized boxes, confidence scores, track IDs, recognized plate attributes, per-module status, model names, device, and inference time. The endpoint does not create alerts or persist frames; the alert pipeline should consume only detections that pass its camera-zone, confidence, and persistence rules.
 

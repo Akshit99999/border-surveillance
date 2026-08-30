@@ -33,7 +33,7 @@ export default function LoginPage() {
           <div className="w-12 h-12 rounded bg-gradient-to-tr from-cyan-600 to-blue-700 flex items-center justify-center mx-auto shadow-[0_0_15px_rgba(6,182,212,0.4)] mb-3">
             <Shield className="w-6 h-6 text-white" />
           </div>
-          <h2 className="text-base font-bold uppercase tracking-widest text-slate-100">BORDERLENS // CONSOLE AUTH</h2>
+          <h2 className="text-base font-bold uppercase tracking-widest text-slate-100">IBVAP // CONSOLE AUTH</h2>
           <p className="text-[11px] text-cyan-400/80 mt-0.5">Use credentials from the configured identity provider.</p>
         </div>
 

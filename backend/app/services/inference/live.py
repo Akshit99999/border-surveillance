@@ -56,20 +56,6 @@ def _env_int(values: Mapping[str, str], name: str, default: int) -> int:
         return default
 
 
-def _env_interval(values: Mapping[str, str], name: str, default: int) -> int:
-    try:
-        return max(1, min(int(values.get(name, str(default))), 120))
-    except (TypeError, ValueError):
-        return default
-
-
-def _env_max_dim(values: Mapping[str, str], name: str, default: int) -> int:
-    try:
-        return max(1, min(int(values.get(name, str(default))), 4096))
-    except (TypeError, ValueError):
-        return default
-
-
 def _model_path(values: Mapping[str, str], name: str, fallback: Path) -> Path:
     configured = values.get(name, "").strip()
     return Path(configured).expanduser() if configured else fallback
@@ -91,9 +77,6 @@ class LiveInferenceConfig:
     anpr_vehicle_confidence: float
     anpr_plate_confidence: float
     anpr_image_size: int
-    face_frame_interval: int = 3
-    anpr_frame_interval: int = 5
-    inference_max_dim: int = 960
     device: str = "cuda"
 
     @classmethod
@@ -111,12 +94,9 @@ class LiveInferenceConfig:
             anpr_enabled=_env_flag(values, "AI_ENABLE_ANPR", True),
             person_confidence=_env_float(values, "AI_FRAME_CONFIDENCE", 0.50),
             face_confidence=_env_float(values, "AI_FACE_CONFIDENCE", 0.50),
-            anpr_vehicle_confidence=_env_float(values, "AI_ANPR_VEHICLE_CONFIDENCE", 0.45),
-            anpr_plate_confidence=_env_float(values, "AI_ANPR_PLATE_CONFIDENCE", 0.15),
+            anpr_vehicle_confidence=_env_float(values, "AI_ANPR_VEHICLE_CONFIDENCE", 0.70),
+            anpr_plate_confidence=_env_float(values, "AI_ANPR_PLATE_CONFIDENCE", 0.25),
             anpr_image_size=_env_int(values, "AI_ANPR_IMAGE_SIZE", 736),
-            face_frame_interval=_env_interval(values, "AI_FACE_FRAME_INTERVAL", 3),
-            anpr_frame_interval=_env_interval(values, "AI_ANPR_FRAME_INTERVAL", 5),
-            inference_max_dim=_env_max_dim(values, "AI_INFERENCE_MAX_DIM", 960),
             device=resolve_device(values.get("AI_DEVICE", "cuda")),
         )
 
@@ -143,9 +123,6 @@ class LiveInferencePipeline:
         self._person_service: Any = None
         self._face_service: Any = None
         self._anpr_service: Any = None
-        self._frame_index = 0
-        self._cached_module_detections: dict[str, list[dict[str, Any]]] = {}
-        self._cached_module_results: dict[str, dict[str, Any]] = {}
 
     def process_frame(
         self, frame: Any, requested_modules: Iterable[str] | None = None
@@ -154,68 +131,13 @@ class LiveInferencePipeline:
         started = time.perf_counter()
         detections: list[dict[str, Any]] = []
         selected = _select_modules(requested_modules)
-        frame_index = self._frame_index
-        self._frame_index += 1
-        inference_frame, scale_x, scale_y = self._prepare_frame(frame, width, height)
         modules = []
-        person_detections: list[InferenceDetection] = []
-        person_module: dict[str, Any] | None = None
-        person_serialized: list[dict[str, Any]] = []
-        if "person_tracking" in selected or "face_detection" in selected:
-            person_module, person_detections, person_serialized = self._run_person(
-                inference_frame,
-                width,
-                height,
-                scale_x,
-                scale_y,
-            )
-        if "person_tracking" in selected and person_module is not None:
-            modules.append(person_module)
-            detections.extend(person_serialized)
+        if "person_tracking" in selected:
+            modules.append(self._run_person(frame, width, height, detections))
         if "face_detection" in selected:
-            if not self.config.face_enabled:
-                modules.append(_module_result("face_detection", "Face detection", self.config.face_model_path, "disabled"))
-            elif not person_detections:
-                self._cached_module_detections.pop("face_detection", None)
-                self._cached_module_results.pop("face_detection", None)
-                modules.append(
-                    _module_result(
-                        "face_detection",
-                        "Face detection",
-                        self.config.face_model_path,
-                        "skipped",
-                        message="Skipped because no person was detected in this frame.",
-                    )
-                )
-            elif frame_index % self.config.face_frame_interval:
-                modules.append(self._append_cached_module("face_detection", detections))
-            else:
-                modules.append(
-                    self._run_face(
-                        inference_frame,
-                        width,
-                        height,
-                        scale_x,
-                        scale_y,
-                        detections,
-                    )
-                )
+            modules.append(self._run_face(frame, width, height, detections))
         if "anpr" in selected:
-            if not self.config.anpr_enabled:
-                modules.append(_module_result("anpr", "Indian ANPR", self.config.anpr_plate_model_path, "disabled"))
-            elif frame_index % self.config.anpr_frame_interval:
-                modules.append(self._append_cached_module("anpr", detections))
-            else:
-                modules.append(
-                    self._run_anpr(
-                        inference_frame,
-                        width,
-                        height,
-                        scale_x,
-                        scale_y,
-                        detections,
-                    )
-                )
+            modules.append(self._run_anpr(frame, width, height, detections))
         unavailable = any(module["status"] == "unavailable" for module in modules)
         return {
             "status": "partial" if unavailable else "ok",
@@ -229,47 +151,11 @@ class LiveInferencePipeline:
             "modules": modules,
         }
 
-    def _prepare_frame(
-        self, frame: Any, width: int, height: int
-    ) -> tuple[Any, float, float]:
-        """Resize only the model input and return x/y factors back to source pixels."""
-
-        max_dim = self.config.inference_max_dim
-        largest_dim = max(width, height)
-        if largest_dim <= max_dim:
-            return frame, 1.0, 1.0
-
-        try:
-            import cv2
-        except ImportError as exc:
-            raise InferenceConfigurationError(
-                "OpenCV is required to resize frames before inference."
-            ) from exc
-
-        scale = max_dim / largest_dim
-        resized_width = max(1, round(width * scale))
-        resized_height = max(1, round(height * scale))
-        resized = cv2.resize(
-            frame,
-            (resized_width, resized_height),
-            interpolation=cv2.INTER_AREA,
-        )
-        return resized, width / resized_width, height / resized_height
-
     def _run_person(
-        self,
-        frame: Any,
-        width: int,
-        height: int,
-        scale_x: float,
-        scale_y: float,
-    ) -> tuple[dict[str, Any], list[InferenceDetection], list[dict[str, Any]]]:
+        self, frame: Any, width: int, height: int, output: list[dict[str, Any]]
+    ) -> dict[str, Any]:
         if not self.config.person_enabled:
-            return (
-                _module_result("person_tracking", "Person tracking", self.config.person_model_path, "disabled"),
-                [],
-                [],
-            )
+            return _module_result("person_tracking", "Person tracking", self.config.person_model_path, "disabled")
         try:
             if self._person_service is None:
                 self._person_service = self._person_factory(
@@ -278,35 +164,20 @@ class LiveInferencePipeline:
                     device=self.config.device,
                 )
             detections = self._person_service.process_frame(frame)
-            serialized = [
-                _serialize_detection(item, "person_tracking", width, height, scale_x, scale_y)
-                for item in detections
-            ]
-            return (
-                _module_result(
-                    "person_tracking", "Person tracking", self.config.person_model_path, "active", len(detections)
-                ),
-                list(detections),
-                serialized,
+            output.extend(_serialize_detection(item, "person_tracking", width, height) for item in detections)
+            return _module_result(
+                "person_tracking", "Person tracking", self.config.person_model_path, "active", len(detections)
             )
         except Exception as exc:
-            return (
-                _module_result(
-                    "person_tracking", "Person tracking", self.config.person_model_path, "unavailable", message=_module_error(exc)
-                ),
-                [],
-                [],
+            return _module_result(
+                "person_tracking", "Person tracking", self.config.person_model_path, "unavailable", message=_module_error(exc)
             )
 
     def _run_face(
-        self,
-        frame: Any,
-        width: int,
-        height: int,
-        scale_x: float,
-        scale_y: float,
-        output: list[dict[str, Any]],
+        self, frame: Any, width: int, height: int, output: list[dict[str, Any]]
     ) -> dict[str, Any]:
+        if not self.config.face_enabled:
+            return _module_result("face_detection", "Face detection", self.config.face_model_path, "disabled")
         try:
             if self._face_service is None:
                 self._face_service = self._face_factory(
@@ -315,34 +186,20 @@ class LiveInferencePipeline:
                     device=self.config.device,
                 )
             detections = self._face_service.process_frame(frame)
-            model_name = getattr(self._face_service, "model_name", self.config.face_model_path.name)
-            status_message = getattr(self._face_service, "status_message", "")
-            serialized = [
-                _serialize_detection(item, "face_detection", width, height, scale_x, scale_y)
-                for item in detections
-            ]
-            output.extend(serialized)
-            module = _module_result(
-                "face_detection", "Face detection", model_name, "active", len(detections), status_message
+            output.extend(_serialize_detection(item, "face_detection", width, height) for item in detections)
+            return _module_result(
+                "face_detection", "Face detection", self.config.face_model_path, "active", len(detections)
             )
-            self._cache_module("face_detection", module, serialized)
-            return module
         except Exception as exc:
-            module = _module_result(
+            return _module_result(
                 "face_detection", "Face detection", self.config.face_model_path, "unavailable", message=_module_error(exc)
             )
-            self._cache_module("face_detection", module, [])
-            return module
 
     def _run_anpr(
-        self,
-        frame: Any,
-        width: int,
-        height: int,
-        scale_x: float,
-        scale_y: float,
-        output: list[dict[str, Any]],
+        self, frame: Any, width: int, height: int, output: list[dict[str, Any]]
     ) -> dict[str, Any]:
+        if not self.config.anpr_enabled:
+            return _module_result("anpr", "Indian ANPR", self.config.anpr_plate_model_path, "disabled")
         try:
             if self._anpr_service is None:
                 self._anpr_service = self._anpr_factory(
@@ -354,56 +211,18 @@ class LiveInferencePipeline:
                     device=self.config.device,
                 )
             detections = self._anpr_service.process_frame(frame)
-            model_name = getattr(self._anpr_service, "model_name", self.config.anpr_plate_model_path.name)
-            status_message = getattr(self._anpr_service, "status_message", "")
-            serialized = [
-                _serialize_detection(item, "anpr", width, height, scale_x, scale_y)
-                for item in detections
-            ]
-            output.extend(serialized)
-            module = _module_result("anpr", "Indian ANPR", model_name, "active", len(detections), status_message)
-            self._cache_module("anpr", module, serialized)
-            return module
+            output.extend(_serialize_detection(item, "anpr", width, height) for item in detections)
+            return _module_result("anpr", "Indian ANPR", self.config.anpr_plate_model_path, "active", len(detections))
         except Exception as exc:
-            module = _module_result(
+            return _module_result(
                 "anpr", "Indian ANPR", self.config.anpr_plate_model_path, "unavailable", message=_module_error(exc)
             )
-            self._cache_module("anpr", module, [])
-            return module
-
-    def _cache_module(
-        self,
-        module_id: str,
-        module: dict[str, Any],
-        detections: list[dict[str, Any]],
-    ) -> None:
-        self._cached_module_results[module_id] = dict(module)
-        self._cached_module_detections[module_id] = list(detections)
-
-    def _append_cached_module(
-        self, module_id: str, output: list[dict[str, Any]]
-    ) -> dict[str, Any]:
-        cached = self._cached_module_results.get(module_id)
-        if cached is None:
-            return _module_result(
-                module_id,
-                "Face detection" if module_id == "face_detection" else "Indian ANPR",
-                self.config.face_model_path if module_id == "face_detection" else self.config.anpr_plate_model_path,
-                "skipped",
-                message="Waiting for the first scheduled inference.",
-            )
-        cached_detections = list(self._cached_module_detections.get(module_id, []))
-        output.extend(cached_detections)
-        return {
-            **cached,
-            "message": "Using the last scheduled inference result.",
-        }
 
 
 def _module_result(
     module_id: str,
     label: str,
-    model_path: Path | str,
+    model_path: Path,
     status: str,
     detection_count: int = 0,
     message: str = "",
@@ -411,7 +230,7 @@ def _module_result(
     return {
         "id": module_id,
         "label": label,
-        "model": model_path.name if isinstance(model_path, Path) else str(model_path),
+        "model": model_path.name,
         "status": status,
         "detectionCount": detection_count,
         "message": message,
@@ -419,36 +238,15 @@ def _module_result(
 
 
 def _serialize_detection(
-    detection: InferenceDetection,
-    source: str,
-    width: int,
-    height: int,
-    scale_x: float = 1.0,
-    scale_y: float = 1.0,
+    detection: InferenceDetection, source: str, width: int, height: int
 ) -> dict[str, Any]:
-    box = detection.bounding_box
-    scaled_box = BoundingBox(
-        round(box.left * scale_x),
-        round(box.top * scale_y),
-        round(box.right * scale_x),
-        round(box.bottom * scale_y),
-    )
-    attributes = dict(detection.attributes)
-    vehicle_bbox = attributes.get("vehicle_bbox")
-    if isinstance(vehicle_bbox, (list, tuple)) and len(vehicle_bbox) == 4:
-        attributes["vehicle_bbox"] = (
-            round(vehicle_bbox[0] * scale_x),
-            round(vehicle_bbox[1] * scale_y),
-            round(vehicle_bbox[2] * scale_x),
-            round(vehicle_bbox[3] * scale_y),
-        )
     return {
         "label": detection.label,
         "source": source,
         "confidence": round(float(detection.confidence), 4),
-        "box": _normalized_box(scaled_box, width, height),
+        "box": _normalized_box(detection.bounding_box, width, height),
         "trackId": detection.track_id,
-        "attributes": attributes,
+        "attributes": detection.attributes,
     }
 
 

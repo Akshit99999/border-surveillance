@@ -130,10 +130,4 @@ class PersonTrackingService:
         from ultralytics import YOLO
 
         self._model = YOLO(self.model_path)
-        # deep-sort-realtime's embedder only supports CUDA; YOLO still receives
-        # the resolved CUDA/MPS/CPU device explicitly on every frame call.
-        self._tracker = DeepSort(
-            max_age=self.max_age,
-            n_init=self.n_init,
-            embedder_gpu=self.device == "cuda",
-        )
+        self._tracker = DeepSort(max_age=self.max_age, n_init=self.n_init)

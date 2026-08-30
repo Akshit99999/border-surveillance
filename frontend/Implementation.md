@@ -1,4 +1,4 @@
-# BorderLens — Full Web Platform Implementation Plan
+# IBVAP — Full Web Platform Implementation Plan
 ### Intelligent Border Video Analytics Platform (Command Center + Guard Duty System)
 **Status:** Integrated UI → Backend-connected | **Data mode:** Django API with explicit empty states | **Owner:** Aki (Lead) + 5-person team
 
@@ -6,7 +6,7 @@
 
 ## 0. Why this doc exists
 
-This is the single source of truth for building BorderLens as a **portfolio/demo-grade product**, not a prototype. Every screen, every empty state, every hover — built like it's shipping to a real command center. The frontend reads Django-owned records and never fabricates operational alerts, cameras, guards, identities, or evidence when the API has no data.
+This is the single source of truth for building IBVAP as a **portfolio/demo-grade product**, not a prototype. Every screen, every empty state, every hover — built like it's shipping to a real command center. The frontend reads Django-owned records and never fabricates operational alerts, cameras, guards, identities, or evidence when the API has no data.
 
 Your 4 reference screens (Alerts, Live Feed / Tactical Matrix, Map, Camera Management) are the visual bar. Nothing we ship should look worse than those.
 
@@ -16,7 +16,7 @@ Your 4 reference screens (Alerts, Live Feed / Tactical Matrix, Map, Camera Manag
 
 ### 1.1 Two surfaces
 1. **SSB Command Console** (the app in your screenshots) — internal, authenticated, dense, tactical UI.
-2. **Public Landing Page** — marketing/demo page explaining BorderLens, for judges/recruiters/stakeholders. Lighter, faster, sells the product in 30 seconds.
+2. **Public Landing Page** — marketing/demo page explaining IBVAP, for judges/recruiters/stakeholders. Lighter, faster, sells the product in 30 seconds.
 
 ### 1.2 Command Console — modules
 | # | Module | Status in your screenshots |
@@ -121,7 +121,7 @@ Border/CCTV AI demos are common; a **human-accountability layer** (who was on po
 - **State:** Zustand or React Context — keep the client state focused on current API data and local offline queues
 - **Backend/data layer:** Firebase (Firestore + Auth + Storage + Cloud Functions) — already decided
 - **Data mode:** Django's `/api/bootstrap` endpoint is the only operational data source. A disconnected browser shows empty state and local-camera controls; it does not fall back to fixtures.
-- **Live video sources:** `components/video/LocalCameraFeed.tsx` supports an explicitly enabled browser camera, a local video file, and a browser-playable HTTP(S) CCTV/IP URL. Frames are sent to Django for the combined person/face/ANPR overlay; raw RTSP/NVR sources still require a WebRTC/HLS relay.
+- **Local camera:** `components/video/LocalCameraFeed.tsx` requests the operator's browser camera only after an explicit click. The stream remains in that browser and is not sent to Django; RTSP/NVR sources still require a WebRTC/HLS relay.
 - **Backend API:** `frontend/lib/api/client.ts` centralizes requests for alerts, guards, cameras, shifts, system actions, offline sync, and blockchain verification.
 - **Blockchain UI:** incident dossiers call the Django verification endpoint and can request backend-side anchoring. No RPC URL, contract address, or private key is exposed to the browser.
 - **Icons:** lucide-react (already used in your screenshots' style)

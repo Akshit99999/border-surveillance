@@ -1,167 +1,238 @@
-# BorderLens — Border Surveillance Command Center
+# Border Surveillance
 
-This repository contains a Django API in `backend/` and a Next.js command-center UI in `frontend/`. The local API stores demo state in `backend/.localdata/`; that directory and all credentials/model weights are intentionally ignored by Git.
+Real-time border surveillance platform for ingesting IP camera feeds, running AI/computer-vision inference, and delivering structured alerts to a command-and-control dashboard.
 
-## Prerequisites
+## System architecture
 
-- Python 3.12 or newer. This project standardizes on Python 3.12+ for its Django environment; `backend/requirements-web.txt` installs Django 5.2.
-- Node.js with npm. Install the current LTS from [nodejs.org](https://nodejs.org/en/download).
-- A plain local filesystem path. Do not place the project in iCloud Drive Desktop/Documents on macOS or OneDrive Desktop/Documents on Windows. Use `/Users/<your-user>/dev/` or `C:\dev\` instead; cloud sync can cause SQLite's `unable to open database file` error.
-
-The checked-in setup files are `backend/requirements-ai.txt`, `backend/requirements-services.txt`, `backend/requirements-web.txt`, `backend/.env.example`, `frontend/package.json`, `frontend/package-lock.json`, and `frontend/.env.example`.
-
-## macOS setup (zsh or bash)
-
-Install Homebrew from [brew.sh](https://brew.sh/) if it is not already installed, then install Python 3.12 and Node.js:
-
-```bash
-brew install python@3.12 node
+```text
+IP Cameras (RTSP/ONVIF)
+        |
+        v
+Video ingestion -> AI/CV inference -> Event and rule layer -> Firebase
+                                                        |
+                                                        v
+                                     Web dashboard / command and control
 ```
 
-Use Homebrew's Python 3.12 binary explicitly:
+The source technology stack is documented in `IBVAP_Tech_Stack.docx`. That document is intentionally excluded from version control; the stack summary below captures the implementation decisions needed by the repository.
 
-```bash
-cd ~/dev/border-surveillance-main/backend
-PYTHON_BIN="$(brew --prefix python@3.12)/bin/python3.12"
-"$PYTHON_BIN" --version
-"$PYTHON_BIN" -m venv venv
-source venv/bin/activate
-python -m pip install --upgrade pip
-for requirements_file in requirements-*.txt; do
-  python -m pip install -r "$requirements_file"
-done
-cp .env.example .env
-python manage.py check
-python manage.py migrate
-python manage.py seed_demo
-python manage.py runserver 127.0.0.1:8000
+See [hardware-and-deployment.md](hardware-and-deployment.md) for the local, cloud, and hybrid deployment recommendation, hardware profiles, offline behavior, and data placement plan.
+
+See [blockchain-setup.md](blockchain-setup.md) for the step-by-step Anvil/Sepolia deployment, Django environment configuration, synthetic verification test, and production security checklist.
+
+The Live Cameras page includes an explicit **Enable Local Camera** control for testing a webcam in the browser. The video preview stays in the browser, while compressed sample frames are sent to Django's local AI endpoint and returned as detection metadata. Real CCTV/RTSP sources still require a configured WebRTC/HLS relay and a Django camera record.
+
+The Next.js command center is integrated under `frontend/`. It hydrates from Django only. When the API is unavailable, the UI shows an explicit disconnected/empty state rather than inventing alerts, cameras, guards, or evidence.
+
+The frontend and backend use the environment contract in `backend/.env.example` and `frontend/.env.example`. Firebase Admin credentials and blockchain signer values stay on the Django server; only the public API base URL belongs in the frontend environment.
+
+## Technology stack
+
+| Layer | Technology | Purpose |
+| --- | --- | --- |
+| Video ingestion | Python, OpenCV, RTSP/ONVIF | Capture streams and prepare frames for inference |
+| Frame queueing | Redis Streams | Decouple ingestion from inference |
+| Live video relay | Go2RTC or MediaMTX | Relay RTSP streams to the dashboard over WebRTC |
+| AI/CV | Python, PyTorch, YOLOv8/v9, ByteTrack/DeepSORT | Detect and track people and vehicles |
+| Specialized CV | RetinaFace/MTCNN, ArcFace, EasyOCR/PaddleOCR | Face matching and ANPR |
+| Inference optimization | ONNX Runtime, TensorRT, NVIDIA Triton | Serve and optimize models on approved local or central servers |
+| Backend API | Django, Django REST Framework, Django Channels | Camera configuration, orchestration, REST APIs, and live alert delivery |
+| Event bus | Kafka or RabbitMQ | Move detection events between inference services and the backend |
+| Data and media | Firebase Firestore, Storage, FCM, Auth, Cloud Functions | Persist alerts, media, users, notifications, and serverless triggers |
+| Evidence accountability | Smart contracts, blockchain | Maintain tamper-evident evidence custody and AI-model provenance |
+| Frontend | React/Next.js, TypeScript | Command-and-control dashboard |
+| Maps and video | Leaflet or Mapbox GL, WebRTC | Sector/fence visualization and live video wall |
+| Deployment | Vercel, GitHub Actions | Web application deployment and CI/CD |
+| Monitoring | Prometheus, Grafana, Firebase Crashlytics/Performance | Infrastructure and dashboard health |
+
+## Repository structure
+
+```text
+.
+├── backend/
+│   ├── manage.py
+│   ├── config/
+│   └── app/
+│   │   ├── api/
+│   │   │   └── routes/
+│   │   ├── core/
+│   │   ├── db/
+│   │   │   └── repositories/
+│   │   ├── models/
+│   │   ├── schemas/
+│   │   ├── services/
+│   │   │   ├── alerts/
+│   │   │   ├── cameras/
+│   │   │   ├── notifications/
+│   │   │   └── rules/
+│   │   └── workers/
+│   └── tests/
+└── frontend/
+    ├── app/
+    │   ├── auth/
+    │   ├── dashboard/
+    │   ├── cameras/
+    │   ├── alerts/
+    │   ├── map/
+    │   └── settings/
+    ├── components/
+    │   ├── dashboard/
+    │   ├── maps/
+    │   ├── video/
+    │   └── ui/
+    ├── hooks/
+    ├── lib/
+    ├── types/
+    ├── public/
+    └── tests/
 ```
 
-In a new Terminal window, start the frontend:
+The directories are scaffolded with `.gitkeep` files so the structure is preserved until implementation files are added.
 
-```bash
-cd ~/dev/border-surveillance-main/frontend
-cp .env.example .env.local
-npm ci
-npm run build
-npm run dev
+## Backend structure
+
+The backend is a thin orchestration layer between the AI services and Firebase. It should remain stateless where possible, with Firestore as the structured event store and Cloud Storage as the media store.
+
+```text
+backend/
+├── manage.py                    # Django management entry point
+├── config/                      # Django project configuration
+│   ├── settings.py              # Environment, apps, middleware, and Firebase settings
+│   ├── urls.py                  # Root URL routing
+│   ├── asgi.py                  # ASGI entry point for Channels/WebSockets
+│   └── wsgi.py                  # WSGI entry point for deployment
+├── app/
+│   ├── apps.py                    # Django application configuration
+│   ├── api/
+│   │   ├── deps.py                # Shared dependencies and auth context
+│   │   └── routes/
+│   │       ├── alerts.py          # Alert list, acknowledgement, and status
+│   │       ├── cameras.py         # Camera configuration and health
+│   │       ├── detections.py      # Structured detection/event endpoints
+│   │       ├── sectors.py         # Border sectors, BOPs, and virtual fences
+│   │       └── watchlist.py       # Face and plate watchlist management
+│   ├── core/
+│   │   ├── config.py              # Environment and service configuration
+│   │   ├── logging.py             # Structured application logging
+│   │   └── security.py            # Firebase token validation and roles
+│   ├── db/
+│   │   ├── firebase.py            # Firestore, Storage, and FCM clients
+│   │   └── repositories/          # Persistence access by aggregate
+│   ├── models/                    # Internal domain models
+│   ├── schemas/                   # API request/response schemas
+│   ├── services/
+│   │   ├── alerts/                # Alert creation and deduplication
+│   │   ├── cameras/               # Camera registration and stream metadata
+│   │   ├── notifications/         # FCM and external command-center delivery
+│   │   └── rules/                 # Intrusion and suspicious-activity rules
+│   └── workers/
+│       ├── event_consumer.py      # Kafka/RabbitMQ detection consumer
+│       └── media_processor.py     # Snapshot and clip processing
+└── tests/
 ```
 
-Open <http://localhost:3000>. The Django API is available at <http://127.0.0.1:8000/api/health>.
+### Backend event flow
 
-On Apple Silicon, `AI_DEVICE=cuda` or `AI_DEVICE=auto` resolves to CUDA when available, then Apple MPS, then CPU. Use `AI_DEVICE=cpu` when a model does not support MPS.
+1. Ingestion services capture RTSP/ONVIF streams and publish frames or detections through Redis Streams.
+2. AI inference services produce tracked objects and detection events.
+3. The event consumer sends detection events to the rule engine.
+4. The rule engine debounces repeated detections and creates alert-worthy events.
+5. The backend persists structured alerts in `/alerts/{alertId}`, stores snapshots/clips in Firebase Storage, and sends FCM notifications when required.
+6. Django REST Framework endpoints serve configuration and history; Django Channels provides live alert updates over WebSockets.
 
-## Windows setup (PowerShell)
+Raw per-frame bounding boxes should be batched to Cloud Storage or BigQuery rather than written directly to Firestore. Firestore should contain alert-worthy events, camera configuration, watchlists, users, and sector/BOP metadata.
 
-Install Python from [python.org](https://www.python.org/downloads/) or with [WinGet](https://learn.microsoft.com/en-us/windows/package-manager/winget/), and install Node.js with:
+## Frontend structure
+
+The frontend uses Next.js/React with TypeScript. Firestore real-time listeners drive alert and camera updates without polling, while WebRTC embeds the low-latency live video wall.
+
+| Directory | Responsibility |
+| --- | --- |
+| `frontend/app/` | Route-level pages for authentication, dashboard, cameras, alerts, map, and settings |
+| `frontend/components/dashboard/` | KPI cards, alert feeds, command-center panels, and operator controls |
+| `frontend/components/maps/` | BOP locations, sectors, tracked objects, and virtual-fence overlays |
+| `frontend/components/video/` | WebRTC player and multi-camera video wall |
+| `frontend/components/ui/` | Shared presentation components |
+| `frontend/hooks/` | Reusable Firestore, WebSocket, auth, and camera hooks |
+| `frontend/lib/` | Firebase client, API client, and authentication helpers |
+| `frontend/types/` | Shared TypeScript domain and API types |
+| `frontend/public/` | Static assets |
+| `frontend/tests/` | Unit, component, and end-to-end tests |
+
+## Firebase data model
+
+- `alerts/{alertId}`: alert type, camera ID, timestamp, location GeoPoint, confidence, status, and media URL.
+- Camera configuration, watchlist entries, users, sectors, and BOP metadata should use separate collections.
+- Use GeoPoint with a geospatial helper such as GeoFirestore for radius queries.
+- Use Firebase Authentication roles for Guard, Operator, Admin, and Command Center users.
+- Use Cloud Functions for media post-processing and forwarding critical alerts to external command-and-control systems.
+
+## Blockchain-backed accountability
+
+Blockchain is used only for records that must remain independently verifiable after an incident. Firebase remains the operational store for alerts, media, users, and dashboard data; the blockchain records proof of evidence handling and the AI model that produced a high-severity detection.
+
+### Evidence chain of custody
+
+When an alert creates or changes an evidence item, Django hashes the media file and appends a custody event to the smart contract. Each event records the alert/evidence reference, action, timestamp, user role, and evidence hash. The supported actions are `created`, `viewed`, `downloaded`, `assigned`, and `resolved`.
+
+This gives commanders an auditable sequence of who handled the evidence and when. Altering a Firebase alert, replacing a stored image, or removing a local log cannot rewrite the on-chain custody history; a recalculated file hash will no longer match the recorded evidence hash.
+
+### AI model provenance
+
+For every high-severity alert, Django also records the inference model identifier, model version, model artifact hash, confidence score, and decision threshold. This links the incident to the exact approved model build that generated it, so reviewers can verify the origin of a detection and distinguish an authorised deployment from an untracked or altered model.
+
+```text
+AI inference -> high-severity alert -> Django evidence service
+                                      |               |
+                                      |               +-> record model provenance on-chain
+                                      v
+                          store media + alert in Firebase
+                                      |
+                                      +-> append custody actions on-chain
+```
+
+Media files, personally identifiable data, and full user identities remain off-chain. Firebase stores the protected operational data; the smart contract stores only hashes, action metadata, role information, model provenance, and transaction IDs. The Firebase alert links to its blockchain transaction IDs so the dashboard can show both the live incident and its verification trail.
+
+## Deployment
+
+- Vercel: deploy the Next.js command-and-control dashboard and web-facing application.
+- Django API: expose the production API through the configured backend URL consumed by the Vercel deployment.
+- Remote BOPs: use the existing CCTV/NVR for recording and an approved local border-post server for AI inference where offline detection is required; otherwise synchronize recorded footage when uplink is restored.
+- CI/CD: use GitHub Actions for checks, builds, and Vercel deployment integration.
+- Monitoring: use Prometheus and Grafana for camera/node health.
+
+## Recommended build order
+
+1. Video ingestion and single-camera human/vehicle detection.
+2. Firestore event pipeline and dashboard alert feed.
+3. ANPR and face-detection modules.
+4. Virtual fences, night-mode detection, and suspicious-activity detection.
+5. Edge deployment and ONNX/TensorRT optimization.
+
+## Run the integrated command center locally
 
 ```powershell
-winget install OpenJS.NodeJS.LTS
+python -m venv .venv
+.\.venv\Scripts\pip install -r backend\requirements-web.txt
+.\.venv\Scripts\pip install -r backend\requirements-services.txt
+\.venv\Scripts\python backend\manage.py runserver 127.0.0.1:8000
 ```
 
-Keep the project under a plain path such as `C:\dev\border-surveillance-main`, then run:
+In a second terminal:
 
 ```powershell
-cd C:\dev\border-surveillance-main\backend
-py -3.12 --version
-py -3.12 -m venv venv
-.\venv\Scripts\Activate.ps1
-python -m pip install --upgrade pip
-Get-ChildItem requirements-*.txt | Sort-Object Name | ForEach-Object { python -m pip install -r $_.FullName }
-Copy-Item .env.example .env
-python manage.py check
-python manage.py migrate
-python manage.py seed_demo
-python manage.py runserver 127.0.0.1:8000
+npm ci --prefix frontend
+npm run dev --prefix frontend
 ```
 
-In a new PowerShell window, start the frontend:
+The frontend reads `frontend/.env.example`. For blockchain verification and anchoring, copy the backend placeholders from `backend/.env.example` into the Django deployment secret manager. The wallet private key is never sent to Vercel or the browser.
 
-```powershell
-cd C:\dev\border-surveillance-main\frontend
-Copy-Item .env.example .env.local
-npm ci
-npm run build
-npm run dev
-```
+### Backend API surface
 
-Open <http://localhost:3000>. If PowerShell blocks activation, run `Set-ExecutionPolicy -Scope CurrentUser RemoteSigned` once and activate again with `.\venv\Scripts\Activate.ps1`.
-
-## Verification commands
-
-From the repository root, the backend test suite can be run without pytest:
-
-```bash
-backend/venv/bin/python -m unittest discover -s backend/tests -t . -v
-```
-
-The equivalent PowerShell command is:
-
-```powershell
-backend\venv\Scripts\python.exe -m unittest discover -s backend\tests -t . -v
-```
-
-The production frontend check is `npm run build` from `frontend/`. It performs TypeScript checking, linting, and static page generation.
-
-## Local configuration
-
-Copy the examples before editing values:
-
-- `backend/.env.example` contains Django, CORS, Firebase, blockchain, and AI settings. Keep Firebase credentials and the blockchain signer private key on the backend only.
-- `frontend/.env.example` contains only `NEXT_PUBLIC_API_BASE_URL`. The browser should never receive backend secrets.
-
-The local AI endpoint accepts JPEG frames at `POST /api/inference/frame`. Model weights are runtime assets, not repository files. Set `PERSON_MODEL_PATH`, `FACE_MODEL_PATH`, `ANPR_VEHICLE_MODEL_PATH`, and `ANPR_PLATE_MODEL_PATH` to approved local weights when using the inference endpoint. If `FACE_MODEL_PATH` is empty or missing, the local preview uses OpenCV's bundled frontal-face cascade so face boxes still appear; configure an approved YOLO face weight when higher accuracy is required. If `ANPR_PLATE_MODEL_PATH` is missing, ANPR keeps the general vehicle model and runs OCR over detected vehicle regions as a fallback.
-
-The `/live-feed` page has a `VIDEO SOURCE` control with three options:
-
-- `DEVICE CAMERA` requests a camera after the operator clicks enable.
-- `VIDEO FILE` accepts a video from the Mac/PC and analyzes it frame by frame in the browser.
-- `CCTV / IP URL` accepts a browser-playable `http://` or `https://` video endpoint. The camera must allow browser CORS access when the Django API and camera are on different origins.
-
-Raw `rtsp://`/`rtsps://` addresses cannot be decoded by a normal browser video element. Put an HLS/WebRTC relay such as MediaMTX or go2rtc in front of the camera, then enter the relay's HTTP(S) URL in the live-feed control.
-
-The live pipeline supports:
-
-- `AI_FACE_FRAME_INTERVAL=3`: run face detection every third pipeline frame.
-- `AI_ANPR_FRAME_INTERVAL=5`: run plate detection every fifth pipeline frame.
-- `AI_INFERENCE_MAX_DIM=960`: resize only oversized model inputs and scale boxes back to the original frame coordinates. The larger default preserves more detail for small plates.
-
-## Troubleshooting
-
-### Django starts with the wrong Python version
-
-Do not use an older system `python3` or an existing venv created from it. Confirm `python --version` is 3.12+, remove the old `backend/venv` and recreate it with Homebrew's `python@3.12` binary on macOS or `py -3.12` on Windows. Reinstall all three `requirements-*.txt` files.
-
-### `sqlite3.OperationalError: unable to open database file`
-
-The database is `backend/.localdata/django.sqlite3`. The backend now creates `.localdata` during Django startup, but cloud-synced or unusual paths can still interfere with SQLite file locking. Move the project to `/Users/<your-user>/dev/border-surveillance-main` or `C:\dev\border-surveillance-main`, recreate the venv there, and rerun `migrate`.
-
-### `Unknown command: 'seed_demo'`
-
-Run the commands from `backend/` with the project venv active. The repository includes `backend/app/management/commands/seed_demo.py`; `python manage.py seed_demo` resets local JSON state and writes a small deterministic demo dataset.
-
-### `next: command not found`
-
-Run `npm ci` from `frontend/` before `npm run build` or `npm run dev`. Use the repository's `frontend/package-lock.json` so the installed versions match the checked-in dependency graph.
-
-### AI inference returns 503 or cannot load a model
-
-The API does not download model weights. Install `backend/requirements-ai.txt`, configure the person and ANPR model paths in `backend/.env`, and verify the files exist. Face detection falls back to OpenCV when `FACE_MODEL_PATH` is absent; the live-feed module card will identify that fallback. ANPR falls back to OCR over detected vehicle crops when `ANPR_PLATE_MODEL_PATH` is absent, but a dedicated plate detector is more accurate. The live-feed module card identifies which path is active.
-
-### CCTV URL does not play
-
-The browser only accepts video formats and protocols supported by that browser. Try an H.264 MP4 or browser-compatible HLS URL first. RTSP needs an HLS/WebRTC relay, and a remote camera must return the appropriate CORS header; otherwise the preview cannot draw frames for AI analysis.
-
-### `check --deploy` reports security warnings
-
-`python manage.py check` is the local readiness check. `check --deploy` also warns when production-only settings are not configured: clickjacking middleware, HSTS, HTTPS redirects, a strong secret key, and secure CSRF cookies. Configure those in the deployment environment before exposing Django publicly; the local demo intentionally runs over HTTP.
-
-### npm reports audit warnings
-
-The current lockfile builds successfully, but `npm audit` reports a high PostCSS issue and a critical Next.js issue for the pinned Next.js 14.2.15 dependency. Resolving them requires a major Next.js upgrade according to npm, so test that upgrade separately before using this demo in production.
-
-## API and frontend routes
-
-The main backend routes are `/api/health`, `/api/bootstrap`, `/api/alerts`, `/api/activity`, `/api/guards/<id>`, `/api/cameras/<id>`, `/api/shifts/<id>`, `/api/sync`, `/api/reset`, and `/api/inference/frame`.
-
-The frontend pages are `/`, `/login`, `/dashboard`, `/live-feed`, `/alerts`, `/map`, `/guard-duty`, `/camera-management`, and `/admin`. The legacy `/logistics`, `/intelligence`, and guard-duty detail routes are present redirect pages, so navigation does not point at missing pages.
+- `GET /api/bootstrap` — dashboard data, system state, and blockchain status.
+- `POST /api/alerts/{id}/action` — acknowledge or escalate an alert.
+- `POST /api/alerts/{id}/anchor` — backend-signed EvidenceRegistry transaction.
+- `GET /api/alerts/{id}/verification` — compare the evidence digest with the contract.
+- `PATCH /api/cameras/{id}`, `PATCH /api/guards/{id}`, and `PATCH /api/shifts/{id}` — persist console configuration changes.
+- `POST /api/sync` — idempotently flush alerts and activity captured during an outage.
+- `POST /api/inference/frame` — run the configured local YOLO model on one JPEG frame and return detection boxes.
