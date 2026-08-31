@@ -50,49 +50,51 @@ export function BlockchainEvidenceCard({ alert }: { alert: Alert }) {
   const isVerified = verification?.verified || status === "anchored";
 
   return (
-    <div className="p-3 bg-slate-950 border border-cyan-900/70 rounded space-y-2.5">
-      <div className="flex items-center justify-between gap-3">
+    <div className="p-4 bg-[#1c1b1b] border border-[#454843] rounded-none space-y-3 font-mono">
+      <div className="flex items-center justify-between gap-3 border-b border-[#454843] pb-2.5">
         <div className="flex items-center gap-2">
-          <ShieldCheck className="w-4 h-4 text-cyan-400" />
-          <span className="text-[10px] text-cyan-300 font-black uppercase tracking-wider">
-            Evidence Registry / Blockchain Accountability
+          <ShieldCheck className="w-4 h-4 text-[#F5F5F0]" />
+          <span className="text-[11px] text-[#F5F5F0] font-bold uppercase tracking-widest">
+            EVIDENCE_REGISTRY // CRYPTO_ANCHOR
           </span>
         </div>
         <span
-          className={`text-[10px] px-2 py-1 rounded border font-black uppercase ${
+          className={`text-[10px] px-2.5 py-1 rounded-none border font-bold uppercase tracking-wider ${
             isVerified
-              ? "text-emerald-300 bg-emerald-950 border-emerald-700"
-              : "text-amber-300 bg-amber-950 border-amber-700"
+              ? "text-[#121212] bg-[#F5F5F0] border-[#F5F5F0]"
+              : "text-[#e5e2e1] bg-[#2a2a2a] border-[#8f918c]"
           }`}
         >
-          {isVerified ? "VERIFIED" : status.replaceAll("_", " ")}
+          {isVerified ? "VERIFIED_ON_CHAIN" : status.replaceAll("_", " ")}
         </span>
       </div>
 
-      <p className="text-[11px] text-slate-400 font-sans">
-        Django keeps the signer private. The chain stores the incident reference and evidence hash; the image stays in private evidence storage.
+      <p className="text-[11px] text-[#c5c7c1] font-sans leading-relaxed">
+        Cryptographic hashing at capture. Immutable incident reference anchored on-chain while raw media remains in private evidence storage.
       </p>
 
       {(verification?.evidenceSha256 || alert.evidenceSha256) && (
-        <div className="text-[10px] text-slate-500 break-all">
-          EVIDENCE SHA-256: <span className="text-cyan-300">{verification?.evidenceSha256 || alert.evidenceSha256}</span>
+        <div className="p-2.5 bg-[#131313] border-l-2 border-[#F5F5F0] text-[11px] text-[#8f918c] break-all">
+          <span className="text-[#c5c7c1] block text-[10px] uppercase font-bold mb-0.5">CRYPTO_HASH (SHA-256):</span>
+          <span className="text-[#F5F5F0]">{verification?.evidenceSha256 || alert.evidenceSha256}</span>
         </div>
       )}
 
       {verification?.transactionHash && (
-        <div className="flex items-center gap-1.5 text-[10px] text-slate-500 break-all">
-          <Link2 className="w-3 h-3 shrink-0" /> TX: <span className="text-emerald-300">{verification.transactionHash}</span>
+        <div className="flex items-center gap-1.5 text-[11px] text-[#8f918c] break-all bg-[#131313] p-2 border border-[#454843]">
+          <Link2 className="w-3.5 h-3.5 text-[#F5F5F0] shrink-0" />
+          <span>TX_HASH:</span> <span className="text-[#F5F5F0] font-bold">{verification.transactionHash}</span>
         </div>
       )}
 
-      {verification?.message && <p className="text-[11px] text-slate-300">{verification.message}</p>}
-      {error && <p className="text-[11px] text-rose-300">{error}</p>}
+      {verification?.message && <p className="text-[11px] text-[#e5e2e1]">{verification.message}</p>}
+      {error && <p className="text-[11px] text-[#ffb4ab]">{error}</p>}
 
       <div className="flex flex-wrap gap-2 pt-1">
         <button
           onClick={verify}
           disabled={busy}
-          className="px-3 py-2 bg-cyan-950 hover:bg-cyan-900 disabled:opacity-50 text-cyan-200 border border-cyan-600 rounded text-[10px] font-black flex items-center gap-1.5"
+          className="px-4 py-2 bg-[#F5F5F0] hover:bg-white text-[#121212] border border-[#F5F5F0] rounded-none text-xs font-bold uppercase tracking-wider flex items-center gap-2 transition-opacity"
         >
           <RefreshCw className={`w-3.5 h-3.5 ${busy ? "animate-spin" : ""}`} />
           VERIFY HASH
@@ -101,10 +103,10 @@ export function BlockchainEvidenceCard({ alert }: { alert: Alert }) {
           <button
             onClick={anchor}
             disabled={busy}
-            className="px-3 py-2 bg-amber-950 hover:bg-amber-900 disabled:opacity-50 text-amber-200 border border-amber-600 rounded text-[10px] font-black flex items-center gap-1.5"
+            className="px-4 py-2 bg-transparent hover:bg-[#2a2a2a] text-[#F5F5F0] border border-[#8f918c] rounded-none text-xs font-bold uppercase tracking-wider flex items-center gap-2 transition-colors"
           >
             <UploadCloud className="w-3.5 h-3.5" />
-            ANCHOR EVIDENCE
+            ANCHOR TO CHAIN
           </button>
         )}
       </div>

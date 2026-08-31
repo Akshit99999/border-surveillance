@@ -2,21 +2,13 @@
 
 import React, { useState } from "react";
 import {
-  Video,
   Grid2X2,
   Grid3X3,
   Maximize,
-  Filter,
-  Eye,
-  Crosshair,
-  WifiOff,
-  SlidersHorizontal,
-  Layers,
 } from "lucide-react";
 import { useIBVAPStore } from "@/lib/store/useIBVAPStore";
 import { CameraVideoFeed } from "@/components/video/CameraVideoFeed";
 import { LocalCameraFeed } from "@/components/video/LocalCameraFeed";
-import { TacticalCard } from "@/components/shared/TacticalCard";
 import { StatusPill } from "@/components/shared/StatusPill";
 import { tacticalSound } from "@/lib/sound";
 
@@ -51,24 +43,25 @@ export default function LiveFeedPage() {
   const signalLostCameraCount = cameras.filter((camera) => camera.status === "signal_lost").length;
 
   return (
-    <div className="space-y-4 font-mono">
+    <div className="space-y-6 font-mono">
+      {/* Real Local Camera / Screen Preview */}
       <LocalCameraFeed className="w-full" />
 
-      {/* Top Controls Toolbar */}
-      <div className="bg-slate-900/90 border border-slate-800 rounded p-3 flex flex-wrap items-center justify-between gap-3 text-xs shadow-xl">
-        {/* Left: Sector & Type Filter */}
-        <div className="flex flex-wrap items-center gap-3">
+      {/* Top Matrix Controls Toolbar */}
+      <div className="bg-[#1c1b1b] border border-[#454843] rounded-none p-3.5 flex flex-wrap items-center justify-between gap-4 text-xs">
+        {/* Filters */}
+        <div className="flex flex-wrap items-center gap-4">
           <div className="flex items-center gap-2">
-            <span className="text-[10px] text-slate-400 font-bold uppercase">SECTOR:</span>
+            <span className="text-[10px] text-[#8f918c] font-bold uppercase tracking-widest">SECTOR:</span>
             <select
               value={selectedSector}
               onChange={(e) => {
                 tacticalSound.playClick();
                 setSelectedSector(e.target.value);
               }}
-              className="bg-slate-950 border border-slate-700 rounded px-2 py-1 text-xs text-cyan-300 focus:outline-none focus:border-cyan-500 font-mono"
+              className="bg-[#131313] border border-[#454843] rounded-none px-2.5 py-1.5 text-xs text-[#F5F5F0] focus:border-[#F5F5F0] font-mono"
             >
-              <option value="ALL">ALL SECTORS ({cameras.length} CONFIGURED)</option>
+              <option value="ALL">ALL SECTORS ({cameras.length} CAMERAS)</option>
               {sectors.map((s) => (
                 <option key={s.id} value={s.code}>
                   {s.code}: {s.name}
@@ -78,78 +71,70 @@ export default function LiveFeedPage() {
           </div>
 
           <div className="flex items-center gap-2">
-            <span className="text-[10px] text-slate-400 font-bold uppercase">OPTICS:</span>
+            <span className="text-[10px] text-[#8f918c] font-bold uppercase tracking-widest">OPTICS:</span>
             <select
               value={selectedCameraType}
               onChange={(e) => {
                 tacticalSound.playClick();
                 setSelectedCameraType(e.target.value);
               }}
-              className="bg-slate-950 border border-slate-700 rounded px-2 py-1 text-xs text-cyan-300 focus:outline-none focus:border-cyan-500 font-mono"
+              className="bg-[#131313] border border-[#454843] rounded-none px-2.5 py-1.5 text-xs text-[#F5F5F0] focus:border-[#F5F5F0] font-mono"
             >
               <option value="ALL">ALL SENSOR TYPES</option>
-              <option value="ptz">PTZ CAMERAS</option>
+              <option value="ptz">PTZ OPTICAL</option>
               <option value="thermal">THERMAL INFRARED</option>
               <option value="fixed">FIXED OPTICAL</option>
             </select>
           </div>
         </div>
 
-        {/* Right: Layout Switchers */}
-        <div className="flex items-center gap-2">
-          <span className="text-[10px] text-slate-400 font-bold uppercase hidden sm:inline">
-            LAYOUT MATRIX:
+        {/* Layout Mode Switchers */}
+        <div className="flex items-center gap-1.5">
+          <span className="text-[10px] text-[#8f918c] font-bold uppercase tracking-widest mr-1 hidden sm:inline">
+            LAYOUT:
           </span>
 
           <button
             onClick={() => handleLayoutChange("2x2")}
-            className={`px-2.5 py-1.5 rounded border text-xs flex items-center gap-1.5 transition-colors ${
+            className={`px-3 py-1.5 rounded-none border text-xs font-bold uppercase tracking-wider flex items-center gap-1.5 transition-colors ${
               layout === "2x2"
-                ? "bg-cyan-950 text-cyan-300 border-cyan-500 font-bold"
-                : "bg-slate-950 text-slate-400 border-slate-800 hover:text-slate-200"
+                ? "bg-[#F5F5F0] text-[#121212] border-[#F5F5F0]"
+                : "bg-[#131313] text-[#8f918c] border-[#454843] hover:text-[#F5F5F0]"
             }`}
           >
-            <Grid2X2 className="w-3.5 h-3.5 text-cyan-400" />
-            <span>2x2 GRID</span>
+            <Grid2X2 className="w-3.5 h-3.5" />
+            <span>2x2</span>
           </button>
 
           <button
             onClick={() => handleLayoutChange("3x2")}
-            className={`px-2.5 py-1.5 rounded border text-xs flex items-center gap-1.5 transition-colors ${
+            className={`px-3 py-1.5 rounded-none border text-xs font-bold uppercase tracking-wider flex items-center gap-1.5 transition-colors ${
               layout === "3x2"
-                ? "bg-cyan-950 text-cyan-300 border-cyan-500 font-bold"
-                : "bg-slate-950 text-slate-400 border-slate-800 hover:text-slate-200"
+                ? "bg-[#F5F5F0] text-[#121212] border-[#F5F5F0]"
+                : "bg-[#131313] text-[#8f918c] border-[#454843] hover:text-[#F5F5F0]"
             }`}
           >
-            <Grid3X3 className="w-3.5 h-3.5 text-cyan-400" />
-            <span>3x2 GRID</span>
+            <Grid3X3 className="w-3.5 h-3.5" />
+            <span>3x2</span>
           </button>
 
           <button
             onClick={() => handleLayoutChange("focus")}
-            className={`px-2.5 py-1.5 rounded border text-xs flex items-center gap-1.5 transition-colors ${
+            className={`px-3 py-1.5 rounded-none border text-xs font-bold uppercase tracking-wider flex items-center gap-1.5 transition-colors ${
               layout === "focus"
-                ? "bg-cyan-950 text-cyan-300 border-cyan-500 font-bold"
-                : "bg-slate-950 text-slate-400 border-slate-800 hover:text-slate-200"
+                ? "bg-[#F5F5F0] text-[#121212] border-[#F5F5F0]"
+                : "bg-[#131313] text-[#8f918c] border-[#454843] hover:text-[#F5F5F0]"
             }`}
           >
-            <Maximize className="w-3.5 h-3.5 text-cyan-400" />
-            <span>FOCUS + THUMBNAILS</span>
+            <Maximize className="w-3.5 h-3.5" />
+            <span>FOCUS</span>
           </button>
         </div>
       </div>
 
-      {cameras.length === 0 && (
-        <div className="p-6 bg-slate-900/70 border border-slate-800 rounded text-center text-xs text-slate-400">
-          No backend CCTV cameras are configured. The local device camera above is available for browser-side testing.
-        </div>
-      )}
-
-      {/* Main Video Feeds Layout */}
+      {/* Main Video Matrix */}
       {cameras.length > 0 && (layout === "focus" ? (
-        /* Focus Mode: 1 Large Feed + Sidebar Thumbnails */
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-4">
-          {/* Main Focus Viewport */}
           <div className="lg:col-span-3">
             {focusCamera && (
               <CameraVideoFeed
@@ -161,10 +146,9 @@ export default function LiveFeedPage() {
             )}
           </div>
 
-          {/* Thumbnail Carousel / Selector */}
-          <div className="space-y-3 max-h-[580px] overflow-y-auto pr-1">
-            <span className="text-[10px] text-slate-400 uppercase font-bold block">
-              SELECT ACTIVE STREAM ({filteredCameras.length})
+          <div className="space-y-2 max-h-[580px] overflow-y-auto pr-1">
+            <span className="text-[10px] text-[#8f918c] uppercase tracking-widest font-bold block mb-2">
+              STREAM SELECTOR ({filteredCameras.length})
             </span>
             {filteredCameras.map((cam) => {
               const isSelected = cam.id === focusCamera?.id;
@@ -175,26 +159,25 @@ export default function LiveFeedPage() {
                     tacticalSound.playClick();
                     setFocusCameraId(cam.id);
                   }}
-                  className={`p-2 bg-slate-900 border rounded cursor-pointer transition-all ${
+                  className={`p-3 border rounded-none cursor-pointer transition-colors ${
                     isSelected
-                      ? "border-cyan-400 shadow-[0_0_12px_rgba(6,182,212,0.2)] bg-cyan-950/30"
-                      : "border-slate-800 hover:border-slate-700"
+                      ? "border-[#F5F5F0] bg-[#1c1b1b]"
+                      : "border-[#454843] bg-[#131313] hover:bg-[#1c1b1b]"
                   }`}
                 >
                   <div className="flex items-center justify-between text-[11px] mb-1">
-                    <span className="font-bold text-slate-200 truncate max-w-[140px]">
+                    <span className="font-bold text-[#F5F5F0] truncate max-w-[140px]">
                       {cam.id}
                     </span>
                     <StatusPill type={cam.status} size="sm" />
                   </div>
-                  <p className="text-[10px] text-slate-400 truncate">{cam.name}</p>
+                  <p className="text-[10px] text-[#8f918c] truncate">{cam.name}</p>
                 </div>
               );
             })}
           </div>
         </div>
       ) : (
-        /* Grid Mode: 2x2 or 3x2 */
         <div
           className={`grid gap-4 ${
             layout === "2x2"
@@ -213,15 +196,20 @@ export default function LiveFeedPage() {
         </div>
       ))}
 
-      {/* Footer Telemetry Banner */}
-      <div className="p-3 bg-slate-900/60 border border-slate-800 rounded flex flex-wrap items-center justify-between text-[11px] text-slate-400">
-        <div className="flex items-center gap-3">
-          <span className="text-emerald-400 font-bold">{onlineCameraCount}/{cameras.length} CONFIGURED CAMERAS ONLINE</span>
-          {signalLostCameraCount > 0 && <><span>•</span><span className="text-rose-400 font-semibold">{signalLostCameraCount} SIGNAL LOST</span></>}
-          {cameras.length === 0 && <span className="text-amber-300">No backend CCTV cameras configured.</span>}
+      {cameras.length === 0 && (
+        <div className="p-8 bg-[#1c1b1b] border border-[#454843] text-center text-xs text-[#8f918c]">
+          No CCTV cameras configured. Use the local camera above to test real-time AI inference.
         </div>
-        <div className="flex items-center gap-2">
-          <span>AI OVERLAYS REQUIRE A CONNECTED VIDEO SOURCE</span>
+      )}
+
+      {/* Footer Telemetry */}
+      <div className="p-3 bg-[#131313] border border-[#454843] flex flex-wrap items-center justify-between text-[11px] text-[#8f918c]">
+        <div className="flex items-center gap-3">
+          <span className="text-[#F5F5F0] font-bold">{onlineCameraCount}/{cameras.length} CONFIGURED CAMERAS ONLINE</span>
+          {signalLostCameraCount > 0 && <><span>•</span><span className="text-[#ffb4ab] font-bold">{signalLostCameraCount} SIGNAL LOST</span></>}
+        </div>
+        <div>
+          <span>AI OVERLAYS REQUIRE ACTIVE VIDEO SOURCE</span>
         </div>
       </div>
     </div>

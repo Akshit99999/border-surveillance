@@ -7,6 +7,7 @@ import {
   CheckCircle2,
   FileVideo,
   Link2,
+  Monitor,
   RefreshCw,
   ShieldAlert,
   Upload,
@@ -21,6 +22,7 @@ interface LocalCameraFeedProps {
 }
 
 type CameraState = "idle" | "starting" | "live" | "error";
+type StreamSource = "camera" | "screen";
 type InferenceState = "idle" | "analyzing" | "ready" | "error";
 type SourceMode = "camera" | "file" | "network";
 
@@ -31,10 +33,10 @@ const canvasToBlob = (canvas: HTMLCanvasElement) =>
 
 const sourceButtonClass = (active: boolean) =>
   cn(
-    "inline-flex items-center justify-center gap-1.5 rounded-sm border px-2 py-1.5 text-[10px] font-bold uppercase tracking-wide transition-colors",
+    "inline-flex items-center justify-center gap-1.5 rounded-none border px-2.5 py-1.5 text-[10px] font-bold uppercase tracking-wider transition-colors font-mono",
     active
-      ? "border-cyan-500 bg-cyan-950 text-cyan-300"
-      : "border-slate-700 bg-slate-900 text-slate-400 hover:border-slate-500 hover:text-slate-200"
+      ? "border-[#F5F5F0] bg-[#F5F5F0] text-[#121212]"
+      : "border-[#454843] bg-[#1c1b1b] text-[#8f918c] hover:border-[#8f918c] hover:text-[#F5F5F0]"
   );
 
 export const LocalCameraFeed: React.FC<LocalCameraFeedProps> = ({ className }) => {
@@ -48,6 +50,7 @@ export const LocalCameraFeed: React.FC<LocalCameraFeedProps> = ({ className }) =
   const [fileName, setFileName] = useState("");
   const [sourceLabel, setSourceLabel] = useState("LOCAL DEVICE CAMERA");
   const [cameraState, setCameraState] = useState<CameraState>("idle");
+  const [activeSource, setActiveSource] = useState<StreamSource | null>(null);
   const [error, setError] = useState<string>("");
   const [devices, setDevices] = useState<MediaDeviceInfo[]>([]);
   const [selectedDeviceId, setSelectedDeviceId] = useState("");
@@ -84,6 +87,7 @@ export const LocalCameraFeed: React.FC<LocalCameraFeedProps> = ({ className }) =
   const clearVideoSource = useCallback(() => {
     stopStream();
     releaseObjectUrl();
+    setActiveSource(null);
     setActiveSourceUrl("");
     setFileName("");
     if (videoRef.current) {
@@ -93,6 +97,25 @@ export const LocalCameraFeed: React.FC<LocalCameraFeedProps> = ({ className }) =
     }
     resetAnalysis();
   }, [releaseObjectUrl, resetAnalysis, stopStream]);
+
+  const attachStream = useCallback((stream: MediaStream, source: StreamSource) => {
+    streamRef.current = stream;
+    setActiveSource(source);
+    if (videoRef.current) videoRef.current.srcObject = stream;
+    setCameraState("live");
+
+    const track = stream.getVideoTracks()[0];
+    if (track) {
+      track.onended = () => {
+        if (streamRef.current !== stream) return;
+        streamRef.current = null;
+        if (videoRef.current) videoRef.current.srcObject = null;
+        setActiveSource(null);
+        setCameraState("idle");
+        setError(source === "screen" ? "Screen sharing ended." : "The camera stream ended.");
+      };
+    }
+  }, []);
 
   const listDevices = useCallback(async () => {
     if (!navigator.mediaDevices?.enumerateDevices) return;
@@ -116,18 +139,14 @@ export const LocalCameraFeed: React.FC<LocalCameraFeedProps> = ({ className }) =
       setCameraState("starting");
       setError("");
       clearVideoSource();
+      setActiveSource("camera");
 
       try {
         const stream = await navigator.mediaDevices.getUserMedia({
           video: deviceId ? { deviceId: { exact: deviceId } } : { facingMode: "user" },
           audio: false,
         });
-        streamRef.current = stream;
-        if (videoRef.current) {
-          videoRef.current.srcObject = stream;
-          await videoRef.current.play().catch(() => undefined);
-        }
-        setCameraState("live");
+        attachStream(stream, "camera");
         await listDevices();
       } catch (cameraError) {
         const errorName = cameraError instanceof DOMException ? cameraError.name : "";
@@ -138,10 +157,11 @@ export const LocalCameraFeed: React.FC<LocalCameraFeedProps> = ({ className }) =
             ? "No camera device is available on this machine."
             : "The local camera could not be opened. Check that it is not in use by another app."
         );
+        setActiveSource(null);
         setCameraState("error");
       }
     },
-    [clearVideoSource, listDevices]
+    [attachStream, clearVideoSource, listDevices]
   );
 
   const chooseSourceMode = useCallback(
@@ -202,6 +222,38 @@ export const LocalCameraFeed: React.FC<LocalCameraFeedProps> = ({ className }) =
       setCameraState("error");
     }
   }, [clearVideoSource, networkUrl]);
+
+  const startScreenShare = useCallback(async () => {
+    if (!navigator.mediaDevices?.getDisplayMedia) {
+      setError("This browser does not support laptop screen sharing.");
+      setCameraState("error");
+      return;
+    }
+
+    clearVideoSource();
+    setSourceMode("camera");
+    setSourceLabel("SCREEN TEST SOURCE");
+    setCameraState("starting");
+    setActiveSource("screen");
+    setError("");
+
+    try {
+      const stream = await navigator.mediaDevices.getDisplayMedia({
+        video: { frameRate: { ideal: 15, max: 30 } },
+        audio: false,
+      });
+      attachStream(stream, "screen");
+    } catch (screenError) {
+      const errorName = screenError instanceof DOMException ? screenError.name : "";
+      setError(
+        errorName === "NotAllowedError"
+          ? "Screen sharing was cancelled or denied. Choose a window or tab and try again."
+          : "The laptop screen could not be shared."
+      );
+      setActiveSource(null);
+      setCameraState("error");
+    }
+  }, [attachStream, clearVideoSource]);
 
   useEffect(() => {
     void listDevices();
@@ -311,23 +363,26 @@ export const LocalCameraFeed: React.FC<LocalCameraFeedProps> = ({ className }) =
   return (
     <section
       className={cn(
-        "relative bg-slate-950 border border-cyan-900/70 rounded-sm overflow-hidden flex flex-col font-mono",
+        "relative bg-[#131313] border border-[#454843] rounded-none overflow-hidden flex flex-col font-mono",
         className
       )}
     >
-      <div className="absolute top-0 inset-x-0 z-10 bg-gradient-to-b from-black/90 to-transparent p-3 flex items-center justify-between text-[11px] pointer-events-none">
+      <div className="absolute top-0 inset-x-0 z-10 bg-[#131313]/90 border-b border-[#454843]/60 p-3 flex items-center justify-between text-[11px] pointer-events-none">
         <div className="flex items-center gap-2 min-w-0">
-          <span className={cn("w-2 h-2 rounded-full shrink-0", isLive ? "bg-emerald-400 animate-pulse" : "bg-slate-500")} />
-          <span className="font-bold tracking-wider text-cyan-300 truncate">{sourceLabel}</span>
+          <span className={cn("w-2 h-2 rounded-full shrink-0", isLive ? "bg-[#F5F5F0] animate-pulse" : "bg-[#8f918c]")} />
+          <span className="font-bold tracking-widest text-[#F5F5F0] truncate uppercase">
+            {activeSource === "screen" ? "SCREEN TEST SOURCE" : sourceLabel}
+          </span>
         </div>
-        <span className={cn("text-[10px] font-bold", isLive ? "text-emerald-400" : "text-slate-400")}>
-          {isLive ? "LIVE" : cameraState === "starting" ? "OPENING" : cameraState === "error" ? "UNAVAILABLE" : "READY"}
+        <span className={cn("text-[10px] font-bold uppercase tracking-wider", isLive ? "text-[#F5F5F0]" : "text-[#8f918c]")}>
+          {isLive ? "LIVE // ACTIVE" : cameraState === "starting" ? "INITIALIZING" : cameraState === "error" ? "UNAVAILABLE" : "STANDBY"}
         </span>
       </div>
 
-      <div className="border-b border-slate-800 bg-slate-950/95 px-3 pt-3 pb-2.5 space-y-2">
+      {/* Top Source Mode Selector */}
+      <div className="border-b border-[#454843] bg-[#1c1b1b] px-4 pt-3 pb-3 space-y-2.5">
         <div className="flex flex-wrap items-center gap-2">
-          <span className="text-[10px] text-cyan-300 font-bold uppercase tracking-wider mr-1">VIDEO SOURCE</span>
+          <span className="text-[10px] text-[#F5F5F0] font-bold uppercase tracking-widest mr-1">INPUT_SOURCE</span>
           <button type="button" className={sourceButtonClass(sourceMode === "camera")} onClick={() => chooseSourceMode("camera")}>
             <Camera className="w-3.5 h-3.5" /> DEVICE CAMERA
           </button>
@@ -335,7 +390,7 @@ export const LocalCameraFeed: React.FC<LocalCameraFeedProps> = ({ className }) =
             <FileVideo className="w-3.5 h-3.5" /> VIDEO FILE
           </button>
           <button type="button" className={sourceButtonClass(sourceMode === "network")} onClick={() => chooseSourceMode("network")}>
-            <Wifi className="w-3.5 h-3.5" /> CCTV / IP URL
+            <Wifi className="w-3.5 h-3.5" /> CCTV / IP STREAM
           </button>
         </div>
 
@@ -345,7 +400,7 @@ export const LocalCameraFeed: React.FC<LocalCameraFeedProps> = ({ className }) =
               <select
                 value={selectedDeviceId}
                 onChange={(event) => setSelectedDeviceId(event.target.value)}
-                className="min-w-0 flex-1 bg-slate-900 border border-slate-700 rounded px-2 py-1.5 text-[10px] text-cyan-300"
+                className="min-w-0 flex-1 bg-[#131313] border border-[#454843] rounded-none px-2.5 py-1.5 text-[11px] text-[#F5F5F0] font-mono"
                 aria-label="Select local camera"
               >
                 {devices.map((device, index) => (
@@ -362,13 +417,21 @@ export const LocalCameraFeed: React.FC<LocalCameraFeedProps> = ({ className }) =
             >
               {cameraState === "live" ? "RESTART CAMERA" : "ENABLE CAMERA"}
             </TacticalButton>
+            <TacticalButton
+              size="sm"
+              variant="secondary"
+              onClick={() => void startScreenShare()}
+              icon={<Monitor className="w-3.5 h-3.5" />}
+            >
+              TEST WITH SCREEN SHARE
+            </TacticalButton>
           </div>
         )}
 
         {sourceMode === "file" && (
           <div className="flex flex-wrap items-center gap-2">
-            <label className="inline-flex items-center gap-1.5 cursor-pointer rounded-sm border border-cyan-500/60 bg-cyan-950/60 px-2.5 py-1.5 text-[10px] font-bold text-cyan-300 uppercase">
-              <Upload className="w-3.5 h-3.5" /> CHOOSE VIDEO
+            <label className="inline-flex items-center gap-1.5 cursor-pointer rounded-none border border-[#F5F5F0] bg-[#F5F5F0] px-3 py-1.5 text-[10px] font-bold text-[#121212] uppercase tracking-wider">
+              <Upload className="w-3.5 h-3.5" /> SELECT VIDEO
               <input
                 type="file"
                 accept="video/*"
@@ -376,8 +439,8 @@ export const LocalCameraFeed: React.FC<LocalCameraFeedProps> = ({ className }) =
                 onChange={(event) => loadVideoFile(event.target.files?.[0])}
               />
             </label>
-            <span className="text-[10px] text-slate-400 truncate max-w-full">
-              {fileName || "MP4/H.264, WebM, and other browser-supported files"}
+            <span className="text-[10px] text-[#8f918c] truncate max-w-full">
+              {fileName || "MP4, WebM format supported"}
             </span>
           </div>
         )}
@@ -385,7 +448,7 @@ export const LocalCameraFeed: React.FC<LocalCameraFeedProps> = ({ className }) =
         {sourceMode === "network" && (
           <div className="flex flex-col sm:flex-row gap-2">
             <div className="flex items-center gap-2 flex-1 min-w-0">
-              <Link2 className="w-3.5 h-3.5 text-cyan-400 shrink-0" />
+              <Link2 className="w-3.5 h-3.5 text-[#8f918c] shrink-0" />
               <input
                 value={networkUrl}
                 onChange={(event) => setNetworkUrl(event.target.value)}
@@ -393,7 +456,7 @@ export const LocalCameraFeed: React.FC<LocalCameraFeedProps> = ({ className }) =
                   if (event.key === "Enter") connectNetwork();
                 }}
                 placeholder="http://192.168.1.50:8080/video"
-                className="w-full min-w-0 bg-slate-900 border border-slate-700 rounded px-2 py-1.5 text-[10px] text-slate-200 placeholder:text-slate-600 focus:outline-none focus:border-cyan-500"
+                className="w-full min-w-0 bg-[#131313] border border-[#454843] rounded-none px-3 py-1.5 text-[11px] text-[#F5F5F0] placeholder:text-[#8f918c]/60 focus:border-[#F5F5F0] font-mono"
                 aria-label="CCTV network stream URL"
               />
             </div>
@@ -402,15 +465,10 @@ export const LocalCameraFeed: React.FC<LocalCameraFeedProps> = ({ className }) =
             </TacticalButton>
           </div>
         )}
-
-        <p className="text-[9px] leading-relaxed text-slate-500">
-          {sourceMode === "network"
-            ? "Use a browser-playable HTTP(S) video/HLS endpoint. RTSP camera addresses need an HLS/WebRTC relay such as MediaMTX or go2rtc before they can be displayed here."
-            : "Frames are sent to Django for person tracking, face detection, and Indian ANPR. No video is saved by this preview."}
-        </p>
       </div>
 
-      <div className="relative aspect-video min-h-[220px] bg-black flex items-center justify-center overflow-hidden">
+      {/* Video Display Area */}
+      <div className="relative aspect-video min-h-[220px] bg-[#0e0e0e] flex items-center justify-center overflow-hidden">
         <video
           ref={videoRef}
           src={activeSourceUrl || undefined}
@@ -425,7 +483,7 @@ export const LocalCameraFeed: React.FC<LocalCameraFeedProps> = ({ className }) =
           onEnded={() => {
             if (sourceMode === "file") {
               setCameraState("idle");
-              setError("Video finished. Choose the file again to replay it.");
+              setError("Video finished. Choose file again to replay.");
             }
           }}
           className={cn("w-full h-full object-contain", !isLive && "hidden")}
@@ -436,14 +494,7 @@ export const LocalCameraFeed: React.FC<LocalCameraFeedProps> = ({ className }) =
             {detections.map((detection, index) => (
               <div
                 key={`${detection.source}-${detection.label}-${index}`}
-                className={cn(
-                  "absolute border-2 shadow-[0_0_12px_rgba(251,113,133,0.75)] pointer-events-none",
-                  detection.source === "face_detection"
-                    ? "border-violet-400"
-                    : detection.source === "anpr"
-                    ? "border-amber-400"
-                    : "border-rose-400"
-                )}
+                className="absolute border border-[#F5F5F0] pointer-events-none rounded-none"
                 style={{
                   left: `${detection.box.x}%`,
                   top: `${detection.box.y}%`,
@@ -452,14 +503,7 @@ export const LocalCameraFeed: React.FC<LocalCameraFeedProps> = ({ className }) =
                 }}
               >
                 <span
-                  className={cn(
-                    "absolute -top-5 left-0 whitespace-nowrap text-white px-1.5 py-0.5 text-[10px] font-bold uppercase",
-                    detection.source === "face_detection"
-                      ? "bg-violet-500"
-                      : detection.source === "anpr"
-                      ? "bg-amber-500"
-                      : "bg-rose-500"
-                  )}
+                  className="absolute -top-5 left-0 whitespace-nowrap bg-[#F5F5F0] text-[#121212] px-1 py-0.2 text-[9px] font-mono font-bold uppercase rounded-none"
                 >
                   {detection.attributes?.plate_number
                     ? String(detection.attributes.plate_number)
@@ -468,81 +512,86 @@ export const LocalCameraFeed: React.FC<LocalCameraFeedProps> = ({ className }) =
                 </span>
               </div>
             ))}
-            <div className="absolute top-10 left-3 bg-slate-950/85 border border-cyan-500/60 rounded px-2 py-1 text-[10px] text-cyan-300 font-mono">
-              AI {inferenceState === "analyzing" ? "ANALYZING" : inferenceState === "error" ? "UNAVAILABLE" : "ACTIVE"} · {detections.length} OBJECT{detections.length === 1 ? "" : "S"}
+            <div className="absolute top-12 left-3 bg-[#131313]/90 border border-[#454843] rounded-none px-2 py-1 text-[10px] text-[#F5F5F0] font-mono">
+              AI_{inferenceState === "analyzing" ? "ANALYZING" : inferenceState === "error" ? "UNAVAILABLE" : "ACTIVE"} // {detections.length} TARGET{detections.length === 1 ? "" : "S"}
             </div>
           </>
         )}
         {!isLive && (
-          <div className="p-6 text-center max-w-md">
+          <div className="p-6 text-center max-w-md font-mono">
             {cameraState === "error" ? (
-              <CameraOff className="w-10 h-10 mx-auto mb-3 text-rose-400" />
+              <CameraOff className="w-8 h-8 mx-auto mb-3 text-[#ffb4ab]" />
+            ) : activeSource === "screen" ? (
+              <Monitor className="w-8 h-8 mx-auto mb-3 text-[#F5F5F0] opacity-70" />
             ) : (
-              <Camera className="w-10 h-10 mx-auto mb-3 text-cyan-400 opacity-70" />
+              <Camera className="w-8 h-8 mx-auto mb-3 text-[#F5F5F0] opacity-70" />
             )}
-            <p className="text-xs text-slate-300 uppercase tracking-wide">
+            <p className="text-xs text-[#e5e2e1] uppercase tracking-wider font-bold">
               {cameraState === "starting"
-                ? "Opening video source"
+                ? activeSource === "screen"
+                ? "Requesting screen share"
+                : "Opening video source"
                 : cameraState === "error"
                 ? error
                 : sourceMode === "file"
-                ? "Choose a video file to start analysis"
+                ? "Select a video file to analyze"
                 : sourceMode === "network"
                 ? "Enter a CCTV / IP stream URL above"
                 : "No local camera stream started"}
             </p>
             {cameraState === "error" && sourceMode === "camera" && (
               <TacticalButton size="sm" className="mt-4" onClick={() => void startCamera(selectedDeviceId || undefined)} icon={<RefreshCw className="w-3.5 h-3.5" />}>
-                TRY CAMERA AGAIN
+                RETRY CAMERA
               </TacticalButton>
             )}
           </div>
         )}
       </div>
 
-      <div className="border-t border-slate-800 bg-slate-950/95 px-3 py-2.5 font-mono">
-        <div className="flex items-center justify-between gap-2 text-[10px] text-slate-400 uppercase tracking-wider">
-          <span className="text-cyan-300 font-bold">AI MODULE PIPELINE</span>
-          <span className="truncate">{modelName || "Waiting for frame analysis"}</span>
+      {/* AI Pipeline Modules */}
+      <div className="border-t border-[#454843] bg-[#1c1b1b] px-4 py-3 font-mono">
+        <div className="flex items-center justify-between gap-2 text-[10px] text-[#8f918c] uppercase tracking-widest">
+          <span className="text-[#F5F5F0] font-bold">AI_MODULE_PIPELINE</span>
+          <span className="truncate">{modelName || "AWAITING FRAME DATA"}</span>
         </div>
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 mt-2">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 mt-2.5">
           {modules.length === 0 && (
-            <div className="sm:col-span-3 border border-dashed border-slate-800 rounded-sm px-2 py-2 text-[10px] text-slate-500">
-              Start a camera, choose a video file, or connect a browser-compatible CCTV URL to run all AI modules.
+            <div className="sm:col-span-3 border border-[#454843] bg-[#131313] px-3 py-2 text-[10px] text-[#8f918c]">
+              Activate camera, screen share, or video file to engage person tracking, face detection, and ANPR inference.
             </div>
           )}
           {modules.map((module) => (
-            <div key={module.id} className="border border-slate-800 rounded-sm bg-slate-900/70 px-2 py-1.5 min-w-0">
+            <div key={module.id} className="border border-[#454843] rounded-none bg-[#131313] p-2 min-w-0">
               <div className="flex items-center justify-between gap-2">
-                <span className="text-[10px] text-slate-200 truncate">{module.label}</span>
+                <span className="text-[10px] text-[#F5F5F0] font-bold truncate uppercase">{module.label}</span>
                 <span className={cn(
                   "text-[9px] font-bold uppercase",
-                  module.status === "active" ? "text-emerald-400" : module.status === "unavailable" ? "text-rose-400" : "text-slate-500"
+                  module.status === "active" ? "text-[#F5F5F0]" : "text-[#8f918c]"
                 )}>{module.status}</span>
               </div>
-              <div className="flex items-center justify-between gap-2 mt-1 text-[9px] text-slate-500">
+              <div className="flex items-center justify-between gap-2 mt-1 text-[9px] text-[#8f918c]">
                 <span className="truncate">{module.model}</span>
-                <span>{module.detectionCount} found</span>
+                <span>{module.detectionCount} DETECTIONS</span>
               </div>
-              {module.message && <p className="mt-1 text-[9px] text-amber-300 truncate" title={module.message}>{module.message}</p>}
             </div>
           ))}
         </div>
       </div>
 
-      <div className="border-t border-slate-800 bg-slate-950/95 px-3 py-2 flex flex-wrap items-center justify-between gap-2 text-[10px] text-slate-400">
+      {/* Footer Status Bar */}
+      <div className="border-t border-[#454843] bg-[#131313] px-4 py-2 flex flex-wrap items-center justify-between gap-2 text-[10px] text-[#8f918c]">
         <span className="flex items-center gap-1.5 min-w-0">
-          {isLive ? <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400 shrink-0" /> : <ShieldAlert className="w-3.5 h-3.5 text-amber-400 shrink-0" />}
-          <span className="truncate">
+          {isLive ? <CheckCircle2 className="w-3.5 h-3.5 text-[#F5F5F0] shrink-0" /> : <ShieldAlert className="w-3.5 h-3.5 text-[#8f918c] shrink-0" />}
+          <span className="truncate uppercase font-bold">
             {!isLive
               ? sourceMode === "network"
                 ? "WAITING FOR CCTV STREAM"
                 : sourceMode === "file"
                 ? "WAITING FOR VIDEO FILE"
-                : "PERMISSION REQUIRED FOR LOCAL PREVIEW"
+                : "READY // CAMERA PERMISSION REQUIRED"
               : inferenceState === "error"
               ? inferenceError
-              : `AI ${inferenceState === "analyzing" ? "ANALYZING" : "ACTIVE"}${modelName ? ` · ${modelName}` : ""}${inferenceMs !== null ? ` · ${inferenceMs}ms` : ""}`}
+              : `AI_${inferenceState === "analyzing" ? "ANALYZING" : "ACTIVE"}${modelName ? ` // ${modelName}` : ""}${inferenceMs !== null ? ` // ${inferenceMs}ms` : ""}`}
           </span>
         </span>
       </div>

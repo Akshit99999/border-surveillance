@@ -4,7 +4,7 @@ import React from "react";
 import { useIBVAPStore } from "@/lib/store/useIBVAPStore";
 import { TacticalSectorMap } from "@/components/map/TacticalSectorMap";
 import { TacticalCard } from "@/components/shared/TacticalCard";
-import { MapPin, Shield, Radio, Video, Users, AlertTriangle } from "lucide-react";
+import { MapPin } from "lucide-react";
 import { StatusPill } from "@/components/shared/StatusPill";
 
 export default function MapPage() {
@@ -19,24 +19,24 @@ export default function MapPage() {
   );
 
   return (
-    <div className="space-y-4 font-mono">
+    <div className="space-y-6 font-mono">
       {/* Top Header */}
-      <div className="bg-slate-900/90 border border-slate-800 rounded p-4 flex flex-wrap items-center justify-between gap-4 shadow-xl">
+      <div className="bg-[#1c1b1b] border border-[#454843] rounded-none p-4 flex flex-wrap items-center justify-between gap-4">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded bg-cyan-950/80 border border-cyan-500/60 flex items-center justify-center text-cyan-400">
-            <MapPin className="w-5 h-5" />
+          <div className="w-8 h-8 bg-[#F5F5F0] text-[#121212] flex items-center justify-center font-bold">
+            <MapPin className="w-4 h-4" />
           </div>
           <div>
-            <h1 className="text-sm font-bold text-slate-100 uppercase tracking-widest">
-              SECTOR INTELLIGENCE GIS MAP // ZERO-LINE DEMARCATION
+            <h1 className="text-xs font-bold text-[#F5F5F0] uppercase tracking-widest">
+              SECTOR GIS RADAR // ZERO-LINE DEMARCATION
             </h1>
-            <p className="text-[11px] text-slate-400 mt-0.5">
-              Live geospatial coordinate overlay of sensors, sentry patrol pins, and tripwires.
+            <p className="text-[11px] text-[#8f918c] mt-0.5 font-sans">
+              Geospatial coordinate overlay of optical sensors, sentry patrol pins, and tripwires.
             </p>
           </div>
         </div>
 
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2">
           <StatusPill type="high" label="1 SECTOR GAP (A4)" size="sm" />
           <StatusPill type="online" label="GIS SYNCHRONIZED" size="sm" />
         </div>
@@ -56,37 +56,37 @@ export default function MapPage() {
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <TacticalCard title="SENTRY POSTS STAFFED" subtitle="HUMAN COVERAGE">
           <div className="flex items-baseline justify-between mt-1">
-            <span className="text-2xl font-bold text-amber-300">
+            <span className="text-2xl font-bold text-[#F5F5F0]">
               {staffedPosts} of {totalPosts}
             </span>
-            <span className="text-xs text-slate-400">1 Deficit (Post #A4)</span>
+            <span className="text-xs text-[#8f918c]">1 Deficit</span>
           </div>
         </TacticalCard>
 
         <TacticalCard title="TACTICAL CAMERAS" subtitle="FOV COVERAGE">
           <div className="flex items-baseline justify-between mt-1">
-            <span className="text-2xl font-bold text-cyan-300">
+            <span className="text-2xl font-bold text-[#F5F5F0]">
               {cameras.length} Sensors
             </span>
-            <span className="text-xs text-slate-400">6 PTZ • 4 Thermal</span>
+            <span className="text-xs text-[#8f918c]">6 PTZ • 4 Thermal</span>
           </div>
         </TacticalCard>
 
         <TacticalCard title="PERIMETER TRIPWIRES" subtitle="SEISMIC & OPTICAL">
           <div className="flex items-baseline justify-between mt-1">
-            <span className="text-2xl font-bold text-emerald-400">
+            <span className="text-2xl font-bold text-[#F5F5F0]">
               {armedTripwires} / {totalTripwires} Armed
             </span>
-            <span className="text-xs text-slate-400">Active Breakbeams</span>
+            <span className="text-xs text-[#8f918c]">Breakbeams Active</span>
           </div>
         </TacticalCard>
 
         <TacticalCard title="ACTIVE THREAT ALERTS" subtitle="GIS BLIPS">
           <div className="flex items-baseline justify-between mt-1">
-            <span className="text-2xl font-bold text-rose-400">
+            <span className="text-2xl font-bold text-[#ffb4ab]">
               {alerts.filter((a) => a.status === "open").length} Active
             </span>
-            <span className="text-xs text-rose-400 font-bold">Pulsing Blips</span>
+            <span className="text-xs text-[#ffb4ab] font-bold">Pulsing</span>
           </div>
         </TacticalCard>
       </div>

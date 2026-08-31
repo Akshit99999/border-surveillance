@@ -3,20 +3,14 @@
 import React, { useState } from "react";
 import {
   Users,
-  ClipboardList,
   Phone,
-  Radio,
-  UserCheck,
   Search,
-  Calendar,
-  AlertTriangle,
-  MapPin,
   Clock,
-  CheckCircle2,
-  Filter,
+  MapPin,
+  UserCheck,
 } from "lucide-react";
 import { useIBVAPStore } from "@/lib/store/useIBVAPStore";
-import { Guard, ActivityLogEntry } from "@/lib/types";
+import { Guard } from "@/lib/types";
 import { StatusPill } from "@/components/shared/StatusPill";
 import { TacticalButton } from "@/components/shared/TacticalButton";
 import { Modal } from "@/components/shared/Modal";
@@ -29,8 +23,6 @@ export default function GuardDutyAndLogPage() {
     activityLog,
     shifts,
     quickHandover,
-    updateGuardStatus,
-    currentUser,
   } = useIBVAPStore();
 
   const [activeTab, setActiveTab] = useState<"on_duty" | "log">("on_duty");
@@ -44,7 +36,7 @@ export default function GuardDutyAndLogPage() {
   const [searchLogQuery, setSearchLogQuery] = useState<string>("");
   const [logDateFilter, setLogDateFilter] = useState<string>("ALL");
 
-  // Eligible replacement guards (off duty or break)
+  // Eligible replacement guards
   const offDutyGuards = guards.filter(
     (g) => g.status === "off_duty" || g.status === "break"
   );
@@ -87,19 +79,19 @@ export default function GuardDutyAndLogPage() {
   });
 
   return (
-    <div className="space-y-4 font-mono">
+    <div className="space-y-6 font-mono">
       {/* Top Banner with 2 Main Large Tabs */}
-      <div className="bg-slate-900 border border-slate-800 rounded p-3 flex flex-wrap items-center justify-between gap-3 shadow-xl">
+      <div className="bg-[#1c1b1b] border border-[#454843] rounded-none p-4 flex flex-wrap items-center justify-between gap-4">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded bg-cyan-950 border border-cyan-500/60 flex items-center justify-center text-cyan-400 shrink-0">
-            <Users className="w-5 h-5" />
+          <div className="w-8 h-8 bg-[#F5F5F0] text-[#121212] flex items-center justify-center font-bold">
+            <Users className="w-4 h-4" />
           </div>
           <div>
-            <h1 className="text-sm font-black text-slate-100 uppercase tracking-widest">
-              GUARD DUTY & ACTIVITY LOG
+            <h1 className="text-xs font-bold text-[#F5F5F0] uppercase tracking-widest">
+              GUARD DUTY ROSTER & AUDIT LOG
             </h1>
-            <p className="text-xs text-slate-400 mt-0.5 font-sans">
-              Live post roster, 1-tap shift handovers, and automatic audit history.
+            <p className="text-[11px] text-[#8f918c] mt-0.5 font-sans">
+              Live sentry post deployment, shift rotations, and immutable audit history.
             </p>
           </div>
         </div>
@@ -111,10 +103,10 @@ export default function GuardDutyAndLogPage() {
               tacticalSound.playClick();
               setActiveTab("on_duty");
             }}
-            className={`px-5 py-2.5 rounded border text-xs font-black tracking-wider transition-all min-h-[44px] ${
+            className={`px-4 py-2 rounded-none border text-xs font-bold uppercase tracking-wider transition-colors ${
               activeTab === "on_duty"
-                ? "bg-cyan-500 text-slate-950 border-cyan-400 shadow-[0_0_15px_rgba(6,182,212,0.4)]"
-                : "bg-slate-950 text-slate-300 border-slate-700 hover:bg-slate-800"
+                ? "bg-[#F5F5F0] text-[#121212] border-[#F5F5F0]"
+                : "bg-[#131313] text-[#8f918c] border-[#454843] hover:text-[#F5F5F0]"
             }`}
           >
             1. ON DUTY NOW ({activeOnDutyGuards.length})
@@ -125,10 +117,10 @@ export default function GuardDutyAndLogPage() {
               tacticalSound.playClick();
               setActiveTab("log");
             }}
-            className={`px-5 py-2.5 rounded border text-xs font-black tracking-wider transition-all min-h-[44px] ${
+            className={`px-4 py-2 rounded-none border text-xs font-bold uppercase tracking-wider transition-colors ${
               activeTab === "log"
-                ? "bg-cyan-500 text-slate-950 border-cyan-400 shadow-[0_0_15px_rgba(6,182,212,0.4)]"
-                : "bg-slate-950 text-slate-300 border-slate-700 hover:bg-slate-800"
+                ? "bg-[#F5F5F0] text-[#121212] border-[#F5F5F0]"
+                : "bg-[#131313] text-[#8f918c] border-[#454843] hover:text-[#F5F5F0]"
             }`}
           >
             2. ACTIVITY LOG ({activityLog.length})
@@ -136,11 +128,11 @@ export default function GuardDutyAndLogPage() {
         </div>
       </div>
 
-      {/* TAB 1: ON DUTY NOW (Simple Sentry List) */}
+      {/* TAB 1: ON DUTY NOW */}
       {activeTab === "on_duty" && (
-        <div className="space-y-4">
-          {/* Sentry List Cards */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+        <div className="space-y-6">
+          {/* Sentry Grid Cards */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {activeOnDutyGuards.map((guard) => {
               const countdown = calculateTimeRemaining(guard.shiftEnd);
               const isUnreachable = guard.status === "unreachable";
@@ -148,72 +140,61 @@ export default function GuardDutyAndLogPage() {
               return (
                 <div
                   key={guard.id}
-                  className={`p-4 rounded border font-mono flex flex-col justify-between space-y-3 transition-all ${
+                  className={`p-5 rounded-none border font-mono flex flex-col justify-between space-y-4 ${
                     isUnreachable
-                      ? "bg-rose-950/40 border-rose-600/80 shadow-[0_0_15px_rgba(244,63,94,0.2)]"
-                      : "bg-slate-900 border-slate-800 hover:border-slate-700"
+                      ? "bg-[#93000a]/20 border-[#ffb4ab]"
+                      : "bg-[#131313] border-[#454843]"
                   }`}
                 >
-                  {/* Top: Name, Rank & Status */}
+                  {/* Top Header */}
                   <div className="flex items-start justify-between gap-3">
                     <div className="min-w-0">
-                      <div className="flex items-center gap-2">
-                        <span className="text-sm font-black text-slate-100 truncate">
-                          {guard.name}
-                        </span>
-                      </div>
-                      <p className="text-xs text-slate-400 mt-0.5">
-                        {guard.rank} • Callsign: <span className="text-amber-400 font-bold">{guard.callSign}</span>
+                      <span className="text-sm font-bold text-[#F5F5F0] truncate block">
+                        {guard.name}
+                      </span>
+                      <p className="text-xs text-[#8f918c] mt-0.5">
+                        {guard.rank} // CALLSIGN: <strong className="text-[#F5F5F0]">{guard.callSign}</strong>
                       </p>
                     </div>
                     <StatusPill type={guard.status} size="md" />
                   </div>
 
-                  {/* Middle: Post & Shift Countdown */}
-                  <div className="p-3 bg-slate-950 rounded border border-slate-800/80 space-y-1.5 text-xs">
-                    <div className="flex justify-between items-center text-slate-300">
-                      <span className="text-slate-400 font-semibold flex items-center gap-1.5">
-                        <MapPin className="w-4 h-4 text-cyan-400" /> SENTRY POST:
+                  {/* Middle Info */}
+                  <div className="p-3 bg-[#1c1b1b] border border-[#454843] space-y-2 text-xs">
+                    <div className="flex justify-between items-center text-[#c5c7c1]">
+                      <span className="text-[#8f918c] font-bold flex items-center gap-1.5 uppercase">
+                        <MapPin className="w-3.5 h-3.5 text-[#F5F5F0]" /> POST:
                       </span>
-                      <span className="font-black text-cyan-300 text-sm">
+                      <span className="font-bold text-[#F5F5F0]">
                         {guard.currentPostId || "Sector Patrol"}
                       </span>
                     </div>
-                    <div className="flex justify-between items-center text-slate-300">
-                      <span className="text-slate-400 font-semibold flex items-center gap-1.5">
-                        <Clock className="w-4 h-4 text-emerald-400" /> TIME REMAINING:
+                    <div className="flex justify-between items-center text-[#c5c7c1]">
+                      <span className="text-[#8f918c] font-bold flex items-center gap-1.5 uppercase">
+                        <Clock className="w-3.5 h-3.5 text-[#F5F5F0]" /> SHIFT REMAINING:
                       </span>
-                      <span
-                        className={
-                          countdown.isExpired
-                            ? "text-rose-400 font-bold"
-                            : "text-emerald-400 font-bold text-xs"
-                        }
-                      >
+                      <span className={countdown.isExpired ? "text-[#ffb4ab] font-bold" : "text-[#F5F5F0] font-bold"}>
                         {countdown.text}
                       </span>
                     </div>
                   </div>
 
-                  {/* Actions: Big Tap-To-Call & 1-Tap Handover Button */}
+                  {/* Actions: Call & Handover */}
                   <div className="grid grid-cols-2 gap-2 pt-1">
-                    {/* Big Green Tap-To-Call */}
                     <a
                       href={`tel:${guard.phone.replace(/\s+/g, "")}`}
                       onClick={() => tacticalSound.playClick()}
-                      className="py-3 px-3 bg-emerald-950 hover:bg-emerald-900 text-emerald-200 border border-emerald-500 rounded text-xs font-black flex items-center justify-center gap-2 min-h-[44px] transition-colors"
-                      title={`Call ${guard.phone}`}
+                      className="py-2.5 px-3 bg-[#1c1b1b] hover:bg-[#2a2a2a] text-[#F5F5F0] border border-[#454843] hover:border-[#F5F5F0] text-xs font-bold flex items-center justify-center gap-2 transition-colors rounded-none uppercase tracking-wider"
                     >
-                      <Phone className="w-4 h-4 text-emerald-400" />
+                      <Phone className="w-3.5 h-3.5 text-[#F5F5F0]" />
                       <span>CALL SENTRY</span>
                     </a>
 
-                    {/* 1-Tap Handover Action */}
                     <button
                       onClick={() => handleOpenHandover(guard)}
-                      className="py-3 px-3 bg-cyan-950 hover:bg-cyan-900 text-cyan-200 border border-cyan-500 rounded text-xs font-black flex items-center justify-center gap-2 min-h-[44px] transition-colors"
+                      className="py-2.5 px-3 bg-[#F5F5F0] hover:opacity-90 text-[#121212] border border-[#F5F5F0] text-xs font-bold flex items-center justify-center gap-2 transition-opacity rounded-none uppercase tracking-wider"
                     >
-                      <UserCheck className="w-4 h-4 text-cyan-400" />
+                      <UserCheck className="w-3.5 h-3.5" />
                       <span>HANDOVER</span>
                     </button>
                   </div>
@@ -222,27 +203,27 @@ export default function GuardDutyAndLogPage() {
             })}
           </div>
 
-          {/* Simple Flat Upcoming Shift List */}
-          <div className="bg-slate-900 border border-slate-800 rounded p-4 space-y-3">
-            <h3 className="text-xs font-black uppercase text-slate-200 tracking-wider">
+          {/* Upcoming Rotations */}
+          <div className="bg-[#1c1b1b] border border-[#454843] p-5 space-y-3">
+            <h3 className="text-xs font-bold uppercase text-[#F5F5F0] tracking-widest">
               UPCOMING SHIFT ROTATIONS (NEXT 24 HOURS)
             </h3>
-            <div className="divide-y divide-slate-800">
+            <div className="divide-y divide-[#454843] border border-[#454843] bg-[#131313]">
               {shifts.slice(0, 4).map((s) => (
                 <div
                   key={s.id}
-                  className="py-2.5 flex flex-wrap items-center justify-between gap-2 text-xs"
+                  className="p-3 flex flex-wrap items-center justify-between gap-2 text-xs"
                 >
                   <div className="flex items-center gap-3">
-                    <Clock className="w-4 h-4 text-slate-500" />
+                    <Clock className="w-3.5 h-3.5 text-[#8f918c]" />
                     <div>
-                      <span className="font-bold text-slate-100">{s.guardName}</span>
-                      <span className="text-slate-400 text-[11px] block">{s.sector}</span>
+                      <span className="font-bold text-[#F5F5F0]">{s.guardName}</span>
+                      <span className="text-[#8f918c] text-[10px] block">{s.sector}</span>
                     </div>
                   </div>
                   <div className="text-right">
-                    <span className="text-cyan-300 font-bold">{s.shiftName}</span>
-                    <span className="text-slate-500 text-[10px] block">{s.postId}</span>
+                    <span className="text-[#F5F5F0] font-bold">{s.shiftName}</span>
+                    <span className="text-[#8f918c] text-[10px] block">{s.postId}</span>
                   </div>
                 </div>
               ))}
@@ -251,24 +232,24 @@ export default function GuardDutyAndLogPage() {
         </div>
       )}
 
-      {/* TAB 2: LOG (Reverse-Chronological Activity History) */}
+      {/* TAB 2: ACTIVITY LOG */}
       {activeTab === "log" && (
-        <div className="space-y-3">
+        <div className="space-y-4">
           {/* Search & Date Filter */}
-          <div className="bg-slate-950 border border-slate-800 rounded p-3 grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs">
+          <div className="bg-[#1c1b1b] border border-[#454843] p-3.5 grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs">
             <div className="relative sm:col-span-2">
-              <Search className="w-4 h-4 text-slate-500 absolute left-3 top-1/2 -translate-y-1/2" />
+              <Search className="w-4 h-4 text-[#8f918c] absolute left-3 top-1/2 -translate-y-1/2" />
               <input
                 type="text"
                 value={searchLogQuery}
                 onChange={(e) => setSearchLogQuery(e.target.value)}
                 placeholder="Search log by guard name, action, or post..."
-                className="w-full bg-slate-900 border border-slate-700 rounded py-2 pl-9 pr-3 text-xs text-slate-200 focus:outline-none focus:border-cyan-500 font-mono min-h-[40px]"
+                className="w-full bg-[#131313] border border-[#454843] rounded-none py-2 pl-9 pr-3 text-xs text-[#F5F5F0] placeholder:text-[#454843] focus:border-[#F5F5F0] font-mono"
               />
             </div>
 
             <div className="flex items-center gap-2">
-              <span className="text-[11px] text-slate-400 font-bold uppercase shrink-0">
+              <span className="text-[10px] text-[#8f918c] font-bold uppercase tracking-widest shrink-0">
                 DATE:
               </span>
               <select
@@ -277,50 +258,48 @@ export default function GuardDutyAndLogPage() {
                   tacticalSound.playClick();
                   setLogDateFilter(e.target.value);
                 }}
-                className="w-full bg-slate-900 border border-slate-700 rounded px-2.5 py-2 text-xs text-cyan-300 focus:outline-none focus:border-cyan-500 font-mono min-h-[40px]"
+                className="w-full bg-[#131313] border border-[#454843] rounded-none px-2.5 py-2 text-xs text-[#F5F5F0] focus:border-[#F5F5F0] font-mono"
               >
                 <option value="ALL">ALL DATES</option>
-                <option value="TODAY">TODAY (AUG 27)</option>
-                <option value="YESTERDAY">YESTERDAY (AUG 26)</option>
+                <option value="TODAY">TODAY</option>
+                <option value="YESTERDAY">YESTERDAY</option>
               </select>
             </div>
           </div>
 
-          {/* Clean Reverse-Chronological List */}
-          <div className="bg-slate-900 border border-slate-800 rounded divide-y divide-slate-800">
+          {/* Reverse-Chronological List */}
+          <div className="bg-[#131313] border border-[#454843] divide-y divide-[#454843]">
             {filteredLogs.length === 0 ? (
-              <div className="p-6 text-center text-slate-500 text-xs">
-                No activity logs match your search.
+              <div className="p-8 text-center text-[#8f918c] text-xs">
+                No activity logs match search query.
               </div>
             ) : (
               filteredLogs.map((log) => (
                 <div
                   key={log.id}
-                  className="p-3.5 hover:bg-slate-800/60 transition-colors flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs"
+                  className="p-4 hover:bg-[#1c1b1b] transition-colors flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs"
                 >
-                  <div className="flex items-start gap-3 min-w-0">
-                    <div className="text-[11px] text-slate-400 font-bold shrink-0 mt-0.5">
-                      <span className="text-cyan-300 block">{formatTimeIST(log.timestamp)}</span>
-                      <span className="text-[10px] text-slate-500">
-                        {formatDateIST(log.timestamp)}
-                      </span>
+                  <div className="flex items-start gap-4 min-w-0">
+                    <div className="text-[11px] text-[#8f918c] shrink-0 font-mono">
+                      <span className="text-[#F5F5F0] font-bold block">{formatTimeIST(log.timestamp)}</span>
+                      <span className="text-[10px] text-[#8f918c]">{formatDateIST(log.timestamp)}</span>
                     </div>
 
                     <div className="min-w-0">
                       <div className="flex items-center gap-2">
-                        <span className="font-black text-slate-100">{log.actorName}</span>
-                        <span className="text-[10px] px-1.5 py-0.2 bg-slate-800 text-slate-300 rounded border border-slate-700 uppercase">
+                        <span className="font-bold text-[#F5F5F0]">{log.actorName}</span>
+                        <span className="text-[9px] px-1.5 py-0.2 bg-[#1c1b1b] text-[#c5c7c1] border border-[#454843] uppercase">
                           {log.sector}
                         </span>
                       </div>
-                      <p className="text-slate-300 font-sans text-xs mt-1 leading-snug">
+                      <p className="text-[#c5c7c1] font-sans text-xs mt-1">
                         {log.details}
                       </p>
                     </div>
                   </div>
 
-                  <div className="text-[10px] text-slate-500 font-mono shrink-0 sm:text-right">
-                    {log.targetId}
+                  <div className="text-[10px] text-[#8f918c] font-mono shrink-0 sm:text-right">
+                    REF: {log.targetId}
                   </div>
                 </div>
               ))
@@ -329,7 +308,7 @@ export default function GuardDutyAndLogPage() {
         </div>
       )}
 
-      {/* Simple 1-Step Handover Modal */}
+      {/* 1-Step Handover Modal */}
       {handoverOutgoing && (
         <Modal
           isOpen={Boolean(handoverOutgoing)}
@@ -338,25 +317,25 @@ export default function GuardDutyAndLogPage() {
           subtitle={`Handover Post: ${handoverOutgoing.currentPostId || "Active Post"}`}
           maxWidth="md"
         >
-          <form onSubmit={handleCommitHandover} className="space-y-4 font-mono text-xs text-slate-200">
-            <div className="p-3 bg-slate-950 border border-slate-800 rounded">
-              <span className="text-[10px] text-slate-400 font-bold uppercase block">
+          <form onSubmit={handleCommitHandover} className="space-y-4 font-mono text-xs text-[#e5e2e1]">
+            <div className="p-3 bg-[#1c1b1b] border border-[#454843]">
+              <span className="text-[10px] text-[#8f918c] font-bold uppercase tracking-widest block mb-0.5">
                 OUTGOING SENTRY:
               </span>
-              <span className="font-black text-amber-300 text-sm">
+              <span className="font-bold text-[#F5F5F0] text-sm">
                 {handoverOutgoing.name} ({handoverOutgoing.rank})
               </span>
             </div>
 
             <div>
-              <label className="text-[11px] text-cyan-400 font-bold uppercase block mb-1">
+              <label className="text-[10px] text-[#8f918c] font-bold uppercase tracking-widest block mb-1">
                 SELECT REPLACEMENT SENTRY:
               </label>
               <select
                 required
                 value={handoverIncomingId}
                 onChange={(e) => setHandoverIncomingId(e.target.value)}
-                className="w-full bg-slate-950 border border-slate-700 rounded p-3 text-xs text-slate-100 font-bold focus:outline-none focus:border-cyan-500 font-mono min-h-[44px]"
+                className="w-full bg-[#131313] border border-[#454843] rounded-none p-2.5 text-xs text-[#F5F5F0] font-bold focus:border-[#F5F5F0] font-mono"
               >
                 {offDutyGuards.map((g) => (
                   <option key={g.id} value={g.id}>
@@ -367,7 +346,7 @@ export default function GuardDutyAndLogPage() {
             </div>
 
             <div>
-              <label className="text-[11px] text-slate-400 font-bold uppercase block mb-1">
+              <label className="text-[10px] text-[#8f918c] font-bold uppercase tracking-widest block mb-1">
                 TURNOVER NOTE (OPTIONAL):
               </label>
               <input
@@ -375,15 +354,15 @@ export default function GuardDutyAndLogPage() {
                 value={handoverNote}
                 onChange={(e) => setHandoverNote(e.target.value)}
                 placeholder="e.g. All clear, perimeter quiet, fog low."
-                className="w-full bg-slate-950 border border-slate-700 rounded p-2.5 text-xs text-slate-200 focus:outline-none focus:border-cyan-500 font-mono"
+                className="w-full bg-[#131313] border border-[#454843] rounded-none p-2.5 text-xs text-[#F5F5F0] placeholder:text-[#454843] focus:border-[#F5F5F0] font-mono"
               />
             </div>
 
-            <div className="pt-2 flex justify-end gap-2 border-t border-slate-800">
+            <div className="pt-3 flex justify-end gap-2 border-t border-[#454843]">
               <button
                 type="button"
                 onClick={() => setHandoverOutgoing(null)}
-                className="px-4 py-2.5 bg-slate-900 text-slate-400 rounded text-xs"
+                className="px-4 py-2 bg-[#1c1b1b] text-[#8f918c] hover:text-[#F5F5F0] border border-[#454843] text-xs font-bold uppercase tracking-wider"
               >
                 Cancel
               </button>
@@ -392,9 +371,9 @@ export default function GuardDutyAndLogPage() {
                 size="md"
                 type="submit"
                 disabled={!handoverIncomingId}
-                className="min-h-[44px] font-black"
+                className="font-bold"
               >
-                CONFIRM HANDOVER (1-TAP)
+                CONFIRM HANDOVER
               </TacticalButton>
             </div>
           </form>

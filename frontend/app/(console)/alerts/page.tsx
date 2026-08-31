@@ -4,24 +4,15 @@ import React, { useState } from "react";
 import {
   ShieldAlert,
   Search,
-  Filter,
-  Eye,
   CheckCircle2,
   AlertTriangle,
-  Radio,
-  MapPin,
-  Clock,
   Phone,
-  UserCheck,
   Fingerprint,
   Car,
-  ChevronDown,
-  ChevronUp,
 } from "lucide-react";
 import { useIBVAPStore } from "@/lib/store/useIBVAPStore";
 import { Alert } from "@/lib/types";
 import { StatusPill } from "@/components/shared/StatusPill";
-import { TacticalButton } from "@/components/shared/TacticalButton";
 import { Modal } from "@/components/shared/Modal";
 import { formatTimeIST, formatDateIST } from "@/lib/utils";
 import { tacticalSound } from "@/lib/sound";
@@ -54,271 +45,301 @@ export default function AlertsPage() {
     return matchSearch && matchCategory;
   });
 
-  const linkedGuard = selectedAlert
-    ? guards.find((g) => g.currentSector === selectedAlert.sector)
+  const activeNodeAlert = selectedAlert || filteredAlerts[0] || null;
+  const linkedGuard = activeNodeAlert
+    ? guards.find((g) => g.currentSector === activeNodeAlert.sector)
     : null;
 
   return (
-    <div className="space-y-4 font-mono">
-      {/* Top Banner */}
-      <div className="bg-slate-900 border border-slate-800 rounded p-4 flex flex-wrap items-center justify-between gap-4 shadow-xl">
+    <div className="space-y-6 font-mono">
+      {/* Header Banner */}
+      <div className="bg-[#1c1b1b] border border-[#454843] rounded-none p-4 flex flex-wrap items-center justify-between gap-4">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded bg-rose-950 border border-rose-600 flex items-center justify-center text-rose-400 shrink-0">
-            <ShieldAlert className="w-5 h-5 animate-pulse" />
+          <div className="w-8 h-8 bg-[#93000a] text-[#ffdad6] flex items-center justify-center font-bold">
+            <ShieldAlert className="w-4 h-4" />
           </div>
           <div>
-            <h1 className="text-sm font-black text-slate-100 uppercase tracking-widest">
-              BORDER THREAT ALERTS & RECONNAISSANCE
+            <h1 className="text-xs font-bold text-[#F5F5F0] uppercase tracking-widest">
+              EVIDENCE VAULT // INCIDENT_DOSSIER
             </h1>
-            <p className="text-xs text-slate-400 mt-0.5 font-sans">
-              Real-time feed of perimeter incursions, POI watchlist matches, and ANPR vehicle alerts.
+            <p className="text-[11px] text-[#8f918c] mt-0.5 font-sans">
+              Cryptographic threat registry, POI face recognition, and ANPR vehicle matching.
             </p>
           </div>
         </div>
 
         <div className="flex items-center gap-2 text-xs">
-          <span className="text-rose-400 font-bold bg-rose-950 px-2.5 py-1 rounded border border-rose-700">
-            {alerts.filter((a) => a.status === "open").length} UNRESOLVED
+          <span className="text-[#ffdad6] font-bold bg-[#93000a] px-3 py-1 border border-[#ffb4ab]">
+            {alerts.filter((a) => a.status === "open").length} UNRESOLVED_INCIDENTS
           </span>
         </div>
       </div>
 
-      {/* Quick Category Filter Chips - Large Tap Targets */}
-      <div className="flex flex-wrap items-center gap-2">
-        {[
-          { key: "ALL", label: `ALL ALERTS (${alerts.length})` },
-          { key: "OPEN", label: `OPEN ONLY (${alerts.filter((a) => a.status === "open").length})` },
-          { key: "PERIMETER", label: "PERIMETER & WEAPONS" },
-          { key: "POI", label: "POI & FACE MATCHES" },
-          { key: "ANPR", label: "VEHICLES & ANPR" },
-        ].map((chip) => (
-          <button
-            key={chip.key}
-            onClick={() => {
-              tacticalSound.playClick();
-              setCategoryFilter(chip.key as any);
-            }}
-            className={`px-4 py-2 rounded border text-xs font-black tracking-wider transition-all min-h-[40px] ${
-              categoryFilter === chip.key
-                ? "bg-cyan-500 text-slate-950 border-cyan-400 shadow-[0_0_12px_rgba(6,182,212,0.3)]"
-                : "bg-slate-900 text-slate-300 border-slate-700 hover:bg-slate-800"
-            }`}
-          >
-            {chip.label}
-          </button>
-        ))}
+      {/* Query Parameters / Search Interface */}
+      <div className="bg-[#1c1b1b] border border-[#454843] p-4 space-y-3">
+        <div className="text-[10px] text-[#8f918c] uppercase tracking-widest font-bold">
+          QUERY_PARAMETERS & FILTERS
+        </div>
+
+        <div className="flex flex-wrap items-center gap-2">
+          {[
+            { key: "ALL", label: `ALL (${alerts.length})` },
+            { key: "OPEN", label: `OPEN ONLY (${alerts.filter((a) => a.status === "open").length})` },
+            { key: "PERIMETER", label: "PERIMETER & INTRUSION" },
+            { key: "POI", label: "POI & FACE MATCHES" },
+            { key: "ANPR", label: "VEHICLES & ANPR" },
+          ].map((chip) => (
+            <button
+              key={chip.key}
+              onClick={() => {
+                tacticalSound.playClick();
+                setCategoryFilter(chip.key as any);
+              }}
+              className={`px-3.5 py-1.5 rounded-none border text-xs font-bold uppercase tracking-wider transition-colors ${
+                categoryFilter === chip.key
+                  ? "bg-[#F5F5F0] text-[#121212] border-[#F5F5F0]"
+                  : "bg-[#131313] text-[#8f918c] border-[#454843] hover:text-[#F5F5F0]"
+              }`}
+            >
+              {chip.label}
+            </button>
+          ))}
+        </div>
+
+        {/* Search Input */}
+        <div className="relative pt-1">
+          <Search className="w-4 h-4 text-[#8f918c] absolute left-3 top-1/2 -translate-y-1/2" />
+          <input
+            type="text"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            placeholder="Search by incident ID, suspect, plate number, or sector..."
+            className="w-full bg-[#131313] border border-[#454843] rounded-none py-2.5 pl-9 pr-3 text-xs text-[#F5F5F0] placeholder:text-[#454843] focus:border-[#F5F5F0] font-mono"
+          />
+        </div>
       </div>
 
-      {/* Search Bar */}
-      <div className="relative">
-        <Search className="w-5 h-5 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
-        <input
-          type="text"
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
-          placeholder="Search by threat, suspect name, vehicle plate, or sector..."
-          className="w-full bg-slate-900 border border-slate-700 rounded py-3 pl-11 pr-4 text-xs text-slate-100 placeholder-slate-500 focus:outline-none focus:border-cyan-500 font-mono min-h-[46px]"
-        />
-      </div>
-
-      {/* High-Contrast Alert Cards List */}
-      <div className="space-y-3">
-        {filteredAlerts.length === 0 ? (
-          <div className="p-8 text-center bg-slate-900 border border-slate-800 rounded text-slate-400 text-xs">
-            No incident alerts match your filter criteria.
+      {/* Active Evidence Node Inspector (Inspired by Evidence Vault Screen) */}
+      {activeNodeAlert && (
+        <section className="border border-[#454843] bg-[#131313]">
+          <div className="px-4 py-2.5 bg-[#1c1b1b] border-b border-[#454843] flex items-center justify-between">
+            <span className="text-xs font-bold text-[#F5F5F0] uppercase tracking-widest">
+              ACTIVE_EVIDENCE_NODE: {activeNodeAlert.id}
+            </span>
+            <div className="flex items-center gap-2">
+              <StatusPill type={activeNodeAlert.level} size="sm" />
+              <StatusPill type={activeNodeAlert.status} size="sm" />
+            </div>
           </div>
-        ) : (
-          filteredAlerts.map((alert) => {
-            const isCritical = alert.level === "critical";
-            const isOpen = alert.status === "open";
-            const isPoi = alert.eventType.includes("POI");
-            const isAnpr = alert.eventType.includes("ANPR");
 
-            return (
-              <div
-                key={alert.id}
-                onClick={() => {
-                  tacticalSound.playClick();
-                  setSelectedAlert(alert);
-                }}
-                className={`p-4 rounded border font-mono cursor-pointer transition-all ${
-                  isOpen && isCritical
-                    ? "bg-rose-950/30 border-rose-600/90 shadow-[0_0_15px_rgba(244,63,94,0.15)]"
-                    : "bg-slate-900 border-slate-800 hover:border-slate-700"
-                }`}
-              >
-                <div className="flex flex-col md:flex-row md:items-center justify-between gap-3">
-                  {/* Left: Thumbnail & Details */}
-                  <div className="flex items-start gap-3.5 min-w-0">
-                    <div className="relative w-20 h-16 rounded bg-slate-950 border border-slate-700 overflow-hidden shrink-0 shadow">
-                      <img
-                        src={alert.evidenceUrl}
-                        alt="Evidence"
-                        className="w-full h-full object-cover"
-                      />
-                      {isPoi && (
-                        <div className="absolute top-0 right-0 p-1 bg-cyan-600 text-slate-950">
-                          <Fingerprint className="w-3 h-3" />
-                        </div>
-                      )}
-                      {isAnpr && (
-                        <div className="absolute top-0 right-0 p-1 bg-amber-600 text-slate-950">
-                          <Car className="w-3 h-3" />
-                        </div>
-                      )}
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-px bg-[#454843]">
+            {/* Image Panel */}
+            <div className="lg:col-span-8 bg-[#0e0e0e] relative aspect-video flex items-center justify-center">
+              <img
+                src={activeNodeAlert.evidenceUrl}
+                alt="Surveillance Evidence Still"
+                className="w-full h-full object-cover grayscale contrast-125"
+              />
+              <div className="absolute top-3 left-3 z-10 flex flex-col gap-1">
+                <span className="bg-[#F5F5F0] text-[#121212] font-mono text-[10px] px-2 py-0.5 uppercase font-bold tracking-widest">
+                  VERIFIED_CAPTURE
+                </span>
+                <span className="font-mono text-[10px] text-[#F5F5F0] bg-[#131313]/90 px-2 py-0.5 border border-[#454843]">
+                  {activeNodeAlert.sourceCameraId} // {activeNodeAlert.sector}
+                </span>
+              </div>
+              <div className="absolute bottom-3 right-3 z-10 text-right font-mono text-[10px] text-[#F5F5F0] bg-[#131313]/80 p-2 border border-[#454843]">
+                <div>REC: {formatDateIST(activeNodeAlert.timestamp)} {formatTimeIST(activeNodeAlert.timestamp)}</div>
+                <div>CONFIDENCE: {activeNodeAlert.confidence}%</div>
+              </div>
+            </div>
+
+            {/* Data & Actions Panel */}
+            <div className="lg:col-span-4 bg-[#131313] p-5 flex flex-col justify-between space-y-4">
+              <div className="space-y-3">
+                <div className="border-b border-[#454843] pb-2">
+                  <div className="text-[10px] text-[#8f918c] uppercase tracking-wider mb-0.5">EVENT_TYPE</div>
+                  <div className="text-sm font-bold text-[#F5F5F0]">{activeNodeAlert.eventType}</div>
+                </div>
+
+                <div className="border-b border-[#454843] pb-2">
+                  <div className="text-[10px] text-[#8f918c] uppercase tracking-wider mb-0.5">SECTOR_CLASSIFICATION</div>
+                  <div className="text-xs text-[#c5c7c1]">{activeNodeAlert.sector} // {activeNodeAlert.objectClass}</div>
+                </div>
+
+                <div className="border-b border-[#454843] pb-2">
+                  <div className="text-[10px] text-[#8f918c] uppercase tracking-wider mb-0.5">OPERATOR_LOG</div>
+                  <p className="text-xs text-[#c5c7c1] font-sans leading-relaxed">{activeNodeAlert.notes}</p>
+                </div>
+              </div>
+
+              {/* Action Buttons */}
+              <div className="pt-2 border-t border-[#454843] space-y-2">
+                {activeNodeAlert.status === "open" ? (
+                  <div className="grid grid-cols-2 gap-2">
+                    <button
+                      onClick={() => acknowledgeAlert(activeNodeAlert.id)}
+                      className="py-2.5 px-3 bg-[#F5F5F0] hover:opacity-90 text-[#121212] font-bold text-xs uppercase tracking-wider transition-opacity flex items-center justify-center gap-1.5"
+                    >
+                      <CheckCircle2 className="w-4 h-4" />
+                      <span>ACKNOWLEDGE</span>
+                    </button>
+                    <button
+                      onClick={() => escalateAlert(activeNodeAlert.id)}
+                      className="py-2.5 px-3 bg-[#93000a] hover:bg-[#b00020] text-[#ffdad6] border border-[#ffb4ab] font-bold text-xs uppercase tracking-wider transition-colors flex items-center justify-center gap-1.5"
+                    >
+                      <AlertTriangle className="w-4 h-4" />
+                      <span>ESCALATE (QRF)</span>
+                    </button>
+                  </div>
+                ) : (
+                  <div className="text-xs text-[#8f918c] p-2 bg-[#1c1b1b] border border-[#454843]">
+                    RESOLVED BY: <strong className="text-[#F5F5F0]">{activeNodeAlert.acknowledgedBy}</strong>
+                  </div>
+                )}
+
+                <button
+                  onClick={() => setSelectedAlert(activeNodeAlert)}
+                  className="w-full py-2 bg-[#1c1b1b] hover:bg-[#2a2a2a] text-[#F5F5F0] border border-[#454843] text-xs font-bold uppercase tracking-wider"
+                >
+                  EXPAND FULL CRYPTO DOSSIER →
+                </button>
+              </div>
+            </div>
+          </div>
+        </section>
+      )}
+
+      {/* Incident List */}
+      <div className="space-y-2">
+        <div className="text-[10px] text-[#8f918c] uppercase tracking-widest font-bold">
+          INCIDENT_RECORDS_INDEX ({filteredAlerts.length})
+        </div>
+
+        <div className="divide-y divide-[#454843] border border-[#454843] bg-[#131313]">
+          {filteredAlerts.length === 0 ? (
+            <div className="p-8 text-center text-xs text-[#8f918c]">
+              No incident alerts match filter criteria.
+            </div>
+          ) : (
+            filteredAlerts.map((alert) => {
+              const isSelected = alert.id === activeNodeAlert?.id;
+              const isCritical = alert.level === "critical";
+              const isOpen = alert.status === "open";
+
+              return (
+                <div
+                  key={alert.id}
+                  onClick={() => {
+                    tacticalSound.playClick();
+                    setSelectedAlert(alert);
+                  }}
+                  className={`p-4 flex flex-col md:flex-row md:items-center justify-between gap-3 cursor-pointer transition-colors ${
+                    isSelected ? "bg-[#1c1b1b]" : "hover:bg-[#1c1b1b]/60"
+                  }`}
+                >
+                  <div className="flex items-start gap-4 min-w-0">
+                    <div className="relative w-16 h-12 bg-[#0e0e0e] border border-[#454843] shrink-0 overflow-hidden">
+                      <img src={alert.evidenceUrl} alt="Still" className="w-full h-full object-cover grayscale" />
                     </div>
 
                     <div className="min-w-0">
                       <div className="flex items-center gap-2">
                         <StatusPill type={alert.level} size="sm" />
-                        <span className="text-[10px] text-slate-400">{alert.id}</span>
-                        <span className="text-[10px] text-cyan-400 font-bold ml-auto sm:ml-0">
-                          {formatTimeIST(alert.timestamp)}
-                        </span>
+                        <span className="text-xs font-bold text-[#F5F5F0]">{alert.id}</span>
+                        <span className="text-[10px] text-[#8f918c]">{formatTimeIST(alert.timestamp)}</span>
                       </div>
-
-                      <h3 className="text-sm font-black text-slate-100 mt-1 truncate">
+                      <h4 className="text-xs font-bold text-[#F5F5F0] truncate mt-0.5">
                         {alert.eventType}
-                      </h3>
-
-                      <p className="text-xs text-slate-300 font-sans mt-0.5 line-clamp-1">
+                      </h4>
+                      <p className="text-[11px] text-[#8f918c] font-sans truncate mt-0.5">
                         {alert.notes}
                       </p>
-
-                      <div className="flex items-center gap-3 text-[11px] text-slate-400 mt-1">
-                        <span>Cam: <strong className="text-slate-200">{alert.sourceCameraId}</strong></span>
-                        <span>•</span>
-                        <span>Sector: <strong className="text-slate-200">{alert.sector}</strong></span>
-                        <span>•</span>
-                        <span className="text-emerald-400 font-bold">Conf: {alert.confidence}%</span>
-                      </div>
                     </div>
                   </div>
 
-                  {/* Right: Quick Action Buttons (Max 1-Tap) */}
-                  <div
-                    className="flex items-center gap-2 shrink-0 pt-2 md:pt-0 border-t md:border-t-0 border-slate-800"
-                    onClick={(e) => e.stopPropagation()}
-                  >
-                    {isOpen ? (
-                      <>
-                        <button
-                          onClick={() => acknowledgeAlert(alert.id)}
-                          className="flex-1 md:flex-none px-4 py-2.5 bg-emerald-950 hover:bg-emerald-900 text-emerald-200 border border-emerald-500 rounded text-xs font-black min-h-[44px] flex items-center justify-center gap-1.5 transition-colors"
-                        >
-                          <CheckCircle2 className="w-4 h-4 text-emerald-400" />
-                          <span>ACKNOWLEDGE</span>
-                        </button>
+                  <div className="flex items-center gap-3 shrink-0">
+                    <div className="text-right text-[10px] text-[#8f918c] hidden sm:block">
+                      <div>Cam: <strong className="text-[#F5F5F0]">{alert.sourceCameraId}</strong></div>
+                      <div>Sec: <strong className="text-[#F5F5F0]">{alert.sector}</strong></div>
+                    </div>
 
-                        <button
-                          onClick={() => escalateAlert(alert.id)}
-                          className="flex-1 md:flex-none px-4 py-2.5 bg-rose-950 hover:bg-rose-900 text-rose-200 border border-rose-500 rounded text-xs font-black min-h-[44px] flex items-center justify-center gap-1.5 transition-colors"
-                        >
-                          <AlertTriangle className="w-4 h-4 text-rose-400" />
-                          <span>ESCALATE (QRF)</span>
-                        </button>
-                      </>
+                    {isOpen ? (
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          acknowledgeAlert(alert.id);
+                        }}
+                        className="px-3 py-1.5 bg-[#F5F5F0] text-[#121212] font-bold text-[10px] uppercase tracking-wider hover:opacity-90"
+                      >
+                        ACK
+                      </button>
                     ) : (
-                      <div className="flex items-center gap-2">
-                        <StatusPill type={alert.status} size="md" />
-                        <span className="text-xs text-slate-400 font-sans hidden sm:inline">
-                          by {alert.acknowledgedBy || "Operator"}
-                        </span>
-                      </div>
+                      <StatusPill type={alert.status} size="sm" />
                     )}
                   </div>
                 </div>
-              </div>
-            );
-          })
-        )}
+              );
+            })
+          )}
+        </div>
       </div>
 
-      {/* Alert Evidence Modal */}
+      {/* Incident Dossier Full Modal */}
       {selectedAlert && (
         <Modal
           isOpen={Boolean(selectedAlert)}
           onClose={() => setSelectedAlert(null)}
-          title={`INCIDENT DOSSIER: ${selectedAlert.id}`}
+          title={`INCIDENT_DOSSIER // ${selectedAlert.id}`}
           subtitle={`${selectedAlert.sector} • ${formatDateIST(selectedAlert.timestamp)} ${formatTimeIST(selectedAlert.timestamp)}`}
-          maxWidth="2xl"
+          maxWidth="3xl"
         >
-          <div className="space-y-4 font-mono text-xs text-slate-200">
-            {/* Badges */}
-            <div className="flex items-center justify-between">
+          <div className="space-y-4 font-mono text-xs text-[#e5e2e1]">
+            <div className="flex items-center justify-between border-b border-[#454843] pb-2">
               <div className="flex items-center gap-2">
                 <StatusPill type={selectedAlert.level} size="md" />
                 <StatusPill type={selectedAlert.status} size="md" />
               </div>
-              <span className="text-emerald-400 font-black text-sm">
-                AI CONFIDENCE: {selectedAlert.confidence}%
+              <span className="text-[#F5F5F0] font-bold">
+                AI_CONFIDENCE: {selectedAlert.confidence}%
               </span>
             </div>
 
-            {/* Evidence Image */}
-            <div className="relative aspect-video bg-slate-950 border border-slate-700 rounded overflow-hidden shadow-2xl">
+            <div className="relative aspect-video bg-[#0e0e0e] border border-[#454843] overflow-hidden">
               <img
                 src={selectedAlert.evidenceUrl}
                 alt="High-Res Evidence"
-                className="w-full h-full object-cover"
+                className="w-full h-full object-cover grayscale contrast-125"
               />
-              <div className="absolute top-2 left-2 text-[10px] bg-black/80 px-2 py-0.5 rounded text-cyan-300">
+              <div className="absolute top-2 left-2 text-[10px] bg-[#131313] border border-[#454843] px-2 py-0.5 text-[#F5F5F0]">
                 SOURCE: {selectedAlert.sourceCameraId}
               </div>
             </div>
 
-            {/* Description */}
-            <div className="p-3 bg-slate-950 border border-slate-800 rounded space-y-1">
-              <h4 className="font-black text-cyan-300 text-sm">{selectedAlert.eventType}</h4>
-              <p className="text-slate-300 font-sans text-xs leading-relaxed">{selectedAlert.notes}</p>
+            <div className="p-3 bg-[#1c1b1b] border border-[#454843] space-y-1">
+              <h4 className="font-bold text-[#F5F5F0] text-sm uppercase">{selectedAlert.eventType}</h4>
+              <p className="text-[#c5c7c1] font-sans text-xs leading-relaxed">{selectedAlert.notes}</p>
             </div>
 
             <BlockchainEvidenceCard alert={selectedAlert} />
 
-            {/* Sentry On Duty Call Option */}
             {linkedGuard && (
-              <div className="p-3 bg-slate-950 border border-emerald-600/70 rounded flex items-center justify-between">
+              <div className="p-3 bg-[#1c1b1b] border border-[#454843] flex items-center justify-between">
                 <div>
-                  <span className="text-[10px] text-slate-400 uppercase font-bold block">
-                    ON-DUTY SENTRY FOR THIS SECTOR:
+                  <span className="text-[10px] text-[#8f918c] uppercase font-bold block">
+                    ASSIGNED SENTRY (SECTOR {selectedAlert.sector}):
                   </span>
-                  <span className="font-bold text-slate-100">{linkedGuard.name} ({linkedGuard.callSign})</span>
+                  <span className="font-bold text-[#F5F5F0]">{linkedGuard.name} ({linkedGuard.callSign})</span>
                 </div>
                 <a
                   href={`tel:${linkedGuard.phone.replace(/\s+/g, "")}`}
-                  className="px-3 py-2 bg-emerald-950 hover:bg-emerald-900 text-emerald-200 border border-emerald-500 rounded text-xs font-black flex items-center gap-1.5"
+                  className="px-3 py-1.5 bg-[#F5F5F0] text-[#121212] font-bold text-xs flex items-center gap-1.5 uppercase tracking-wider hover:opacity-90"
                 >
-                  <Phone className="w-3.5 h-3.5 text-emerald-400" />
+                  <Phone className="w-3.5 h-3.5" />
                   <span>CALL SENTRY</span>
                 </a>
               </div>
             )}
-
-            {/* Actions */}
-            <div className="pt-2 flex justify-end gap-2 border-t border-slate-800">
-              {selectedAlert.status === "open" && (
-                <>
-                  <button
-                    onClick={() => {
-                      acknowledgeAlert(selectedAlert.id);
-                      setSelectedAlert(null);
-                    }}
-                    className="px-4 py-2.5 bg-emerald-950 hover:bg-emerald-900 text-emerald-200 border border-emerald-500 rounded text-xs font-black min-h-[44px]"
-                  >
-                    ACKNOWLEDGE
-                  </button>
-                  <button
-                    onClick={() => {
-                      escalateAlert(selectedAlert.id);
-                      setSelectedAlert(null);
-                    }}
-                    className="px-4 py-2.5 bg-rose-950 hover:bg-rose-900 text-rose-200 border border-rose-500 rounded text-xs font-black min-h-[44px]"
-                  >
-                    ESCALATE TO QRF
-                  </button>
-                </>
-              )}
-            </div>
           </div>
         </Modal>
       )}

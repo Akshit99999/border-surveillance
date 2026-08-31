@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { Modal } from "../shared/Modal";
 import { TacticalButton } from "../shared/TacticalButton";
 import { Guard } from "@/lib/types";
-import { ArrowRight, CheckSquare, Square, ShieldCheck, UserCheck } from "lucide-react";
+import { CheckSquare, Square, ShieldCheck } from "lucide-react";
 import { tacticalSound } from "@/lib/sound";
 
 interface ShiftHandoverModalProps {
@@ -37,7 +37,6 @@ export const ShiftHandoverModal: React.FC<ShiftHandoverModalProps> = ({
   });
 
   const selectedOutgoing = guards.find((g) => g.id === outgoingId);
-  const selectedIncoming = guards.find((g) => g.id === incomingId);
 
   const toggleCheck = (key: keyof typeof checklist) => {
     tacticalSound.playClick();
@@ -60,21 +59,21 @@ export const ShiftHandoverModal: React.FC<ShiftHandoverModalProps> = ({
       isOpen={isOpen}
       onClose={onClose}
       title="POST SHIFT TURNOVER & HANDOVER"
-      subtitle="Formal Human Accountability & Tactical Responsibility Transfer Protocol"
+      subtitle="Formal Human Accountability Transfer Protocol"
       maxWidth="xl"
     >
-      <form onSubmit={handleSubmit} className="space-y-4 font-mono text-xs text-slate-200">
+      <form onSubmit={handleSubmit} className="space-y-4 font-mono text-xs text-[#e5e2e1]">
         {/* Outgoing vs Incoming Guard Selector */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 p-3 bg-slate-950/80 border border-slate-800 rounded">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 p-3 bg-[#1c1b1b] border border-[#454843]">
           {/* Outgoing */}
           <div className="space-y-1.5">
-            <label className="text-[10px] text-amber-400 font-bold uppercase tracking-wider block">
-              OUTGOING SENTRY (TRANSFERRING OUT)
+            <label className="text-[10px] text-[#8f918c] font-bold uppercase tracking-widest block">
+              OUTGOING SENTRY
             </label>
             <select
               value={outgoingId}
               onChange={(e) => setOutgoingId(e.target.value)}
-              className="w-full bg-slate-900 border border-slate-700 rounded p-2 text-xs text-slate-200 focus:border-amber-500 focus:outline-none font-mono"
+              className="w-full bg-[#131313] border border-[#454843] rounded-none p-2 text-xs text-[#F5F5F0] focus:border-[#F5F5F0] font-mono"
             >
               {activeGuards.map((g) => (
                 <option key={g.id} value={g.id}>
@@ -83,129 +82,101 @@ export const ShiftHandoverModal: React.FC<ShiftHandoverModalProps> = ({
               ))}
             </select>
             {selectedOutgoing && (
-              <div className="text-[10px] text-slate-400 mt-1">
-                Post: <span className="text-amber-300 font-semibold">{selectedOutgoing.currentPostId}</span> • Callsign: {selectedOutgoing.callSign}
+              <div className="text-[10px] text-[#8f918c] mt-1">
+                Post: <span className="text-[#F5F5F0] font-semibold">{selectedOutgoing.currentPostId}</span> • Callsign: {selectedOutgoing.callSign}
               </div>
             )}
           </div>
 
           {/* Incoming */}
           <div className="space-y-1.5">
-            <label className="text-[10px] text-emerald-400 font-bold uppercase tracking-wider block">
-              INCOMING SENTRY (RELIEF SQUAD)
+            <label className="text-[10px] text-[#8f918c] font-bold uppercase tracking-widest block">
+              INCOMING SENTRY
             </label>
             <select
               value={incomingId}
               onChange={(e) => setIncomingId(e.target.value)}
-              className="w-full bg-slate-900 border border-slate-700 rounded p-2 text-xs text-slate-200 focus:border-emerald-500 focus:outline-none font-mono"
+              className="w-full bg-[#131313] border border-[#454843] rounded-none p-2 text-xs text-[#F5F5F0] focus:border-[#F5F5F0] font-mono"
             >
               {offDutyGuards.map((g) => (
                 <option key={g.id} value={g.id}>
-                  {g.name} ({g.rank} • {g.badgeId})
+                  {g.name} (Callsign: {g.callSign})
                 </option>
               ))}
             </select>
-            {selectedIncoming && (
-              <div className="text-[10px] text-slate-400 mt-1">
-                Blood Group: <span className="text-emerald-300 font-semibold">{selectedIncoming.bloodGroup}</span> • Callsign: {selectedIncoming.callSign}
-              </div>
-            )}
           </div>
         </div>
 
-        {/* Tactical Verification Checklist */}
-        <div className="p-3 bg-slate-950/60 border border-slate-800 rounded space-y-2">
-          <span className="text-[10px] text-cyan-400 uppercase font-bold tracking-wider block">
-            MANDATORY COMPLIANCE VERIFICATIONS
+        {/* Verification Checklist */}
+        <div className="space-y-2 p-3 bg-[#1c1b1b] border border-[#454843]">
+          <span className="text-[10px] text-[#8f918c] font-bold uppercase tracking-widest block mb-1">
+            MANDATORY TURNOVER CHECKLIST
           </span>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-            <button
-              type="button"
-              onClick={() => toggleCheck("weaponVerified")}
-              className="flex items-center gap-2 p-2 bg-slate-900/90 border border-slate-700 rounded text-left hover:border-cyan-500 transition-colors"
-            >
-              {checklist.weaponVerified ? (
-                <CheckSquare className="w-4 h-4 text-emerald-400 shrink-0" />
-              ) : (
-                <Square className="w-4 h-4 text-slate-500 shrink-0" />
-              )}
-              <span className="text-[11px]">Assigned Arms & Ammo Checked</span>
-            </button>
-
-            <button
-              type="button"
-              onClick={() => toggleCheck("sensorsChecked")}
-              className="flex items-center gap-2 p-2 bg-slate-900/90 border border-slate-700 rounded text-left hover:border-cyan-500 transition-colors"
-            >
-              {checklist.sensorsChecked ? (
-                <CheckSquare className="w-4 h-4 text-emerald-400 shrink-0" />
-              ) : (
-                <Square className="w-4 h-4 text-slate-500 shrink-0" />
-              )}
-              <span className="text-[11px]">Perimeter Tripwires Armed</span>
-            </button>
-
-            <button
-              type="button"
-              onClick={() => toggleCheck("openIncidentsBriefed")}
-              className="flex items-center gap-2 p-2 bg-slate-900/90 border border-slate-700 rounded text-left hover:border-cyan-500 transition-colors"
-            >
-              {checklist.openIncidentsBriefed ? (
-                <CheckSquare className="w-4 h-4 text-emerald-400 shrink-0" />
-              ) : (
-                <Square className="w-4 h-4 text-slate-500 shrink-0" />
-              )}
-              <span className="text-[11px]">Active Threat Log Briefed</span>
-            </button>
-
-            <button
-              type="button"
-              onClick={() => toggleCheck("radioChannelTested")}
-              className="flex items-center gap-2 p-2 bg-slate-900/90 border border-slate-700 rounded text-left hover:border-cyan-500 transition-colors"
-            >
-              {checklist.radioChannelTested ? (
-                <CheckSquare className="w-4 h-4 text-emerald-400 shrink-0" />
-              ) : (
-                <Square className="w-4 h-4 text-slate-500 shrink-0" />
-              )}
-              <span className="text-[11px]">Radio Channel Link Tested</span>
-            </button>
+            {[
+              { key: "weaponVerified", label: "Weapons & Ammo Accounted" },
+              { key: "sensorsChecked", label: "Breakbeams & CCTV Clear" },
+              { key: "openIncidentsBriefed", label: "Open Threat Log Briefed" },
+              { key: "radioChannelTested", label: "Radio Channel Frequency OK" },
+            ].map(({ key, label }) => {
+              const isChecked = checklist[key as keyof typeof checklist];
+              return (
+                <div
+                  key={key}
+                  onClick={() => toggleCheck(key as keyof typeof checklist)}
+                  className="flex items-center gap-2 cursor-pointer p-2 bg-[#131313] border border-[#454843] text-xs hover:border-[#8f918c]"
+                >
+                  {isChecked ? (
+                    <CheckSquare className="w-4 h-4 text-[#F5F5F0]" />
+                  ) : (
+                    <Square className="w-4 h-4 text-[#8f918c]" />
+                  )}
+                  <span className={isChecked ? "text-[#F5F5F0]" : "text-[#8f918c]"}>{label}</span>
+                </div>
+              );
+            })}
           </div>
         </div>
 
-        {/* Handover Observation Notes */}
-        <div className="space-y-1">
-          <label className="text-[10px] text-slate-400 font-bold uppercase tracking-wider block">
-            HANDOVER LOG NOTES & SECTOR OBSERVATIONS
+        {/* Turnover Log Note */}
+        <div>
+          <label className="text-[10px] text-[#8f918c] font-bold uppercase tracking-widest block mb-1">
+            HANDOVER LOG NOTE:
           </label>
-          <textarea
-            rows={3}
+          <input
+            type="text"
             value={notes}
             onChange={(e) => setNotes(e.target.value)}
-            placeholder="e.g. Fog density increasing along zero line. 1 suspicious pickup sighted at 09:30. Post perimeter secure."
-            className="w-full bg-slate-950 border border-slate-700 rounded p-2.5 text-xs text-slate-200 focus:border-cyan-500 focus:outline-none font-mono"
+            placeholder="e.g. All clear, zero line calm, weather foggy."
+            className="w-full bg-[#131313] border border-[#454843] rounded-none p-2.5 text-xs text-[#F5F5F0] placeholder:text-[#454843] focus:border-[#F5F5F0] font-mono"
           />
         </div>
 
-        {/* Modal Actions */}
-        <div className="flex items-center justify-end gap-3 pt-2">
-          <button
-            type="button"
-            onClick={onClose}
-            className="px-3.5 py-2 bg-slate-900 hover:bg-slate-800 text-slate-400 rounded text-xs"
-          >
-            Cancel
-          </button>
-          <TacticalButton
-            variant="primary"
-            size="md"
-            type="submit"
-            disabled={!allChecked || !outgoingId || !incomingId}
-            icon={<UserCheck className="w-4 h-4" />}
-          >
-            COMMIT SHIFT TURNOVER
-          </TacticalButton>
+        <div className="pt-3 flex items-center justify-between border-t border-[#454843]">
+          <div className="text-[10px] text-[#8f918c] flex items-center gap-1.5">
+            <ShieldCheck className="w-3.5 h-3.5 text-[#F5F5F0]" />
+            <span>IMMUTABLE AUDIT ENTRY WILL BE LOGGED</span>
+          </div>
+
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={onClose}
+              className="px-4 py-2 bg-[#1c1b1b] text-[#8f918c] hover:text-[#F5F5F0] border border-[#454843] text-xs font-bold uppercase tracking-wider"
+            >
+              Cancel
+            </button>
+            <TacticalButton
+              variant="primary"
+              size="md"
+              type="submit"
+              disabled={!outgoingId || !incomingId || !allChecked}
+              className="font-bold"
+            >
+              EXECUTE HANDOVER
+            </TacticalButton>
+          </div>
         </div>
       </form>
     </Modal>

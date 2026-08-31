@@ -1,7 +1,6 @@
 import React, { useEffect } from "react";
 import { X } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { TacticalButton } from "./TacticalButton";
 
 interface ModalProps {
   isOpen: boolean;
@@ -54,48 +53,42 @@ export const Modal: React.FC<ModalProps> = ({
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
       {/* Backdrop */}
       <div
-        className="fixed inset-0 bg-black/80 backdrop-blur-sm transition-opacity animate-in fade-in"
+        className="fixed inset-0 bg-[#0e0e0e]/90 transition-opacity"
         onClick={onClose}
       />
 
       {/* Modal Container */}
       <div
         className={cn(
-          "relative w-full bg-slate-900 border border-cyan-500/40 rounded-sm shadow-[0_0_30px_rgba(6,182,212,0.25)] flex flex-col max-h-[90vh] overflow-hidden z-10 animate-in zoom-in-95 duration-150",
+          "relative w-full bg-[#131313] border border-[#454843] rounded-none flex flex-col max-h-[90vh] overflow-hidden z-10 animate-in fade-in duration-100",
           maxWidthStyles,
           className
         )}
       >
-        {/* Corner Accents */}
-        <div className="absolute top-0 left-0 w-3 h-3 border-t-2 border-l-2 border-cyan-400 pointer-events-none" />
-        <div className="absolute top-0 right-0 w-3 h-3 border-t-2 border-r-2 border-cyan-400 pointer-events-none" />
-        <div className="absolute bottom-0 left-0 w-3 h-3 border-b-2 border-l-2 border-cyan-400 pointer-events-none" />
-        <div className="absolute bottom-0 right-0 w-3 h-3 border-b-2 border-r-2 border-cyan-400 pointer-events-none" />
-
         {/* Modal Header */}
-        <div className="flex items-center justify-between px-5 py-3.5 bg-slate-950/80 border-b border-slate-800">
+        <div className="flex items-center justify-between px-6 py-4 bg-[#1c1b1b] border-b border-[#454843]">
           <div>
-            <h2 className="font-mono text-sm font-bold uppercase tracking-wider text-cyan-300">
+            <h2 className="font-mono text-xs font-bold uppercase tracking-widest text-[#F5F5F0]">
               {title}
             </h2>
             {subtitle && (
-              <p className="font-mono text-[11px] text-slate-400 mt-0.5">{subtitle}</p>
+              <p className="font-mono text-[10px] text-[#8f918c] mt-0.5">// {subtitle}</p>
             )}
           </div>
           <button
             onClick={onClose}
-            className="text-slate-400 hover:text-slate-200 p-1 hover:bg-slate-800/80 rounded transition-colors"
+            className="text-[#8f918c] hover:text-[#F5F5F0] p-1.5 hover:bg-[#2a2a2a] transition-colors rounded-none"
           >
             <X className="w-4 h-4" />
           </button>
         </div>
 
         {/* Modal Body */}
-        <div className="p-5 overflow-y-auto flex-1">{children}</div>
+        <div className="p-6 overflow-y-auto flex-1 bg-[#131313] text-[#e5e2e1]">{children}</div>
 
         {/* Modal Footer */}
         {footer && (
-          <div className="flex items-center justify-end gap-3 px-5 py-3.5 bg-slate-950/80 border-t border-slate-800">
+          <div className="flex items-center justify-end gap-3 px-6 py-4 bg-[#1c1b1b] border-t border-[#454843]">
             {footer}
           </div>
         )}

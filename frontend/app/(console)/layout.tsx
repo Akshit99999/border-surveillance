@@ -13,21 +13,18 @@ export default function ConsoleLayout({
   children: React.ReactNode;
 }) {
   return (
-    <div className="flex h-screen w-screen overflow-hidden bg-slate-950 text-slate-100 font-sans">
+    <div className="flex h-screen w-screen overflow-hidden bg-[#131313] text-[#e5e2e1] font-sans selection:bg-white selection:text-black">
       <BackendHydrator />
       {/* Navigation Sidebar */}
       <ConsoleSidebar />
 
       {/* Main Command Console Area */}
-      <div className="flex-1 flex flex-col min-w-0 h-full overflow-hidden">
+      <div className="flex-1 flex flex-col min-w-0 h-full overflow-hidden bg-[#131313]">
         {/* Top Command Header */}
         <ConsoleHeader />
 
         {/* Dynamic Page Content */}
-        <main className="flex-1 overflow-y-auto p-4 md:p-6 bg-slate-950/90 relative">
-          {/* Subtle Grid Lines */}
-          <div className="absolute inset-0 bg-[linear-gradient(to_right,#06b6d405_1px,transparent_1px),linear-gradient(to_bottom,#06b6d405_1px,transparent_1px)] bg-[size:48px_48px] pointer-events-none" />
-
+        <main className="flex-1 overflow-y-auto p-4 md:p-6 bg-[#131313] relative">
           <div className="relative z-10 max-w-[1800px] mx-auto space-y-6">
             {children}
           </div>

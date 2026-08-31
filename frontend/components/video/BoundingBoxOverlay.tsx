@@ -23,9 +23,9 @@ export const BoundingBoxOverlay: React.FC<BoundingBoxOverlayProps> = ({ boxes, c
       {boxes.map((box) => {
         const isCritical = box.type === "weapon" || box.confidence > 92;
         const colorBorder = isCritical
-          ? "border-rose-500 shadow-[0_0_12px_rgba(244,63,94,0.6)]"
-          : "border-cyan-400 shadow-[0_0_10px_rgba(6,182,212,0.4)]";
-        const colorTag = isCritical ? "bg-rose-600 text-white" : "bg-cyan-600 text-slate-950 font-bold";
+          ? "border-[#ffb4ab]"
+          : "border-[#F5F5F0]";
+        const colorTag = isCritical ? "bg-[#93000a] text-[#ffdad6]" : "bg-[#F5F5F0] text-[#121212] font-bold";
 
         return (
           <div
@@ -36,29 +36,23 @@ export const BoundingBoxOverlay: React.FC<BoundingBoxOverlayProps> = ({ boxes, c
               width: `${box.width}%`,
               height: `${box.height}%`,
             }}
-            className={cn("absolute border-2 transition-all duration-300", colorBorder)}
+            className={cn("absolute border transition-all duration-150 rounded-none", colorBorder)}
           >
-            {/* Corner Markers */}
-            <div className="absolute -top-1 -left-1 w-2 h-2 border-t-2 border-l-2 border-white" />
-            <div className="absolute -top-1 -right-1 w-2 h-2 border-t-2 border-r-2 border-white" />
-            <div className="absolute -bottom-1 -left-1 w-2 h-2 border-b-2 border-l-2 border-white" />
-            <div className="absolute -bottom-1 -right-1 w-2 h-2 border-b-2 border-r-2 border-white" />
-
             {/* Label Tag */}
             <div
               className={cn(
-                "absolute -top-6 left-0 px-1.5 py-0.5 text-[9px] font-mono tracking-wider whitespace-nowrap uppercase flex items-center gap-1 shadow-md",
+                "absolute -top-5 left-0 px-1 py-0.2 text-[9px] font-mono tracking-wider whitespace-nowrap uppercase flex items-center gap-1 rounded-none",
                 colorTag
               )}
             >
               <span>{box.label}</span>
-              <span className="opacity-90 font-mono">[{box.confidence.toFixed(1)}%]</span>
+              <span className="font-mono">[{box.confidence.toFixed(0)}%]</span>
             </div>
 
-            {/* Target Crosshair */}
-            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-3 h-3 pointer-events-none opacity-40">
-              <div className="w-full h-px bg-cyan-300 absolute top-1/2 -translate-y-1/2" />
-              <div className="h-full w-px bg-cyan-300 absolute left-1/2 -translate-x-1/2" />
+            {/* Subtle Crosshair */}
+            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-2 h-2 pointer-events-none opacity-50">
+              <div className="w-full h-px bg-white absolute top-1/2 -translate-y-1/2" />
+              <div className="h-full w-px bg-white absolute left-1/2 -translate-x-1/2" />
             </div>
           </div>
         );

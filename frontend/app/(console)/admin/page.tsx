@@ -1,10 +1,8 @@
 "use client";
 
 import React from "react";
-import { Sliders, Camera as CameraIcon, Power, CheckCircle2, RotateCcw, Volume2, VolumeX } from "lucide-react";
+import { Sliders, Power, RotateCcw, Volume2, VolumeX } from "lucide-react";
 import { useIBVAPStore } from "@/lib/store/useIBVAPStore";
-import { StatusPill } from "@/components/shared/StatusPill";
-import { tacticalSound } from "@/lib/sound";
 
 export default function CameraSettingsAdminPage() {
   const {
@@ -17,19 +15,19 @@ export default function CameraSettingsAdminPage() {
   } = useIBVAPStore();
 
   return (
-    <div className="space-y-4 font-mono">
+    <div className="space-y-6 font-mono">
       {/* Top Banner */}
-      <div className="bg-slate-900 border border-slate-800 rounded p-4 flex flex-wrap items-center justify-between gap-4 shadow-xl">
+      <div className="bg-[#1c1b1b] border border-[#454843] rounded-none p-4 flex flex-wrap items-center justify-between gap-4">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded bg-cyan-950 border border-cyan-500/60 flex items-center justify-center text-cyan-400 shrink-0">
-            <Sliders className="w-5 h-5" />
+          <div className="w-8 h-8 bg-[#F5F5F0] text-[#121212] flex items-center justify-center font-bold">
+            <Sliders className="w-4 h-4" />
           </div>
           <div>
-            <h1 className="text-sm font-black text-slate-100 uppercase tracking-widest">
-              CAMERA SETTINGS & SENSOR POWER
+            <h1 className="text-xs font-bold text-[#F5F5F0] uppercase tracking-widest">
+              CAMERA SETTINGS // SENSOR_POWER_CONTROL
             </h1>
-            <p className="text-xs text-slate-400 mt-0.5 font-sans">
-              Simple camera power toggles and detection sensitivity adjustments.
+            <p className="text-[11px] text-[#8f918c] mt-0.5 font-sans">
+              Camera power control, sensitivity thresholds, and audio telemetry configuration.
             </p>
           </div>
         </div>
@@ -38,78 +36,78 @@ export default function CameraSettingsAdminPage() {
         <div className="flex items-center gap-2">
           <button
             onClick={toggleSound}
-            className="px-3 py-2 bg-slate-950 hover:bg-slate-800 text-slate-300 border border-slate-700 rounded text-xs font-bold flex items-center gap-2 min-h-[40px]"
+            className="px-3.5 py-2 bg-[#131313] hover:bg-[#2a2a2a] text-[#F5F5F0] border border-[#454843] rounded-none text-xs font-bold uppercase tracking-wider flex items-center gap-2"
           >
             {soundMuted ? (
               <>
-                <VolumeX className="w-4 h-4 text-rose-400" />
-                <span>UNMUTE SOUND</span>
+                <VolumeX className="w-3.5 h-3.5 text-[#ffb4ab]" />
+                <span>UNMUTE AUDIO</span>
               </>
             ) : (
               <>
-                <Volume2 className="w-4 h-4 text-cyan-400" />
-                <span>SOUND ON</span>
+                <Volume2 className="w-3.5 h-3.5 text-[#F5F5F0]" />
+                <span>AUDIO ACTIVE</span>
               </>
             )}
           </button>
 
           <button
             onClick={resetData}
-            className="px-3 py-2 bg-slate-950 hover:bg-slate-800 text-slate-300 border border-slate-700 rounded text-xs font-bold flex items-center gap-1.5 min-h-[40px]"
-            title="Clear server-managed records"
+            className="px-3.5 py-2 bg-[#131313] hover:bg-[#2a2a2a] text-[#8f918c] hover:text-[#F5F5F0] border border-[#454843] rounded-none text-xs font-bold uppercase tracking-wider flex items-center gap-1.5"
+            title="Clear server records"
           >
-            <RotateCcw className="w-3.5 h-3.5 text-amber-400" />
-            <span>CLEAR SERVER DATA</span>
+            <RotateCcw className="w-3.5 h-3.5" />
+            <span>RESET CACHE</span>
           </button>
         </div>
       </div>
 
-      {/* Simplified Camera Cards List - Large Tap Targets */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+      {/* Simplified Camera Cards List */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {cameras.map((cam) => {
           const isOnline = cam.status === "online";
 
           return (
             <div
               key={cam.id}
-              className="p-4 bg-slate-900 border border-slate-800 rounded flex flex-col justify-between space-y-3"
+              className="p-5 bg-[#131313] border border-[#454843] rounded-none flex flex-col justify-between space-y-4"
             >
               {/* Header: Camera ID & Power Switch */}
               <div className="flex items-start justify-between gap-2">
                 <div>
                   <div className="flex items-center gap-2">
-                    <span className="text-sm font-black text-slate-100">{cam.id}</span>
-                    <span className="text-[10px] px-1.5 py-0.5 bg-slate-800 text-cyan-300 rounded border border-slate-700 uppercase">
+                    <span className="text-sm font-bold text-[#F5F5F0]">{cam.id}</span>
+                    <span className="text-[9px] px-1.5 py-0.2 bg-[#1c1b1b] text-[#c5c7c1] rounded-none border border-[#454843] uppercase font-bold">
                       {cam.type}
                     </span>
                   </div>
-                  <h4 className="text-xs text-slate-300 font-sans mt-0.5">{cam.name}</h4>
-                  <p className="text-[11px] text-slate-500">{cam.sector}</p>
+                  <h4 className="text-xs text-[#c5c7c1] mt-1">{cam.name}</h4>
+                  <p className="text-[11px] text-[#8f918c]">{cam.sector}</p>
                 </div>
 
                 {/* Big Power On/Off Toggle Button */}
                 <button
                   onClick={() => toggleCameraActive(cam.id)}
-                  className={`px-4 py-2.5 rounded border text-xs font-black min-h-[44px] flex items-center gap-2 transition-all ${
+                  className={`px-4 py-2 rounded-none border text-xs font-bold uppercase tracking-wider flex items-center gap-2 transition-colors ${
                     isOnline
-                      ? "bg-emerald-950 hover:bg-emerald-900 text-emerald-200 border-emerald-500"
-                      : "bg-slate-950 hover:bg-slate-800 text-slate-400 border-slate-700"
+                      ? "bg-[#F5F5F0] text-[#121212] border-[#F5F5F0]"
+                      : "bg-[#1c1b1b] text-[#8f918c] border-[#454843] hover:text-[#F5F5F0]"
                   }`}
                 >
                   <Power
-                    className={`w-4 h-4 ${isOnline ? "text-emerald-400" : "text-slate-500"}`}
+                    className={`w-3.5 h-3.5 ${isOnline ? "text-[#121212]" : "text-[#8f918c]"}`}
                   />
-                  <span>{isOnline ? "POWER ON" : "POWER OFF"}</span>
+                  <span>{isOnline ? "ONLINE" : "OFFLINE"}</span>
                 </button>
               </div>
 
               {/* Sensitivity Slider */}
-              <div className="p-3 bg-slate-950 rounded border border-slate-800/80 space-y-2">
+              <div className="p-3.5 bg-[#1c1b1b] border border-[#454843] space-y-2">
                 <div className="flex justify-between items-center text-xs">
-                  <span className="text-slate-400 font-bold uppercase">
-                    DETECTION SENSITIVITY:
+                  <span className="text-[#8f918c] font-bold uppercase tracking-widest">
+                    DETECTION_SENSITIVITY:
                   </span>
-                  <span className="text-cyan-300 font-black text-sm">
+                  <span className="text-[#F5F5F0] font-bold text-sm">
                     {cam.confidenceThreshold}%
                   </span>
                 </div>
@@ -121,12 +119,12 @@ export default function CameraSettingsAdminPage() {
                   value={cam.confidenceThreshold}
                   onChange={(e) => setCameraSensitivity(cam.id, Number(e.target.value))}
                   disabled={!isOnline}
-                  className="w-full h-3 accent-cyan-500 cursor-pointer disabled:opacity-40"
+                  className="w-full h-2 accent-[#F5F5F0] cursor-pointer disabled:opacity-30"
                 />
 
-                <div className="flex justify-between text-[10px] text-slate-500">
-                  <span>Lower (More Alerts)</span>
-                  <span>Higher (Strict)</span>
+                <div className="flex justify-between text-[10px] text-[#8f918c]">
+                  <span>Lower (High Recall)</span>
+                  <span>Higher (High Precision)</span>
                 </div>
               </div>
             </div>
