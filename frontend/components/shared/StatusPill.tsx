@@ -36,8 +36,8 @@ export const StatusPill: React.FC<StatusPillProps> = ({
 }) => {
   const normalizedType = type.toLowerCase().replace(/\s+/g, "_");
 
-  let colorClasses = "bg-[#1c1b1b] text-[#c5c7c1] border-[#454843]";
-  let dotClass = "bg-[#8f918c]";
+  let colorClasses = "bg-[#F1F6FB] text-[#475569] border-[#CBDCEB]";
+  let dotClass = "bg-[#64748B]";
   let displayLabel = label || type.toUpperCase().replace(/_/g, " ");
   let shouldPulse = pulse;
 
@@ -46,8 +46,8 @@ export const StatusPill: React.FC<StatusPillProps> = ({
     case "signal_lost":
     case "blacklisted":
     case "unreachable":
-      colorClasses = "bg-[#93000a]/40 text-[#ffdad6] border-[#ffb4ab]/80";
-      dotClass = "bg-[#ffb4ab]";
+      colorClasses = "bg-[#FEE2E2] text-[#991B1B] border-[#FCA5A5]";
+      dotClass = "bg-[#DC2626]";
       shouldPulse = shouldPulse ?? true;
       if (normalizedType === "signal_lost") displayLabel = label || "SIGNAL LOST";
       break;
@@ -56,16 +56,16 @@ export const StatusPill: React.FC<StatusPillProps> = ({
     case "break":
     case "suspicious":
     case "flagged":
-      colorClasses = "bg-[#2a2a2a] text-[#e5e2e1] border-[#8f918c]";
-      dotClass = "bg-[#c8c6c6]";
+      colorClasses = "bg-[#FEF3C7] text-[#92400E] border-[#FCD34D]";
+      dotClass = "bg-[#D97706]";
       if (normalizedType === "high") displayLabel = label || "HIGH";
       break;
 
     case "medium":
     case "patrolling":
     case "elevated":
-      colorClasses = "bg-[#1c1b1b] text-[#e5e2e1] border-[#454843]";
-      dotClass = "bg-[#ffffff]";
+      colorClasses = "bg-[#E0F2FE] text-[#0369A1] border-[#BAE6FD]";
+      dotClass = "bg-[#0284C7]";
       if (normalizedType === "patrolling") displayLabel = label || "PATROLLING";
       break;
 
@@ -73,16 +73,16 @@ export const StatusPill: React.FC<StatusPillProps> = ({
     case "on_post":
     case "authorized":
     case "low":
-      colorClasses = "bg-[#1c1b1b] text-[#ffffff] border-[#8f918c]";
-      dotClass = "bg-[#ffffff]";
+      colorClasses = "bg-[#DCFCE7] text-[#166534] border-[#86EFAC]";
+      dotClass = "bg-[#16A34A]";
       if (normalizedType === "on_post") displayLabel = label || "ON POST";
       if (normalizedType === "online") displayLabel = label || "ONLINE";
       break;
 
     case "offline":
     case "off_duty":
-      colorClasses = "bg-[#131313] text-[#8f918c] border-[#454843]";
-      dotClass = "bg-[#454843]";
+      colorClasses = "bg-[#F1F5F9] text-[#64748B] border-[#CBD5E1]";
+      dotClass = "bg-[#94A3B8]";
       if (normalizedType === "off_duty") displayLabel = label || "OFF DUTY";
       break;
   }

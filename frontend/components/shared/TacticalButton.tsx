@@ -41,17 +41,17 @@ export const TacticalButton: React.FC<TacticalButtonProps> = ({
 
   const variantStyles = {
     primary:
-      "bg-[#F5F5F0] text-[#121212] border-[#F5F5F0] hover:bg-white hover:opacity-90 font-bold active:scale-[0.99]",
+      "bg-[#0284C7] text-white border-[#0284C7] hover:bg-[#0369A1] hover:border-[#0369A1] font-bold active:scale-[0.99] shadow-sm",
     secondary:
-      "bg-[#1c1b1b] hover:bg-[#2a2a2a] text-[#e5e2e1] border-[#454843] hover:border-[#8f918c]",
+      "bg-[#E0F2FE] hover:bg-[#BAE6FD] text-[#0369A1] border-[#CBDCEB] hover:border-[#94B8D7] font-bold",
     danger:
-      "bg-[#93000a] hover:bg-[#b00020] text-[#ffdad6] border-[#ffb4ab]/60 font-bold",
+      "bg-[#DC2626] hover:bg-[#B91C1C] text-white border-[#DC2626] font-bold shadow-sm",
     warning:
-      "bg-[#353534] hover:bg-[#494949] text-[#e5e2e1] border-[#8f918c]",
+      "bg-[#FEF3C7] hover:bg-[#FDE68A] text-[#92400E] border-[#FCD34D] font-bold",
     outline:
-      "bg-transparent hover:bg-[#1c1b1b] text-[#e5e2e1] border-[#454843] hover:border-[#F5F5F0]",
+      "bg-transparent hover:bg-[#E0F2FE] text-[#0284C7] border-[#0284C7] hover:border-[#0369A1]",
     ghost:
-      "bg-transparent hover:bg-[#201f1f] text-[#c5c7c1] hover:text-[#e5e2e1] border-transparent",
+      "bg-transparent hover:bg-[#EBF3FA] text-[#475569] hover:text-[#0F172A] border-transparent",
   }[variant];
 
   return (

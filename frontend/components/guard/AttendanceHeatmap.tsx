@@ -9,11 +9,11 @@ interface AttendanceHeatmapProps {
 
 export const AttendanceHeatmap: React.FC<AttendanceHeatmapProps> = ({ records, className }) => {
   const statusColors = {
-    present: "bg-[#1c1b1b] border-[#F5F5F0] text-[#F5F5F0]",
-    late: "bg-[#2a2a2a] border-[#8f918c] text-[#c5c7c1]",
-    absent: "bg-[#93000a] border-[#ffb4ab] text-[#ffdad6]",
-    leave: "bg-[#131313] border-[#454843] text-[#8f918c]",
-    swap: "bg-[#353534] border-[#8f918c] text-[#F5F5F0]",
+    present: "bg-[#DCFCE7] border-[#86EFAC] text-[#166534]",
+    late: "bg-[#FEF3C7] border-[#FCD34D] text-[#92400E]",
+    absent: "bg-[#FEE2E2] border-[#FCA5A5] text-[#991B1B]",
+    leave: "bg-[#F1F5F9] border-[#CBD5E1] text-[#64748B]",
+    swap: "bg-[#E0F2FE] border-[#BAE6FD] text-[#0369A1]",
   };
 
   const total = records.length;
@@ -22,19 +22,19 @@ export const AttendanceHeatmap: React.FC<AttendanceHeatmapProps> = ({ records, c
   const attendanceRate = total > 0 ? (((presentCount + lateCount) / total) * 100).toFixed(1) : "100";
 
   return (
-    <div className={cn("p-4 bg-[#131313] border border-[#454843] rounded-none font-mono", className)}>
+    <div className={cn("p-4 bg-[#FFFFFF] border border-[#CBDCEB] rounded-none font-mono shadow-sm", className)}>
       <div className="flex flex-wrap items-center justify-between gap-2 mb-3">
         <div>
-          <h4 className="text-xs font-bold text-[#F5F5F0] uppercase tracking-widest">
+          <h4 className="text-xs font-bold text-[#0F172A] uppercase tracking-widest">
             30-DAY OPERATIONAL ATTENDANCE HEATMAP
           </h4>
-          <p className="text-[10px] text-[#8f918c] mt-0.5 font-sans">
+          <p className="text-[10px] text-[#475569] mt-0.5 font-sans">
             Historical sentry post fulfillment and duty punctuality records.
           </p>
         </div>
         <div className="flex items-center gap-2">
-          <span className="text-[10px] text-[#8f918c] font-bold uppercase">COMPLIANCE:</span>
-          <span className="text-xs font-bold text-[#121212] bg-[#F5F5F0] px-2.5 py-0.5 rounded-none">
+          <span className="text-[10px] text-[#475569] font-bold uppercase">COMPLIANCE:</span>
+          <span className="text-xs font-bold text-white bg-[#0284C7] px-2.5 py-0.5 rounded-none shadow-sm">
             {attendanceRate}%
           </span>
         </div>
@@ -59,7 +59,7 @@ export const AttendanceHeatmap: React.FC<AttendanceHeatmapProps> = ({ records, c
               </span>
 
               {/* Tooltip on hover */}
-              <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-1.5 px-2 py-1 bg-[#131313] border border-[#454843] text-[#F5F5F0] text-[9px] rounded-none whitespace-nowrap hidden group-hover:block z-20 pointer-events-none">
+              <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-1.5 px-2 py-1 bg-[#0F172A] border border-[#CBDCEB] text-white text-[9px] rounded-none whitespace-nowrap hidden group-hover:block z-20 pointer-events-none shadow-md">
                 {r.date} • {r.status.toUpperCase()} ({r.hours}h)
               </div>
             </div>
@@ -68,25 +68,25 @@ export const AttendanceHeatmap: React.FC<AttendanceHeatmapProps> = ({ records, c
       </div>
 
       {/* Heatmap Legend */}
-      <div className="flex flex-wrap items-center gap-3 pt-3 mt-2 border-t border-[#454843] text-[10px] text-[#8f918c]">
+      <div className="flex flex-wrap items-center gap-3 pt-3 mt-2 border-t border-[#CBDCEB] text-[10px] text-[#475569]">
         <div className="flex items-center gap-1.5">
-          <span className="w-2.5 h-2.5 bg-[#1c1b1b] border border-[#F5F5F0]" />
+          <span className="w-2.5 h-2.5 bg-[#DCFCE7] border border-[#86EFAC]" />
           <span>Present (P)</span>
         </div>
         <div className="flex items-center gap-1.5">
-          <span className="w-2.5 h-2.5 bg-[#2a2a2a] border border-[#8f918c]" />
+          <span className="w-2.5 h-2.5 bg-[#FEF3C7] border border-[#FCD34D]" />
           <span>Late Shift (L)</span>
         </div>
         <div className="flex items-center gap-1.5">
-          <span className="w-2.5 h-2.5 bg-[#353534] border border-[#8f918c]" />
+          <span className="w-2.5 h-2.5 bg-[#E0F2FE] border border-[#BAE6FD]" />
           <span>Shift Swap (S)</span>
         </div>
         <div className="flex items-center gap-1.5">
-          <span className="w-2.5 h-2.5 bg-[#131313] border border-[#454843]" />
+          <span className="w-2.5 h-2.5 bg-[#F1F5F9] border border-[#CBDCEB]" />
           <span>Approved Leave (V)</span>
         </div>
         <div className="flex items-center gap-1.5">
-          <span className="w-2.5 h-2.5 bg-[#93000a] border border-[#ffb4ab]" />
+          <span className="w-2.5 h-2.5 bg-[#FEE2E2] border border-[#FCA5A5]" />
           <span>Absent (A)</span>
         </div>
       </div>

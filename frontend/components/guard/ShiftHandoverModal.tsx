@@ -62,18 +62,18 @@ export const ShiftHandoverModal: React.FC<ShiftHandoverModalProps> = ({
       subtitle="Formal Human Accountability Transfer Protocol"
       maxWidth="xl"
     >
-      <form onSubmit={handleSubmit} className="space-y-4 font-mono text-xs text-[#e5e2e1]">
+      <form onSubmit={handleSubmit} className="space-y-4 font-mono text-xs text-[#0F172A]">
         {/* Outgoing vs Incoming Guard Selector */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 p-3 bg-[#1c1b1b] border border-[#454843]">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 p-3 bg-[#F0F6FC] border border-[#CBDCEB]">
           {/* Outgoing */}
           <div className="space-y-1.5">
-            <label className="text-[10px] text-[#8f918c] font-bold uppercase tracking-widest block">
+            <label className="text-[10px] text-[#475569] font-bold uppercase tracking-widest block">
               OUTGOING SENTRY
             </label>
             <select
               value={outgoingId}
               onChange={(e) => setOutgoingId(e.target.value)}
-              className="w-full bg-[#131313] border border-[#454843] rounded-none p-2 text-xs text-[#F5F5F0] focus:border-[#F5F5F0] font-mono"
+              className="w-full bg-[#FFFFFF] border border-[#CBDCEB] rounded-none p-2 text-xs text-[#0F172A] focus:border-[#0284C7] font-mono font-bold"
             >
               {activeGuards.map((g) => (
                 <option key={g.id} value={g.id}>
@@ -82,21 +82,21 @@ export const ShiftHandoverModal: React.FC<ShiftHandoverModalProps> = ({
               ))}
             </select>
             {selectedOutgoing && (
-              <div className="text-[10px] text-[#8f918c] mt-1">
-                Post: <span className="text-[#F5F5F0] font-semibold">{selectedOutgoing.currentPostId}</span> • Callsign: {selectedOutgoing.callSign}
+              <div className="text-[10px] text-[#64748B] mt-1">
+                Post: <span className="text-[#0F172A] font-semibold">{selectedOutgoing.currentPostId}</span> • Callsign: {selectedOutgoing.callSign}
               </div>
             )}
           </div>
 
           {/* Incoming */}
           <div className="space-y-1.5">
-            <label className="text-[10px] text-[#8f918c] font-bold uppercase tracking-widest block">
+            <label className="text-[10px] text-[#475569] font-bold uppercase tracking-widest block">
               INCOMING SENTRY
             </label>
             <select
               value={incomingId}
               onChange={(e) => setIncomingId(e.target.value)}
-              className="w-full bg-[#131313] border border-[#454843] rounded-none p-2 text-xs text-[#F5F5F0] focus:border-[#F5F5F0] font-mono"
+              className="w-full bg-[#FFFFFF] border border-[#CBDCEB] rounded-none p-2 text-xs text-[#0F172A] focus:border-[#0284C7] font-mono font-bold"
             >
               {offDutyGuards.map((g) => (
                 <option key={g.id} value={g.id}>
@@ -108,8 +108,8 @@ export const ShiftHandoverModal: React.FC<ShiftHandoverModalProps> = ({
         </div>
 
         {/* Verification Checklist */}
-        <div className="space-y-2 p-3 bg-[#1c1b1b] border border-[#454843]">
-          <span className="text-[10px] text-[#8f918c] font-bold uppercase tracking-widest block mb-1">
+        <div className="space-y-2 p-3 bg-[#F0F6FC] border border-[#CBDCEB]">
+          <span className="text-[10px] text-[#475569] font-bold uppercase tracking-widest block mb-1">
             MANDATORY TURNOVER CHECKLIST
           </span>
 
@@ -125,14 +125,14 @@ export const ShiftHandoverModal: React.FC<ShiftHandoverModalProps> = ({
                 <div
                   key={key}
                   onClick={() => toggleCheck(key as keyof typeof checklist)}
-                  className="flex items-center gap-2 cursor-pointer p-2 bg-[#131313] border border-[#454843] text-xs hover:border-[#8f918c]"
+                  className="flex items-center gap-2 cursor-pointer p-2 bg-[#FFFFFF] border border-[#CBDCEB] text-xs hover:border-[#0284C7]"
                 >
                   {isChecked ? (
-                    <CheckSquare className="w-4 h-4 text-[#F5F5F0]" />
+                    <CheckSquare className="w-4 h-4 text-[#0284C7]" />
                   ) : (
-                    <Square className="w-4 h-4 text-[#8f918c]" />
+                    <Square className="w-4 h-4 text-[#94A3B8]" />
                   )}
-                  <span className={isChecked ? "text-[#F5F5F0]" : "text-[#8f918c]"}>{label}</span>
+                  <span className={isChecked ? "text-[#0F172A] font-bold" : "text-[#64748B]"}>{label}</span>
                 </div>
               );
             })}
@@ -141,7 +141,7 @@ export const ShiftHandoverModal: React.FC<ShiftHandoverModalProps> = ({
 
         {/* Turnover Log Note */}
         <div>
-          <label className="text-[10px] text-[#8f918c] font-bold uppercase tracking-widest block mb-1">
+          <label className="text-[10px] text-[#475569] font-bold uppercase tracking-widest block mb-1">
             HANDOVER LOG NOTE:
           </label>
           <input
@@ -149,13 +149,13 @@ export const ShiftHandoverModal: React.FC<ShiftHandoverModalProps> = ({
             value={notes}
             onChange={(e) => setNotes(e.target.value)}
             placeholder="e.g. All clear, zero line calm, weather foggy."
-            className="w-full bg-[#131313] border border-[#454843] rounded-none p-2.5 text-xs text-[#F5F5F0] placeholder:text-[#454843] focus:border-[#F5F5F0] font-mono"
+            className="w-full bg-[#F8FAFC] border border-[#CBDCEB] rounded-none p-2.5 text-xs text-[#0F172A] placeholder:text-[#94A3B8] focus:border-[#0284C7] font-mono"
           />
         </div>
 
-        <div className="pt-3 flex items-center justify-between border-t border-[#454843]">
-          <div className="text-[10px] text-[#8f918c] flex items-center gap-1.5">
-            <ShieldCheck className="w-3.5 h-3.5 text-[#F5F5F0]" />
+        <div className="pt-3 flex items-center justify-between border-t border-[#CBDCEB]">
+          <div className="text-[10px] text-[#64748B] flex items-center gap-1.5 font-bold">
+            <ShieldCheck className="w-3.5 h-3.5 text-[#16A34A]" />
             <span>IMMUTABLE AUDIT ENTRY WILL BE LOGGED</span>
           </div>
 
@@ -163,7 +163,7 @@ export const ShiftHandoverModal: React.FC<ShiftHandoverModalProps> = ({
             <button
               type="button"
               onClick={onClose}
-              className="px-4 py-2 bg-[#1c1b1b] text-[#8f918c] hover:text-[#F5F5F0] border border-[#454843] text-xs font-bold uppercase tracking-wider"
+              className="px-4 py-2 bg-[#F0F6FC] text-[#475569] hover:text-[#0F172A] border border-[#CBDCEB] text-xs font-bold uppercase tracking-wider transition-colors"
             >
               Cancel
             </button>
@@ -172,7 +172,7 @@ export const ShiftHandoverModal: React.FC<ShiftHandoverModalProps> = ({
               size="md"
               type="submit"
               disabled={!outgoingId || !incomingId || !allChecked}
-              className="font-bold"
+              className="font-bold shadow-sm"
             >
               EXECUTE HANDOVER
             </TacticalButton>

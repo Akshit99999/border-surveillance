@@ -6,12 +6,12 @@
 @tailwind utilities;
 
 :root {
-  --background: #131313;
-  --foreground: #e5e2e1;
-  --surface: #131313;
-  --surface-container: #201f1f;
-  --outline: #8f918c;
-  --outline-variant: #454843;
+  --background: #EBF3FA;
+  --foreground: #0F172A;
+  --surface: #FFFFFF;
+  --surface-container: #F1F6FB;
+  --outline: #94B8D7;
+  --outline-variant: #CBDCEB;
 }
 
 * {
@@ -19,42 +19,42 @@
 }
 
 body {
-  color: #e5e2e1;
-  background-color: #131313;
+  color: #0F172A;
+  background-color: #EBF3FA;
   font-family: Inter, Geist, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
   overflow-x: hidden;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
 
-/* Minimalist Scrollbar (Obsidian Surveillance) */
+/* Minimalist Scrollbar (Light Blue Steel) */
 ::-webkit-scrollbar {
-  width: 4px;
-  height: 4px;
+  width: 5px;
+  height: 5px;
 }
 
 ::-webkit-scrollbar-track {
-  background: #131313;
+  background: #EBF3FA;
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #454843;
+  background: #CBDCEB;
   border-radius: 0px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #8f918c;
+  background: #94B8D7;
 }
 
-/* 1px Slate Gray grid lines */
+/* 1px Light Blue Steel grid lines */
 .grid-layout {
   display: grid;
   gap: 1px;
-  background-color: #454843;
+  background-color: #CBDCEB;
 }
 
 .grid-item {
-  background-color: #131313;
+  background-color: #FFFFFF;
 }
 
 /* Sharp focus indicators */

@@ -40,110 +40,110 @@ export default function DashboardPage() {
   return (
     <div className="space-y-6 font-mono">
       {/* Top Banner */}
-      <div className="bg-[#1c1b1b] border border-[#454843] rounded-none p-4 flex flex-wrap items-center justify-between gap-4">
+      <div className="bg-[#FFFFFF] border border-[#CBDCEB] rounded-none p-4 flex flex-wrap items-center justify-between gap-4 shadow-sm">
         <div className="flex items-center gap-3">
-          <div className="w-8 h-8 bg-[#F5F5F0] text-[#121212] flex items-center justify-center font-bold">
+          <div className="w-8 h-8 bg-[#0284C7] text-white flex items-center justify-center font-bold">
             <Shield className="w-4 h-4" />
           </div>
           <div>
-            <h1 className="text-xs font-bold text-[#F5F5F0] uppercase tracking-widest">
+            <h1 className="text-xs font-bold text-[#0F172A] uppercase tracking-widest">
               COMMAND CONSOLE // SECTOR_NODE_ALPHA_07
             </h1>
-            <p className="text-[11px] text-[#8f918c] mt-0.5 font-sans">
+            <p className="text-[11px] text-[#475569] mt-0.5 font-sans">
               Live automated surveillance overview & post readiness.
             </p>
           </div>
         </div>
 
         <Link href="/guard-duty">
-          <div className="flex items-center gap-2 px-3 py-2 bg-[#131313] hover:bg-[#2a2a2a] border border-[#454843] text-xs font-bold text-[#F5F5F0] transition-colors rounded-none">
-            <AlertTriangle className="w-4 h-4 text-[#8f918c]" />
+          <div className="flex items-center gap-2 px-3 py-2 bg-[#F0F6FC] hover:bg-[#E0F2FE] border border-[#CBDCEB] text-xs font-bold text-[#0369A1] transition-colors rounded-none">
+            <AlertTriangle className="w-4 h-4 text-[#0284C7]" />
             <span>{guards.length > 0 ? `${onDutyGuards.length}/${guards.length} POSTS ON DUTY` : "NO ROSTER DATA"}</span>
-            <ChevronRight className="w-3.5 h-3.5 text-[#8f918c]" />
+            <ChevronRight className="w-3.5 h-3.5 text-[#0284C7]" />
           </div>
         </Link>
       </div>
 
       {/* 4 High-Contrast KPI Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-px bg-[#454843] border border-[#454843]">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-px bg-[#CBDCEB] border border-[#CBDCEB] shadow-sm">
         {/* Alerts KPI */}
-        <Link href="/alerts" className="block p-5 bg-[#131313] hover:bg-[#1c1b1b] transition-colors group">
-          <div className="flex items-center justify-between text-[#8f918c] text-[10px] uppercase tracking-widest">
+        <Link href="/alerts" className="block p-5 bg-[#FFFFFF] hover:bg-[#F8FBFE] transition-colors group">
+          <div className="flex items-center justify-between text-[#475569] text-[10px] uppercase tracking-widest font-bold">
             <span>ACTIVE THREATS</span>
-            <ShieldAlert className="w-4 h-4 text-[#F5F5F0]" />
+            <ShieldAlert className="w-4 h-4 text-[#DC2626]" />
           </div>
           <div className="mt-3 flex items-baseline justify-between">
-            <span className="text-3xl font-bold text-[#F5F5F0]">{openAlerts.length}</span>
-            <span className="text-[11px] text-[#8f918c] uppercase font-bold">
+            <span className="text-3xl font-bold text-[#0F172A]">{openAlerts.length}</span>
+            <span className="text-[11px] text-[#DC2626] uppercase font-bold">
               {criticalAlerts.length} CRITICAL
             </span>
           </div>
-          <span className="text-[10px] text-[#8f918c] group-hover:text-[#F5F5F0] mt-3 block uppercase tracking-wider">
+          <span className="text-[10px] text-[#0284C7] group-hover:underline mt-3 block uppercase tracking-wider font-bold">
             OPEN EVIDENCE VAULT →
           </span>
         </Link>
 
         {/* Sentry Posts KPI */}
-        <Link href="/guard-duty" className="block p-5 bg-[#131313] hover:bg-[#1c1b1b] transition-colors group">
-          <div className="flex items-center justify-between text-[#8f918c] text-[10px] uppercase tracking-widest">
+        <Link href="/guard-duty" className="block p-5 bg-[#FFFFFF] hover:bg-[#F8FBFE] transition-colors group">
+          <div className="flex items-center justify-between text-[#475569] text-[10px] uppercase tracking-widest font-bold">
             <span>SENTRY POSTS</span>
-            <Users className="w-4 h-4 text-[#F5F5F0]" />
+            <Users className="w-4 h-4 text-[#0284C7]" />
           </div>
           <div className="mt-3 flex items-baseline justify-between">
-            <span className="text-3xl font-bold text-[#F5F5F0]">{onDutyGuards.length} / {guards.length}</span>
-            <span className="text-[11px] text-[#8f918c] uppercase font-bold">{guards.length > 0 ? `${unstaffedGuardCount} UNSTAFFED` : "NO ROSTER"}</span>
+            <span className="text-3xl font-bold text-[#0F172A]">{onDutyGuards.length} / {guards.length}</span>
+            <span className="text-[11px] text-[#0369A1] uppercase font-bold">{guards.length > 0 ? `${unstaffedGuardCount} UNSTAFFED` : "NO ROSTER"}</span>
           </div>
-          <span className="text-[10px] text-[#8f918c] group-hover:text-[#F5F5F0] mt-3 block uppercase tracking-wider">
+          <span className="text-[10px] text-[#0284C7] group-hover:underline mt-3 block uppercase tracking-wider font-bold">
             MANAGE ROSTER →
           </span>
         </Link>
 
         {/* Cameras KPI */}
-        <Link href="/live-feed" className="block p-5 bg-[#131313] hover:bg-[#1c1b1b] transition-colors group">
-          <div className="flex items-center justify-between text-[#8f918c] text-[10px] uppercase tracking-widest">
+        <Link href="/live-feed" className="block p-5 bg-[#FFFFFF] hover:bg-[#F8FBFE] transition-colors group">
+          <div className="flex items-center justify-between text-[#475569] text-[10px] uppercase tracking-widest font-bold">
             <span>CAMERAS ONLINE</span>
-            <Video className="w-4 h-4 text-[#F5F5F0]" />
+            <Video className="w-4 h-4 text-[#16A34A]" />
           </div>
           <div className="mt-3 flex items-baseline justify-between">
-            <span className="text-3xl font-bold text-[#F5F5F0]">
+            <span className="text-3xl font-bold text-[#0F172A]">
               {onlineCameras.length}/{cameras.length}
             </span>
-            <span className="text-[11px] text-[#8f918c] uppercase font-bold">{cameras.length} CONFIGURED</span>
+            <span className="text-[11px] text-[#16A34A] uppercase font-bold">{cameras.length} CONFIGURED</span>
           </div>
-          <span className="text-[10px] text-[#8f918c] group-hover:text-[#F5F5F0] mt-3 block uppercase tracking-wider">
+          <span className="text-[10px] text-[#0284C7] group-hover:underline mt-3 block uppercase tracking-wider font-bold">
             OPEN CAMERA MATRIX →
           </span>
         </Link>
 
         {/* DEFCON KPI */}
-        <div className="p-5 bg-[#131313]">
-          <div className="flex items-center justify-between text-[#8f918c] text-[10px] uppercase tracking-widest">
+        <div className="p-5 bg-[#FFFFFF]">
+          <div className="flex items-center justify-between text-[#475569] text-[10px] uppercase tracking-widest font-bold">
             <span>DEFENSE LEVEL</span>
-            <div className="w-2 h-2 rounded-full bg-[#F5F5F0] animate-pulse" />
+            <div className="w-2 h-2 rounded-full bg-[#0284C7] animate-pulse" />
           </div>
           <div className="mt-3 flex items-baseline justify-between">
-            <span className="text-3xl font-bold text-[#F5F5F0]">DEFCON {defconLevel}</span>
-            <span className="text-[11px] text-[#8f918c] uppercase font-bold">NODE ARMED</span>
+            <span className="text-3xl font-bold text-[#0F172A]">DEFCON {defconLevel}</span>
+            <span className="text-[11px] text-[#0369A1] uppercase font-bold">NODE ARMED</span>
           </div>
-          <span className="text-[10px] text-[#8f918c] mt-3 block uppercase tracking-wider">
+          <span className="text-[10px] text-[#64748B] mt-3 block uppercase tracking-wider font-semibold">
             TELEMETRY LINKED
           </span>
         </div>
       </div>
 
       {/* Main Grid: Video Stream & Telemetry (Left) + Event Log (Right) */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-px bg-[#454843] border border-[#454843]">
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-px bg-[#CBDCEB] border border-[#CBDCEB] shadow-sm">
         {/* Center / Left Column: Video Feeds & Telemetry */}
-        <div className="lg:col-span-8 bg-[#131313] p-6 space-y-6 flex flex-col justify-between">
+        <div className="lg:col-span-8 bg-[#FFFFFF] p-6 space-y-6 flex flex-col justify-between">
           <div className="space-y-4">
-            <div className="flex items-center justify-between border-b border-[#454843] pb-2">
+            <div className="flex items-center justify-between border-b border-[#CBDCEB] pb-2">
               <div className="flex items-center gap-2">
-                <div className="w-2 h-2 rounded-full bg-[#F5F5F0] animate-pulse" />
-                <h2 className="text-xs font-bold uppercase tracking-widest text-[#F5F5F0]">
+                <div className="w-2 h-2 rounded-full bg-[#0284C7] animate-pulse" />
+                <h2 className="text-xs font-bold uppercase tracking-widest text-[#0F172A]">
                   PRIMARY SURVEILLANCE FEED
                 </h2>
               </div>
-              <Link href="/live-feed" className="text-xs text-[#8f918c] hover:text-[#F5F5F0] uppercase tracking-wider">
+              <Link href="/live-feed" className="text-xs text-[#0284C7] hover:text-[#0369A1] uppercase tracking-wider font-bold">
                 EXPAND MATRIX →
               </Link>
             </div>
@@ -158,7 +158,7 @@ export default function DashboardPage() {
                 />
               ))}
               {previewCameras.length === 0 && (
-                <div className="sm:col-span-2 p-8 bg-[#1c1b1b] border border-[#454843] text-center text-xs text-[#8f918c]">
+                <div className="sm:col-span-2 p-8 bg-[#F0F6FC] border border-[#CBDCEB] text-center text-xs text-[#475569]">
                   No CCTV cameras configured. Use Live Cameras to preview local camera.
                 </div>
               )}
@@ -166,29 +166,29 @@ export default function DashboardPage() {
           </div>
 
           {/* Environmental Telemetry & Uplink */}
-          <div className="border-t border-[#454843] pt-6 space-y-6">
+          <div className="border-t border-[#CBDCEB] pt-6 space-y-6">
             <div>
-              <div className="text-[10px] text-[#8f918c] uppercase tracking-widest border-b border-[#454843] pb-2 mb-4">
+              <div className="text-[10px] text-[#475569] uppercase tracking-widest border-b border-[#CBDCEB] pb-2 mb-4 font-bold">
                 ENVIRONMENTAL_TELEMETRY
               </div>
               <div className="grid grid-cols-3 gap-6">
                 <div>
-                  <span className="text-[10px] text-[#8f918c] block uppercase">TEMP</span>
-                  <span className="text-xl font-bold text-[#F5F5F0]">18.4°C</span>
+                  <span className="text-[10px] text-[#64748B] block uppercase font-bold">TEMP</span>
+                  <span className="text-xl font-bold text-[#0F172A]">18.4°C</span>
                 </div>
                 <div>
-                  <span className="text-[10px] text-[#8f918c] block uppercase">HUMIDITY</span>
-                  <span className="text-xl font-bold text-[#F5F5F0]">42%</span>
+                  <span className="text-[10px] text-[#64748B] block uppercase font-bold">HUMIDITY</span>
+                  <span className="text-xl font-bold text-[#0F172A]">42%</span>
                 </div>
                 <div>
-                  <span className="text-[10px] text-[#8f918c] block uppercase">PRESSURE</span>
-                  <span className="text-xl font-bold text-[#F5F5F0]">1012 hPa</span>
+                  <span className="text-[10px] text-[#64748B] block uppercase font-bold">PRESSURE</span>
+                  <span className="text-xl font-bold text-[#0F172A]">1012 hPa</span>
                 </div>
               </div>
             </div>
 
             <div>
-              <div className="text-[10px] text-[#8f918c] uppercase tracking-widest border-b border-[#454843] pb-2 mb-3">
+              <div className="text-[10px] text-[#475569] uppercase tracking-widest border-b border-[#CBDCEB] pb-2 mb-3 font-bold">
                 UPLINK_BANDWIDTH
               </div>
               <div className="h-10 w-full flex items-end gap-1">
@@ -196,7 +196,7 @@ export default function DashboardPage() {
                   <div
                     key={i}
                     style={{ height: `${h}%` }}
-                    className={`flex-1 transition-colors ${i === 11 ? "bg-[#F5F5F0]" : "bg-[#454843] hover:bg-[#8f918c]"}`}
+                    className={`flex-1 transition-colors ${i === 11 ? "bg-[#0284C7]" : "bg-[#BAE6FD] hover:bg-[#38BDF8]"}`}
                   />
                 ))}
               </div>
@@ -205,17 +205,17 @@ export default function DashboardPage() {
         </div>
 
         {/* Right Column: Live Event Log */}
-        <div className="lg:col-span-4 bg-[#131313] flex flex-col border-t lg:border-t-0 lg:border-l border-[#454843]">
-          <div className="p-4 border-b border-[#454843] bg-[#1c1b1b] flex justify-between items-center">
-            <span className="text-xs font-bold text-[#F5F5F0] uppercase tracking-widest">
+        <div className="lg:col-span-4 bg-[#FFFFFF] flex flex-col border-t lg:border-t-0 lg:border-l border-[#CBDCEB]">
+          <div className="p-4 border-b border-[#CBDCEB] bg-[#F0F6FC] flex justify-between items-center">
+            <span className="text-xs font-bold text-[#0F172A] uppercase tracking-widest">
               EVENT_LOG // LIVE
             </span>
-            <Link href="/alerts" className="text-[10px] text-[#8f918c] hover:text-[#F5F5F0] uppercase tracking-wider">
+            <Link href="/alerts" className="text-[10px] text-[#0284C7] hover:text-[#0369A1] uppercase tracking-wider font-bold">
               VIEW_ALL ({alerts.length})
             </Link>
           </div>
 
-          <div className="flex-1 overflow-y-auto divide-y divide-[#454843] max-h-[600px]">
+          <div className="flex-1 overflow-y-auto divide-y divide-[#CBDCEB] max-h-[600px]">
             {alerts.slice(0, 5).map((alert) => {
               const isOpen = alert.status === "open";
               const isCritical = alert.level === "critical";
@@ -223,38 +223,38 @@ export default function DashboardPage() {
               return (
                 <div
                   key={alert.id}
-                  className={`p-4 transition-colors ${isOpen && isCritical ? "bg-[#93000a]/20" : "hover:bg-[#1c1b1b]"}`}
+                  className={`p-4 transition-colors ${isOpen && isCritical ? "bg-[#FEE2E2]/30" : "hover:bg-[#F8FBFE]"}`}
                 >
                   <div className="flex justify-between items-start mb-1.5">
                     <StatusPill type={alert.level} size="sm" />
-                    <span className="text-[10px] text-[#8f918c] font-bold">
+                    <span className="text-[10px] text-[#64748B] font-bold">
                       {formatTimeIST(alert.timestamp)}
                     </span>
                   </div>
 
-                  <h4 className="text-xs font-bold text-[#F5F5F0] truncate mt-1">
+                  <h4 className="text-xs font-bold text-[#0F172A] truncate mt-1">
                     {alert.eventType}
                   </h4>
-                  <p className="text-[11px] text-[#c5c7c1] font-sans mt-0.5 line-clamp-2 leading-snug">
+                  <p className="text-[11px] text-[#475569] font-sans mt-0.5 line-clamp-2 leading-snug">
                     {alert.notes}
                   </p>
 
-                  <div className="text-[10px] text-[#8f918c] mt-2 flex items-center justify-between">
-                    <span>Cam: {alert.sourceCameraId}</span>
-                    <span>Sec: {alert.sector}</span>
+                  <div className="text-[10px] text-[#64748B] mt-2 flex items-center justify-between">
+                    <span>Cam: <strong className="text-[#0F172A]">{alert.sourceCameraId}</strong></span>
+                    <span>Sec: <strong className="text-[#0F172A]">{alert.sector}</strong></span>
                   </div>
 
                   {isOpen && (
-                    <div className="grid grid-cols-2 gap-2 pt-2.5 mt-2 border-t border-[#454843]">
+                    <div className="grid grid-cols-2 gap-2 pt-2.5 mt-2 border-t border-[#CBDCEB]">
                       <button
                         onClick={() => acknowledgeAlert(alert.id)}
-                        className="py-1.5 px-2 bg-[#F5F5F0] hover:opacity-90 text-[#121212] font-bold text-[10px] uppercase tracking-wider rounded-none transition-opacity"
+                        className="py-1.5 px-2 bg-[#0284C7] hover:bg-[#0369A1] text-white font-bold text-[10px] uppercase tracking-wider rounded-none transition-colors shadow-sm"
                       >
                         ACKNOWLEDGE
                       </button>
                       <button
                         onClick={() => escalateAlert(alert.id)}
-                        className="py-1.5 px-2 bg-[#93000a] hover:bg-[#b00020] text-[#ffdad6] font-bold text-[10px] uppercase tracking-wider border border-[#ffb4ab] rounded-none transition-colors"
+                        className="py-1.5 px-2 bg-[#DC2626] hover:bg-[#B91C1C] text-white font-bold text-[10px] uppercase tracking-wider rounded-none transition-colors shadow-sm"
                       >
                         ESCALATE (QRF)
                       </button>
@@ -264,7 +264,7 @@ export default function DashboardPage() {
               );
             })}
             {alerts.length === 0 && (
-              <div className="p-8 text-center text-xs text-[#8f918c]">
+              <div className="p-8 text-center text-xs text-[#64748B]">
                 No threat alerts reported.
               </div>
             )}
@@ -274,53 +274,53 @@ export default function DashboardPage() {
 
       {/* Row 3: On-Duty Sentries Rapid Action */}
       <div className="space-y-3">
-        <div className="flex items-center justify-between border-b border-[#454843] pb-2">
+        <div className="flex items-center justify-between border-b border-[#CBDCEB] pb-2">
           <div className="flex items-center gap-2">
-            <Users className="w-4 h-4 text-[#F5F5F0]" />
-            <h2 className="text-xs font-bold uppercase tracking-widest text-[#F5F5F0]">
+            <Users className="w-4 h-4 text-[#0284C7]" />
+            <h2 className="text-xs font-bold uppercase tracking-widest text-[#0F172A]">
               ON-DUTY SENTRIES (1-TAP CALL & HANDOVER)
             </h2>
           </div>
-          <Link href="/guard-duty" className="text-xs text-[#8f918c] hover:text-[#F5F5F0] uppercase tracking-wider font-bold">
+          <Link href="/guard-duty" className="text-xs text-[#0284C7] hover:text-[#0369A1] uppercase tracking-wider font-bold">
             ROSTER & AUDIT →
           </Link>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-px bg-[#454843] border border-[#454843]">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-px bg-[#CBDCEB] border border-[#CBDCEB] shadow-sm">
           {onDutyGuards.slice(0, 4).map((guard) => {
             const countdown = calculateTimeRemaining(guard.shiftEnd);
             return (
               <div
                 key={guard.id}
-                className="p-4 bg-[#131313] flex flex-col justify-between space-y-4"
+                className="p-4 bg-[#FFFFFF] flex flex-col justify-between space-y-4"
               >
                 <div>
                   <div className="flex items-center justify-between">
                     <StatusPill type={guard.status} size="sm" />
-                    <span className="text-[10px] text-[#8f918c] font-bold">{guard.callSign}</span>
+                    <span className="text-[10px] text-[#64748B] font-bold">{guard.callSign}</span>
                   </div>
-                  <h4 className="text-xs font-bold text-[#F5F5F0] mt-2 truncate">
+                  <h4 className="text-xs font-bold text-[#0F172A] mt-2 truncate">
                     {guard.name}
                   </h4>
-                  <p className="text-[11px] text-[#c5c7c1] font-bold mt-0.5">
+                  <p className="text-[11px] text-[#0369A1] font-bold mt-0.5">
                     {guard.currentPostId || "Sector Patrol"}
                   </p>
-                  <p className="text-[10px] text-[#8f918c] mt-0.5">{countdown.text}</p>
+                  <p className="text-[10px] text-[#64748B] mt-0.5">{countdown.text}</p>
                 </div>
 
                 <a
                   href={`tel:${guard.phone.replace(/\s+/g, "")}`}
                   onClick={() => tacticalSound.playClick()}
-                  className="py-2 px-3 bg-[#1c1b1b] hover:bg-[#2a2a2a] text-[#F5F5F0] border border-[#454843] hover:border-[#F5F5F0] text-xs font-bold flex items-center justify-center gap-2 transition-colors rounded-none uppercase tracking-wider"
+                  className="py-2 px-3 bg-[#E0F2FE] hover:bg-[#BAE6FD] text-[#0369A1] border border-[#CBDCEB] text-xs font-bold flex items-center justify-center gap-2 transition-colors rounded-none uppercase tracking-wider"
                 >
-                  <Phone className="w-3.5 h-3.5 text-[#F5F5F0]" />
+                  <Phone className="w-3.5 h-3.5 text-[#0284C7]" />
                   <span>CALL SENTRY</span>
                 </a>
               </div>
             );
           })}
           {onDutyGuards.length === 0 && (
-            <div className="sm:col-span-2 lg:col-span-4 p-8 bg-[#131313] text-center text-xs text-[#8f918c]">
+            <div className="sm:col-span-2 lg:col-span-4 p-8 bg-[#FFFFFF] text-center text-xs text-[#64748B]">
               No guard roster records loaded.
             </div>
           )}

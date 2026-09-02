@@ -5,8 +5,6 @@ import Link from "next/link";
 import {
   Volume2,
   VolumeX,
-  Wifi,
-  WifiOff,
   Clock,
   LogOut,
   AlertTriangle,
@@ -26,7 +24,6 @@ export const ConsoleHeader: React.FC = () => {
     offlineQueue,
     offlineLogQueue,
     currentUser,
-    backendStatus,
     blockchainStatus,
   } = useIBVAPStore();
 
@@ -46,45 +43,45 @@ export const ConsoleHeader: React.FC = () => {
   }, []);
 
   return (
-    <header className="h-14 bg-[#131313] border-b border-[#454843] px-4 flex items-center justify-between z-30 shrink-0 select-none font-mono">
+    <header className="h-14 bg-[#FFFFFF] border-b border-[#CBDCEB] px-4 flex items-center justify-between z-30 shrink-0 select-none font-mono shadow-sm">
       {/* Left: Terminal Node & Clock */}
       <div className="flex items-center gap-3">
         <div className="flex items-center gap-2">
-          <div className="w-2 h-2 rounded-full bg-[#F5F5F0] animate-pulse" />
-          <span className="text-xs font-bold text-[#F5F5F0] tracking-widest uppercase">
+          <div className="w-2 h-2 rounded-full bg-[#0284C7] animate-pulse" />
+          <span className="text-xs font-bold text-[#0F172A] tracking-widest uppercase">
             S_COMMAND_01
           </span>
         </div>
 
-        <span className="text-[#454843] hidden sm:inline">|</span>
+        <span className="text-[#CBDCEB] hidden sm:inline">|</span>
 
         {/* DEFCON Level */}
         <div
           className={`text-[11px] px-2.5 py-1 border font-bold uppercase tracking-wider ${
             defconLevel === 1
-              ? "bg-[#93000a] text-[#ffdad6] border-[#ffb4ab] animate-pulse"
+              ? "bg-[#FEE2E2] text-[#991B1B] border-[#FCA5A5] animate-pulse"
               : defconLevel === 2
-              ? "bg-[#2a2a2a] text-[#e5e2e1] border-[#8f918c]"
-              : "bg-[#1c1b1b] text-[#c5c7c1] border-[#454843]"
+              ? "bg-[#FEF3C7] text-[#92400E] border-[#FCD34D]"
+              : "bg-[#E0F2FE] text-[#0369A1] border-[#BAE6FD]"
           }`}
         >
           DEFCON_{defconLevel}
         </div>
 
         {/* Live Clock (UTC & IST) */}
-        <div className="hidden md:flex items-center gap-2 text-xs text-[#8f918c]">
-          <Clock className="w-3.5 h-3.5 text-[#8f918c]" />
-          <span className="text-[#F5F5F0] font-bold">{utcTime || "00:00:00 UTC"}</span>
-          <span className="text-[10px] text-[#8f918c]">({currentTime || "00:00:00"} IST)</span>
+        <div className="hidden md:flex items-center gap-2 text-xs text-[#475569]">
+          <Clock className="w-3.5 h-3.5 text-[#0284C7]" />
+          <span className="text-[#0F172A] font-bold">{utcTime || "00:00:00 UTC"}</span>
+          <span className="text-[10px] text-[#64748B]">({currentTime || "00:00:00"} IST)</span>
         </div>
       </div>
 
       {/* Quick Center Nav for Desktop */}
-      <nav className="hidden xl:flex items-center gap-6 text-[11px] uppercase tracking-widest text-[#8f918c]">
-        <Link href="/live-feed" className="hover:text-[#F5F5F0] transition-colors">LIVE_FEED</Link>
-        <Link href="/alerts" className="hover:text-[#F5F5F0] transition-colors">EVIDENCE_VAULT</Link>
-        <Link href="/map" className="hover:text-[#F5F5F0] transition-colors">RADAR_GIS</Link>
-        <Link href="/guard-duty" className="hover:text-[#F5F5F0] transition-colors">ROSTER</Link>
+      <nav className="hidden xl:flex items-center gap-6 text-[11px] uppercase tracking-widest text-[#475569]">
+        <Link href="/live-feed" className="hover:text-[#0284C7] transition-colors">LIVE_FEED</Link>
+        <Link href="/alerts" className="hover:text-[#0284C7] transition-colors">EVIDENCE_VAULT</Link>
+        <Link href="/map" className="hover:text-[#0284C7] transition-colors">RADAR_GIS</Link>
+        <Link href="/guard-duty" className="hover:text-[#0284C7] transition-colors">ROSTER</Link>
       </nav>
 
       {/* Right Controls */}
@@ -94,65 +91,55 @@ export const ConsoleHeader: React.FC = () => {
           title={blockchainStatus.message}
           className={`hidden lg:flex items-center gap-1.5 px-2.5 py-1 border text-[10px] font-bold uppercase ${
             blockchainStatus.connected
-              ? "bg-[#1c1b1b] text-[#F5F5F0] border-[#8f918c]"
-              : "bg-[#131313] text-[#8f918c] border-[#454843]"
+              ? "bg-[#DCFCE7] text-[#166534] border-[#86EFAC]"
+              : "bg-[#F1F5F9] text-[#64748B] border-[#CBDCEB]"
           }`}
         >
-          <ShieldCheck className="w-3.5 h-3.5" />
-          <span>{blockchainStatus.connected ? "CHAIN_SYNCED" : "CHAIN_STANDBY"}</span>
+          <ShieldCheck className="w-3 h-3 text-[#16A34A]" />
+          <span>LEDGER: {blockchainStatus.connected ? "SYNC" : "STANDBY"}</span>
         </div>
 
-        {/* API Status */}
-        <div
-          className={`text-[11px] px-2.5 py-1 border flex items-center gap-1.5 font-bold uppercase ${
-            backendStatus === "online"
-              ? "bg-[#1c1b1b] text-[#F5F5F0] border-[#8f918c]"
-              : "bg-[#93000a]/40 text-[#ffdad6] border-[#ffb4ab]"
-          }`}
-        >
-          {backendStatus === "online" ? <Wifi className="w-3.5 h-3.5" /> : <WifiOff className="w-3.5 h-3.5" />}
-          <span>{backendStatus === "online" ? "API_ONLINE" : "OFFLINE"}</span>
-          {totalQueued > 0 && <span className="text-[#ffb4ab]">({totalQueued}Q)</span>}
-        </div>
+        {/* Offline Queue Badge */}
+        {totalQueued > 0 && (
+          <div
+            className="flex items-center gap-1.5 px-2 py-1 bg-[#FEF3C7] border border-[#FCD34D] text-[#92400E] text-[10px] font-bold uppercase"
+            title={`${totalQueued} items buffered offline`}
+          >
+            <span className="w-1.5 h-1.5 rounded-full bg-[#D97706] animate-pulse" />
+            <span>BUFFER ({totalQueued})</span>
+          </div>
+        )}
 
         {/* Sound Toggle */}
         <button
           onClick={toggleSound}
-          title={soundMuted ? "Unmute Audio" : "Mute Audio"}
-          className="p-2 bg-[#1c1b1b] hover:bg-[#2a2a2a] text-[#8f918c] hover:text-[#F5F5F0] border border-[#454843] rounded-none transition-colors"
+          className={`p-2 border rounded-none transition-colors ${
+            soundMuted
+              ? "bg-[#FEE2E2] text-[#991B1B] border-[#FCA5A5]"
+              : "bg-[#F0F6FC] hover:bg-[#E0F2FE] text-[#0369A1] border-[#CBDCEB]"
+          }`}
+          title={soundMuted ? "Audio muted" : "Audio active"}
         >
-          {soundMuted ? (
-            <VolumeX className="w-3.5 h-3.5 text-[#ffb4ab]" />
-          ) : (
-            <Volume2 className="w-3.5 h-3.5 text-[#F5F5F0]" />
-          )}
+          {soundMuted ? <VolumeX className="w-3.5 h-3.5" /> : <Volume2 className="w-3.5 h-3.5" />}
         </button>
 
-        {/* Lockdown Action Button */}
+        {/* Tactical Lockdown Trigger */}
         <TacticalButton
           variant="danger"
           size="sm"
-          onClick={triggerLockdown}
+          onClick={() => triggerLockdown()}
+          className={lockdownActive ? "animate-pulse" : ""}
           icon={<AlertTriangle className="w-3.5 h-3.5" />}
-          className="font-bold"
         >
-          LOCKDOWN
+          {lockdownActive ? "LOCKDOWN ACTIVE" : "LOCKDOWN"}
         </TacticalButton>
 
-        {/* User / Logout */}
-        <div className="hidden sm:flex items-center gap-2 pl-2 border-l border-[#454843]">
-          <div className="text-right text-[10px]">
-            <p className="font-bold text-[#F5F5F0] leading-none">{currentUser.name}</p>
-            <p className="text-[#8f918c] mt-0.5">{currentUser.rank}</p>
-          </div>
-          <Link
-            href="/login"
-            title="Logout / Switch Operator"
-            className="p-1.5 text-[#8f918c] hover:text-[#F5F5F0] hover:bg-[#1c1b1b] border border-transparent hover:border-[#454843] transition-colors"
-          >
+        {/* Sign Out */}
+        <Link href="/login" title="Exit to Login">
+          <button className="p-2 bg-[#F0F6FC] hover:bg-[#E0F2FE] text-[#64748B] hover:text-[#0F172A] border border-[#CBDCEB] transition-colors rounded-none">
             <LogOut className="w-3.5 h-3.5" />
-          </Link>
-        </div>
+          </button>
+        </Link>
       </div>
     </header>
   );

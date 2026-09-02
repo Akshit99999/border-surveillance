@@ -48,18 +48,18 @@ export default function LiveFeedPage() {
       <LocalCameraFeed className="w-full" />
 
       {/* Top Matrix Controls Toolbar */}
-      <div className="bg-[#1c1b1b] border border-[#454843] rounded-none p-3.5 flex flex-wrap items-center justify-between gap-4 text-xs">
+      <div className="bg-[#FFFFFF] border border-[#CBDCEB] rounded-none p-3.5 flex flex-wrap items-center justify-between gap-4 text-xs shadow-sm">
         {/* Filters */}
         <div className="flex flex-wrap items-center gap-4">
           <div className="flex items-center gap-2">
-            <span className="text-[10px] text-[#8f918c] font-bold uppercase tracking-widest">SECTOR:</span>
+            <span className="text-[10px] text-[#475569] font-bold uppercase tracking-widest">SECTOR:</span>
             <select
               value={selectedSector}
               onChange={(e) => {
                 tacticalSound.playClick();
                 setSelectedSector(e.target.value);
               }}
-              className="bg-[#131313] border border-[#454843] rounded-none px-2.5 py-1.5 text-xs text-[#F5F5F0] focus:border-[#F5F5F0] font-mono"
+              className="bg-[#F0F6FC] border border-[#CBDCEB] rounded-none px-2.5 py-1.5 text-xs text-[#0F172A] focus:border-[#0284C7] font-mono font-bold"
             >
               <option value="ALL">ALL SECTORS ({cameras.length} CAMERAS)</option>
               {sectors.map((s) => (
@@ -71,14 +71,14 @@ export default function LiveFeedPage() {
           </div>
 
           <div className="flex items-center gap-2">
-            <span className="text-[10px] text-[#8f918c] font-bold uppercase tracking-widest">OPTICS:</span>
+            <span className="text-[10px] text-[#475569] font-bold uppercase tracking-widest">OPTICS:</span>
             <select
               value={selectedCameraType}
               onChange={(e) => {
                 tacticalSound.playClick();
                 setSelectedCameraType(e.target.value);
               }}
-              className="bg-[#131313] border border-[#454843] rounded-none px-2.5 py-1.5 text-xs text-[#F5F5F0] focus:border-[#F5F5F0] font-mono"
+              className="bg-[#F0F6FC] border border-[#CBDCEB] rounded-none px-2.5 py-1.5 text-xs text-[#0F172A] focus:border-[#0284C7] font-mono font-bold"
             >
               <option value="ALL">ALL SENSOR TYPES</option>
               <option value="ptz">PTZ OPTICAL</option>
@@ -90,7 +90,7 @@ export default function LiveFeedPage() {
 
         {/* Layout Mode Switchers */}
         <div className="flex items-center gap-1.5">
-          <span className="text-[10px] text-[#8f918c] font-bold uppercase tracking-widest mr-1 hidden sm:inline">
+          <span className="text-[10px] text-[#475569] font-bold uppercase tracking-widest mr-1 hidden sm:inline">
             LAYOUT:
           </span>
 
@@ -98,8 +98,8 @@ export default function LiveFeedPage() {
             onClick={() => handleLayoutChange("2x2")}
             className={`px-3 py-1.5 rounded-none border text-xs font-bold uppercase tracking-wider flex items-center gap-1.5 transition-colors ${
               layout === "2x2"
-                ? "bg-[#F5F5F0] text-[#121212] border-[#F5F5F0]"
-                : "bg-[#131313] text-[#8f918c] border-[#454843] hover:text-[#F5F5F0]"
+                ? "bg-[#0284C7] text-white border-[#0284C7] shadow-sm"
+                : "bg-[#F0F6FC] text-[#475569] border-[#CBDCEB] hover:text-[#0F172A] hover:bg-[#E0F2FE]"
             }`}
           >
             <Grid2X2 className="w-3.5 h-3.5" />
@@ -110,8 +110,8 @@ export default function LiveFeedPage() {
             onClick={() => handleLayoutChange("3x2")}
             className={`px-3 py-1.5 rounded-none border text-xs font-bold uppercase tracking-wider flex items-center gap-1.5 transition-colors ${
               layout === "3x2"
-                ? "bg-[#F5F5F0] text-[#121212] border-[#F5F5F0]"
-                : "bg-[#131313] text-[#8f918c] border-[#454843] hover:text-[#F5F5F0]"
+                ? "bg-[#0284C7] text-white border-[#0284C7] shadow-sm"
+                : "bg-[#F0F6FC] text-[#475569] border-[#CBDCEB] hover:text-[#0F172A] hover:bg-[#E0F2FE]"
             }`}
           >
             <Grid3X3 className="w-3.5 h-3.5" />
@@ -122,8 +122,8 @@ export default function LiveFeedPage() {
             onClick={() => handleLayoutChange("focus")}
             className={`px-3 py-1.5 rounded-none border text-xs font-bold uppercase tracking-wider flex items-center gap-1.5 transition-colors ${
               layout === "focus"
-                ? "bg-[#F5F5F0] text-[#121212] border-[#F5F5F0]"
-                : "bg-[#131313] text-[#8f918c] border-[#454843] hover:text-[#F5F5F0]"
+                ? "bg-[#0284C7] text-white border-[#0284C7] shadow-sm"
+                : "bg-[#F0F6FC] text-[#475569] border-[#CBDCEB] hover:text-[#0F172A] hover:bg-[#E0F2FE]"
             }`}
           >
             <Maximize className="w-3.5 h-3.5" />
@@ -147,7 +147,7 @@ export default function LiveFeedPage() {
           </div>
 
           <div className="space-y-2 max-h-[580px] overflow-y-auto pr-1">
-            <span className="text-[10px] text-[#8f918c] uppercase tracking-widest font-bold block mb-2">
+            <span className="text-[10px] text-[#475569] uppercase tracking-widest font-bold block mb-2">
               STREAM SELECTOR ({filteredCameras.length})
             </span>
             {filteredCameras.map((cam) => {
@@ -161,17 +161,17 @@ export default function LiveFeedPage() {
                   }}
                   className={`p-3 border rounded-none cursor-pointer transition-colors ${
                     isSelected
-                      ? "border-[#F5F5F0] bg-[#1c1b1b]"
-                      : "border-[#454843] bg-[#131313] hover:bg-[#1c1b1b]"
+                      ? "border-[#0284C7] bg-[#E0F2FE]"
+                      : "border-[#CBDCEB] bg-[#FFFFFF] hover:bg-[#F8FBFE]"
                   }`}
                 >
                   <div className="flex items-center justify-between text-[11px] mb-1">
-                    <span className="font-bold text-[#F5F5F0] truncate max-w-[140px]">
+                    <span className="font-bold text-[#0F172A] truncate max-w-[140px]">
                       {cam.id}
                     </span>
                     <StatusPill type={cam.status} size="sm" />
                   </div>
-                  <p className="text-[10px] text-[#8f918c] truncate">{cam.name}</p>
+                  <p className="text-[10px] text-[#475569] truncate">{cam.name}</p>
                 </div>
               );
             })}
@@ -197,19 +197,19 @@ export default function LiveFeedPage() {
       ))}
 
       {cameras.length === 0 && (
-        <div className="p-8 bg-[#1c1b1b] border border-[#454843] text-center text-xs text-[#8f918c]">
+        <div className="p-8 bg-[#FFFFFF] border border-[#CBDCEB] text-center text-xs text-[#475569] shadow-sm">
           No CCTV cameras configured. Use the local camera above to test real-time AI inference.
         </div>
       )}
 
       {/* Footer Telemetry */}
-      <div className="p-3 bg-[#131313] border border-[#454843] flex flex-wrap items-center justify-between text-[11px] text-[#8f918c]">
+      <div className="p-3 bg-[#FFFFFF] border border-[#CBDCEB] flex flex-wrap items-center justify-between text-[11px] text-[#475569] shadow-sm">
         <div className="flex items-center gap-3">
-          <span className="text-[#F5F5F0] font-bold">{onlineCameraCount}/{cameras.length} CONFIGURED CAMERAS ONLINE</span>
-          {signalLostCameraCount > 0 && <><span>•</span><span className="text-[#ffb4ab] font-bold">{signalLostCameraCount} SIGNAL LOST</span></>}
+          <span className="text-[#0F172A] font-bold">{onlineCameraCount}/{cameras.length} CONFIGURED CAMERAS ONLINE</span>
+          {signalLostCameraCount > 0 && <><span>•</span><span className="text-[#DC2626] font-bold">{signalLostCameraCount} SIGNAL LOST</span></>}
         </div>
         <div>
-          <span>AI OVERLAYS REQUIRE ACTIVE VIDEO SOURCE</span>
+          <span className="text-[#64748B]">AI OVERLAYS REQUIRE ACTIVE VIDEO SOURCE</span>
         </div>
       </div>
     </div>

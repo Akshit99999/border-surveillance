@@ -14,12 +14,8 @@ import {
   RotateCcw,
   Radio,
   Eye,
-  Phone,
-  Crosshair,
-  AlertTriangle,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { StatusPill } from "../shared/StatusPill";
 import { tacticalSound } from "@/lib/sound";
 import Link from "next/link";
 
@@ -83,22 +79,22 @@ export const TacticalSectorMap: React.FC<TacticalSectorMapProps> = ({
   return (
     <div
       className={cn(
-        "relative w-full h-[620px] bg-[#131313] border border-[#454843] rounded-none overflow-hidden flex flex-col font-mono select-none shadow-none",
+        "relative w-full h-[620px] bg-[#FFFFFF] border border-[#CBDCEB] rounded-none overflow-hidden flex flex-col font-mono select-none shadow-sm",
         className
       )}
     >
       {/* Top Map Toolbar */}
-      <div className="bg-[#1c1b1b] border-b border-[#454843] px-4 py-2.5 flex flex-wrap items-center justify-between gap-3 z-20 shrink-0 text-xs">
+      <div className="bg-[#F0F6FC] border-b border-[#CBDCEB] px-4 py-2.5 flex flex-wrap items-center justify-between gap-3 z-20 shrink-0 text-xs">
         {/* Sector Focus Selector */}
         <div className="flex items-center gap-2">
-          <span className="text-[10px] text-[#8f918c] font-bold uppercase tracking-widest">SECTOR FOCUS:</span>
+          <span className="text-[10px] text-[#475569] font-bold uppercase tracking-widest">SECTOR FOCUS:</span>
           <select
             value={selectedSector}
             onChange={(e) => {
               tacticalSound.playClick();
               setSelectedSector(e.target.value);
             }}
-            className="bg-[#131313] border border-[#454843] rounded-none px-2.5 py-1 text-xs text-[#F5F5F0] font-mono focus:border-[#F5F5F0]"
+            className="bg-[#FFFFFF] border border-[#CBDCEB] rounded-none px-2.5 py-1 text-xs text-[#0F172A] font-mono font-bold focus:border-[#0284C7]"
           >
             <option value="ALL">ALL BORDER SECTORS (ALPHA 1-6)</option>
             {sectors.map((s) => (
@@ -116,8 +112,8 @@ export const TacticalSectorMap: React.FC<TacticalSectorMapProps> = ({
             className={cn(
               "px-2 py-0.5 rounded-none text-[10px] border flex items-center gap-1 transition-colors font-bold uppercase tracking-wider",
               layers.cameras
-                ? "bg-[#F5F5F0] text-[#121212] border-[#F5F5F0]"
-                : "bg-[#131313] text-[#8f918c] border-[#454843]"
+                ? "bg-[#0284C7] text-white border-[#0284C7] shadow-sm"
+                : "bg-[#FFFFFF] text-[#475569] border-[#CBDCEB] hover:text-[#0F172A]"
             )}
           >
             <Video className="w-3 h-3" /> CAMERAS
@@ -128,8 +124,8 @@ export const TacticalSectorMap: React.FC<TacticalSectorMapProps> = ({
             className={cn(
               "px-2 py-0.5 rounded-none text-[10px] border flex items-center gap-1 transition-colors font-bold uppercase tracking-wider",
               layers.fovCones
-                ? "bg-[#F5F5F0] text-[#121212] border-[#F5F5F0]"
-                : "bg-[#131313] text-[#8f918c] border-[#454843]"
+                ? "bg-[#0284C7] text-white border-[#0284C7] shadow-sm"
+                : "bg-[#FFFFFF] text-[#475569] border-[#CBDCEB] hover:text-[#0F172A]"
             )}
           >
             <Eye className="w-3 h-3" /> FOV CONES
@@ -140,8 +136,8 @@ export const TacticalSectorMap: React.FC<TacticalSectorMapProps> = ({
             className={cn(
               "px-2 py-0.5 rounded-none text-[10px] border flex items-center gap-1 transition-colors font-bold uppercase tracking-wider",
               layers.guards
-                ? "bg-[#F5F5F0] text-[#121212] border-[#F5F5F0]"
-                : "bg-[#131313] text-[#8f918c] border-[#454843]"
+                ? "bg-[#0284C7] text-white border-[#0284C7] shadow-sm"
+                : "bg-[#FFFFFF] text-[#475569] border-[#CBDCEB] hover:text-[#0F172A]"
             )}
           >
             <User className="w-3 h-3" /> SENTRIES
@@ -152,8 +148,8 @@ export const TacticalSectorMap: React.FC<TacticalSectorMapProps> = ({
             className={cn(
               "px-2 py-0.5 rounded-none text-[10px] border flex items-center gap-1 transition-colors font-bold uppercase tracking-wider",
               layers.alerts
-                ? "bg-[#93000a] text-[#ffdad6] border-[#ffb4ab]"
-                : "bg-[#131313] text-[#8f918c] border-[#454843]"
+                ? "bg-[#DC2626] text-white border-[#DC2626] shadow-sm"
+                : "bg-[#FFFFFF] text-[#475569] border-[#CBDCEB] hover:text-[#0F172A]"
             )}
           >
             <ShieldAlert className="w-3 h-3" /> ALERTS
@@ -164,8 +160,8 @@ export const TacticalSectorMap: React.FC<TacticalSectorMapProps> = ({
             className={cn(
               "px-2 py-0.5 rounded-none text-[10px] border flex items-center gap-1 transition-colors font-bold uppercase tracking-wider",
               layers.tripwires
-                ? "bg-[#F5F5F0] text-[#121212] border-[#F5F5F0]"
-                : "bg-[#131313] text-[#8f918c] border-[#454843]"
+                ? "bg-[#0284C7] text-white border-[#0284C7] shadow-sm"
+                : "bg-[#FFFFFF] text-[#475569] border-[#CBDCEB] hover:text-[#0F172A]"
             )}
           >
             <Radio className="w-3 h-3" /> TRIPWIRES
@@ -179,7 +175,7 @@ export const TacticalSectorMap: React.FC<TacticalSectorMapProps> = ({
               tacticalSound.playClick();
               setZoomLevel(Math.min(2.2, zoomLevel + 0.3));
             }}
-            className="p-1.5 bg-[#131313] hover:bg-[#2a2a2a] text-[#8f918c] hover:text-[#F5F5F0] rounded-none border border-[#454843]"
+            className="p-1.5 bg-[#FFFFFF] hover:bg-[#E0F2FE] text-[#0369A1] rounded-none border border-[#CBDCEB]"
             title="Zoom In"
           >
             <ZoomIn className="w-3.5 h-3.5" />
@@ -189,7 +185,7 @@ export const TacticalSectorMap: React.FC<TacticalSectorMapProps> = ({
               tacticalSound.playClick();
               setZoomLevel(Math.max(0.8, zoomLevel - 0.3));
             }}
-            className="p-1.5 bg-[#131313] hover:bg-[#2a2a2a] text-[#8f918c] hover:text-[#F5F5F0] rounded-none border border-[#454843]"
+            className="p-1.5 bg-[#FFFFFF] hover:bg-[#E0F2FE] text-[#0369A1] rounded-none border border-[#CBDCEB]"
             title="Zoom Out"
           >
             <ZoomOut className="w-3.5 h-3.5" />
@@ -200,7 +196,7 @@ export const TacticalSectorMap: React.FC<TacticalSectorMapProps> = ({
               setZoomLevel(1);
               setSelectedSector("ALL");
             }}
-            className="p-1.5 bg-[#131313] hover:bg-[#2a2a2a] text-[#8f918c] hover:text-[#F5F5F0] rounded-none border border-[#454843]"
+            className="p-1.5 bg-[#FFFFFF] hover:bg-[#E0F2FE] text-[#0369A1] rounded-none border border-[#CBDCEB]"
             title="Reset Map View"
           >
             <RotateCcw className="w-3.5 h-3.5" />
@@ -208,13 +204,13 @@ export const TacticalSectorMap: React.FC<TacticalSectorMapProps> = ({
         </div>
       </div>
 
-      {/* Main SVG Canvas Viewport */}
-      <div className="relative flex-1 bg-[#0e0e0e] overflow-hidden cursor-grab active:cursor-grabbing">
-        {/* Range rings */}
-        <div className="absolute inset-0 flex items-center justify-center pointer-events-none opacity-20">
-          <div className="w-[300px] h-[300px] border border-[#454843] rounded-full" />
-          <div className="w-[500px] h-[500px] border border-[#454843] rounded-full absolute" />
-          <div className="w-[750px] h-[750px] border border-[#454843] rounded-full absolute" />
+      {/* Main SVG Canvas Viewport - Tactical Deep Oceanic Navy */}
+      <div className="relative flex-1 bg-[#0B192C] overflow-hidden cursor-grab active:cursor-grabbing">
+        {/* Radar concentric range rings */}
+        <div className="absolute inset-0 flex items-center justify-center pointer-events-none opacity-30">
+          <div className="w-[300px] h-[300px] border border-[#38BDF8] rounded-full" />
+          <div className="w-[500px] h-[500px] border border-[#38BDF8] rounded-full absolute" />
+          <div className="w-[750px] h-[750px] border border-[#38BDF8] rounded-full absolute" />
         </div>
 
         {/* SVG Map Elements */}
@@ -226,10 +222,10 @@ export const TacticalSectorMap: React.FC<TacticalSectorMapProps> = ({
           {/* Zero-Line Border */}
           <path
             d="M 60 50 Q 250 180 500 280 T 940 550"
-            className="stroke-[#ffb4ab]/80 stroke-[2] fill-none"
+            className="stroke-[#F43F5E] stroke-[2] fill-none"
             strokeDasharray="8 6"
           />
-          <text x="70" y="45" fill="#ffb4ab" fontSize="10" fontWeight="bold" fontFamily="monospace">
+          <text x="70" y="45" fill="#F43F5E" fontSize="10" fontWeight="bold" fontFamily="monospace">
             ZERO LINE // INTERNATIONAL DEMARCATION
           </text>
 
@@ -252,15 +248,15 @@ export const TacticalSectorMap: React.FC<TacticalSectorMapProps> = ({
                     className={cn(
                       "transition-all duration-200",
                       isSectorFocused
-                        ? "fill-[#454843]/10 stroke-[#8f918c] stroke-[1]"
-                        : "fill-transparent stroke-[#454843]/40 stroke-[1]"
+                        ? "fill-[#0284C7]/20 stroke-[#38BDF8] stroke-[1.5]"
+                        : "fill-transparent stroke-[#38BDF8]/40 stroke-[1]"
                     )}
                   />
                   {sector.polygon[0] && (
                     <text
                       x={toMapCoords(sector.polygon[0].lat, sector.polygon[0].lng).x + 10}
                       y={toMapCoords(sector.polygon[0].lat, sector.polygon[0].lng).y + 20}
-                      fill="#F5F5F0"
+                      fill="#E0F2FE"
                       fontSize="10"
                       fontWeight="bold"
                       fontFamily="monospace"
@@ -287,12 +283,12 @@ export const TacticalSectorMap: React.FC<TacticalSectorMapProps> = ({
                       y2={end.y}
                       className={cn(
                         "stroke-[2]",
-                        wire.armed ? "stroke-[#F5F5F0] stroke-dasharray-2" : "stroke-[#454843]"
+                        wire.armed ? "stroke-[#38BDF8]" : "stroke-[#64748B]"
                       )}
                       strokeDasharray="4 4"
                     />
-                    <circle cx={start.x} cy={start.y} r="2.5" fill="#F5F5F0" />
-                    <circle cx={end.x} cy={end.y} r="2.5" fill="#F5F5F0" />
+                    <circle cx={start.x} cy={start.y} r="2.5" fill="#38BDF8" />
+                    <circle cx={end.x} cy={end.y} r="2.5" fill="#38BDF8" />
                   </g>
                 );
               })
@@ -315,7 +311,7 @@ export const TacticalSectorMap: React.FC<TacticalSectorMapProps> = ({
                 <path
                   key={`fov-${cam.id}`}
                   d={`M ${pos.x} ${pos.y} L ${x1} ${y1} A ${radius} ${radius} 0 0 1 ${x2} ${y2} Z`}
-                  className="fill-[#F5F5F0]/5 stroke-[#F5F5F0]/20 stroke-[1] pointer-events-none"
+                  className="fill-[#38BDF8]/15 stroke-[#38BDF8]/40 stroke-[1] pointer-events-none"
                 />
               );
             })}
@@ -343,14 +339,14 @@ export const TacticalSectorMap: React.FC<TacticalSectorMapProps> = ({
                     className={cn(
                       "transition-all",
                       isSelected
-                        ? "fill-[#F5F5F0] stroke-[#121212] stroke-2"
-                        : "fill-[#1c1b1b] stroke-[#8f918c] stroke-[1] hover:stroke-[#F5F5F0]"
+                        ? "fill-[#0284C7] stroke-white stroke-2"
+                        : "fill-[#0F172A] stroke-[#38BDF8] stroke-[1] hover:stroke-white"
                     )}
                   />
                   <text
                     x="12"
                     y="4"
-                    fill={isSelected ? "#F5F5F0" : "#8f918c"}
+                    fill={isSelected ? "#38BDF8" : "#BAE6FD"}
                     fontSize="9"
                     fontWeight="bold"
                     fontFamily="monospace"
@@ -397,14 +393,14 @@ export const TacticalSectorMap: React.FC<TacticalSectorMapProps> = ({
                     className={cn(
                       "transition-all",
                       isSelected
-                        ? "fill-[#F5F5F0] stroke-[#121212] stroke-2"
-                        : "fill-[#1c1b1b] stroke-[#8f918c] stroke-[1]"
+                        ? "fill-[#10B981] stroke-white stroke-2"
+                        : "fill-[#065F46] stroke-[#34D399] stroke-[1]"
                     )}
                   />
                   <text
                     x="10"
                     y="3"
-                    fill="#c5c7c1"
+                    fill="#A7F3D0"
                     fontSize="8"
                     fontFamily="monospace"
                   >
@@ -434,12 +430,12 @@ export const TacticalSectorMap: React.FC<TacticalSectorMapProps> = ({
                     }}
                     className="cursor-pointer"
                   >
-                    <circle r="12" className="fill-[#93000a]/40 stroke-[#ffb4ab] stroke-[1] animate-ping" />
-                    <circle r="6" className="fill-[#93000a] stroke-[#ffb4ab] stroke-2" />
+                    <circle r="12" className="fill-[#DC2626]/40 stroke-[#FCA5A5] stroke-[1] animate-ping" />
+                    <circle r="6" className="fill-[#DC2626] stroke-white stroke-2" />
                     <text
                       x="14"
                       y="4"
-                      fill="#ffb4ab"
+                      fill="#FCA5A5"
                       fontSize="9"
                       fontWeight="bold"
                       fontFamily="monospace"
@@ -453,9 +449,9 @@ export const TacticalSectorMap: React.FC<TacticalSectorMapProps> = ({
 
         {/* Selected Inspector Panel */}
         {(selectedCamera || selectedAlert || selectedGuard) && (
-          <div className="absolute bottom-4 left-4 max-w-sm w-full bg-[#1c1b1b] border border-[#454843] p-4 text-xs z-30 font-mono space-y-3">
-            <div className="flex items-center justify-between border-b border-[#454843] pb-2">
-              <span className="font-bold text-[#F5F5F0] uppercase tracking-wider">
+          <div className="absolute bottom-4 left-4 max-w-sm w-full bg-[#FFFFFF] border border-[#CBDCEB] p-4 text-xs z-30 font-mono space-y-3 shadow-xl">
+            <div className="flex items-center justify-between border-b border-[#CBDCEB] pb-2">
+              <span className="font-bold text-[#0F172A] uppercase tracking-wider">
                 {selectedCamera
                   ? `SENSOR // ${selectedCamera.id}`
                   : selectedAlert
@@ -468,7 +464,7 @@ export const TacticalSectorMap: React.FC<TacticalSectorMapProps> = ({
                   setSelectedAlert(null);
                   setSelectedGuard(null);
                 }}
-                className="text-[#8f918c] hover:text-[#F5F5F0]"
+                className="text-[#64748B] hover:text-[#0F172A]"
               >
                 ✕
               </button>
@@ -476,14 +472,14 @@ export const TacticalSectorMap: React.FC<TacticalSectorMapProps> = ({
 
             {selectedCamera && (
               <div className="space-y-2">
-                <div className="text-[11px] text-[#c5c7c1]">
-                  <div>NAME: {selectedCamera.name}</div>
+                <div className="text-[11px] text-[#475569]">
+                  <div>NAME: <strong className="text-[#0F172A]">{selectedCamera.name}</strong></div>
                   <div>SECTOR: {selectedCamera.sector}</div>
-                  <div>STATUS: <strong className="text-[#F5F5F0]">{selectedCamera.status.toUpperCase()}</strong></div>
+                  <div>STATUS: <strong className="text-[#0284C7]">{selectedCamera.status.toUpperCase()}</strong></div>
                 </div>
                 <Link
                   href="/live-feed"
-                  className="block text-center py-1.5 bg-[#F5F5F0] text-[#121212] font-bold text-[10px] uppercase tracking-wider hover:opacity-90"
+                  className="block text-center py-1.5 bg-[#0284C7] text-white font-bold text-[10px] uppercase tracking-wider hover:bg-[#0369A1] shadow-sm"
                 >
                   OPEN STREAM VIEW →
                 </Link>
@@ -492,8 +488,8 @@ export const TacticalSectorMap: React.FC<TacticalSectorMapProps> = ({
 
             {selectedAlert && (
               <div className="space-y-2">
-                <div className="text-[11px] text-[#c5c7c1]">
-                  <div className="text-[#ffdad6] font-bold">{selectedAlert.eventType}</div>
+                <div className="text-[11px] text-[#475569]">
+                  <div className="text-[#DC2626] font-bold">{selectedAlert.eventType}</div>
                   <div>SECTOR: {selectedAlert.sector}</div>
                   <div>CONFIDENCE: {selectedAlert.confidence}%</div>
                 </div>
@@ -503,7 +499,7 @@ export const TacticalSectorMap: React.FC<TacticalSectorMapProps> = ({
                       onAcknowledgeAlert(selectedAlert.id);
                       setSelectedAlert(null);
                     }}
-                    className="w-full py-1.5 bg-[#F5F5F0] text-[#121212] font-bold text-[10px] uppercase tracking-wider hover:opacity-90"
+                    className="w-full py-1.5 bg-[#0284C7] text-white font-bold text-[10px] uppercase tracking-wider hover:bg-[#0369A1] shadow-sm"
                   >
                     ACKNOWLEDGE INCIDENT
                   </button>
@@ -513,14 +509,14 @@ export const TacticalSectorMap: React.FC<TacticalSectorMapProps> = ({
 
             {selectedGuard && (
               <div className="space-y-2">
-                <div className="text-[11px] text-[#c5c7c1]">
-                  <div className="font-bold text-[#F5F5F0]">{selectedGuard.name} ({selectedGuard.rank})</div>
+                <div className="text-[11px] text-[#475569]">
+                  <div className="font-bold text-[#0F172A]">{selectedGuard.name} ({selectedGuard.rank})</div>
                   <div>POST: {selectedGuard.currentPostId || "Sector Patrol"}</div>
                   <div>PHONE: {selectedGuard.phone}</div>
                 </div>
                 <a
                   href={`tel:${selectedGuard.phone.replace(/\s+/g, "")}`}
-                  className="block text-center py-1.5 bg-[#F5F5F0] text-[#121212] font-bold text-[10px] uppercase tracking-wider hover:opacity-90"
+                  className="block text-center py-1.5 bg-[#0284C7] text-white font-bold text-[10px] uppercase tracking-wider hover:bg-[#0369A1] shadow-sm"
                 >
                   CALL SENTRY
                 </a>
@@ -531,10 +527,11 @@ export const TacticalSectorMap: React.FC<TacticalSectorMapProps> = ({
       </div>
 
       {/* Coordinate & GIS Status Footer */}
-      <div className="bg-[#131313] border-t border-[#454843] px-4 py-2 flex items-center justify-between text-[10px] text-[#8f918c]">
+      <div className="bg-[#F0F6FC] border-t border-[#CBDCEB] px-4 py-2 flex items-center justify-between text-[10px] text-[#475569]">
         <div>COORDINATES: LAT 31.6540° N // LON 74.9050° E</div>
         <div className="flex items-center gap-2">
-          <span>GIS_RADAR_ACTIVE</span>
+          <span className="w-2 h-2 rounded-full bg-[#0284C7] animate-pulse" />
+          <span className="text-[#0284C7] font-bold">GIS_RADAR_ACTIVE</span>
         </div>
       </div>
     </div>

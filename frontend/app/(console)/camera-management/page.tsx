@@ -24,11 +24,11 @@ export default function CameraManagementPage() {
 
   if (!selectedCamera) {
     return (
-      <div className="min-h-[360px] flex items-center justify-center bg-[#1c1b1b] border border-[#454843] rounded-none p-8 text-center font-mono">
+      <div className="min-h-[360px] flex items-center justify-center bg-[#FFFFFF] border border-[#CBDCEB] rounded-none p-8 text-center font-mono shadow-sm">
         <div>
-          <CameraIcon className="w-8 h-8 mx-auto mb-3 text-[#8f918c]" />
-          <h1 className="text-xs font-bold text-[#F5F5F0] uppercase tracking-widest">NO CAMERAS CONFIGURED</h1>
-          <p className="text-xs text-[#8f918c] mt-2 max-w-md">Register a CCTV source through Django before configuring detection zones.</p>
+          <CameraIcon className="w-8 h-8 mx-auto mb-3 text-[#0284C7]" />
+          <h1 className="text-xs font-bold text-[#0F172A] uppercase tracking-widest">NO CAMERAS CONFIGURED</h1>
+          <p className="text-xs text-[#475569] mt-2 max-w-md">Register a CCTV source through Django before configuring detection zones.</p>
         </div>
       </div>
     );
@@ -64,16 +64,16 @@ export default function CameraManagementPage() {
   return (
     <div className="space-y-6 font-mono">
       {/* Top Banner */}
-      <div className="bg-[#1c1b1b] border border-[#454843] rounded-none p-4 flex flex-wrap items-center justify-between gap-4">
+      <div className="bg-[#FFFFFF] border border-[#CBDCEB] rounded-none p-4 flex flex-wrap items-center justify-between gap-4 shadow-sm">
         <div className="flex items-center gap-3">
-          <div className="w-8 h-8 bg-[#F5F5F0] text-[#121212] flex items-center justify-center font-bold">
+          <div className="w-8 h-8 bg-[#0284C7] text-white flex items-center justify-center font-bold">
             <CameraIcon className="w-4 h-4" />
           </div>
           <div>
-            <h1 className="text-xs font-bold text-[#F5F5F0] uppercase tracking-widest">
+            <h1 className="text-xs font-bold text-[#0F172A] uppercase tracking-widest">
               CAMERA REGISTRY & DETECTION STUDIO
             </h1>
-            <p className="text-[11px] text-[#8f918c] mt-0.5 font-sans">
+            <p className="text-[11px] text-[#475569] mt-0.5 font-sans">
               Configure detection zones, sensitivity parameters, and automated action triggers per camera.
             </p>
           </div>
@@ -86,10 +86,10 @@ export default function CameraManagementPage() {
               tacticalSound.playClick();
               setActiveTab("detection_studio");
             }}
-            className={`px-3 py-1.5 rounded-none border text-xs font-bold uppercase tracking-wider transition-colors ${
+            className={`px-3.5 py-1.5 rounded-none border text-xs font-bold uppercase tracking-wider transition-colors ${
               activeTab === "detection_studio"
-                ? "bg-[#F5F5F0] text-[#121212] border-[#F5F5F0]"
-                : "bg-[#131313] text-[#8f918c] border-[#454843] hover:text-[#F5F5F0]"
+                ? "bg-[#0284C7] text-white border-[#0284C7] shadow-sm"
+                : "bg-[#F0F6FC] text-[#475569] border-[#CBDCEB] hover:text-[#0F172A] hover:bg-[#E0F2FE]"
             }`}
           >
             DETECTION STUDIO
@@ -99,10 +99,10 @@ export default function CameraManagementPage() {
               tacticalSound.playClick();
               setActiveTab("registry");
             }}
-            className={`px-3 py-1.5 rounded-none border text-xs font-bold uppercase tracking-wider transition-colors ${
+            className={`px-3.5 py-1.5 rounded-none border text-xs font-bold uppercase tracking-wider transition-colors ${
               activeTab === "registry"
-                ? "bg-[#F5F5F0] text-[#121212] border-[#F5F5F0]"
-                : "bg-[#131313] text-[#8f918c] border-[#454843] hover:text-[#F5F5F0]"
+                ? "bg-[#0284C7] text-white border-[#0284C7] shadow-sm"
+                : "bg-[#F0F6FC] text-[#475569] border-[#CBDCEB] hover:text-[#0F172A] hover:bg-[#E0F2FE]"
             }`}
           >
             REGISTRY TABLE ({cameras.length})
@@ -115,7 +115,7 @@ export default function CameraManagementPage() {
           {/* Camera Selector List */}
           <div className="space-y-3">
             <div className="flex items-center justify-between">
-              <span className="text-xs font-bold text-[#F5F5F0] uppercase tracking-wider">
+              <span className="text-xs font-bold text-[#0F172A] uppercase tracking-wider">
                 ACTIVE SENSORS ({cameras.length})
               </span>
               <select
@@ -124,7 +124,7 @@ export default function CameraManagementPage() {
                   tacticalSound.playClick();
                   setSectorFilter(e.target.value);
                 }}
-                className="bg-[#131313] border border-[#454843] rounded-none px-2 py-1 text-[11px] text-[#F5F5F0] font-mono focus:border-[#F5F5F0]"
+                className="bg-[#FFFFFF] border border-[#CBDCEB] rounded-none px-2 py-1 text-[11px] text-[#0F172A] font-mono focus:border-[#0284C7] font-bold"
               >
                 <option value="ALL">ALL SECTORS</option>
                 {sectors.map((s) => (
@@ -147,20 +147,20 @@ export default function CameraManagementPage() {
                     }}
                     className={`p-3 border rounded-none cursor-pointer transition-colors ${
                       isSelected
-                        ? "border-[#F5F5F0] bg-[#1c1b1b]"
-                        : "border-[#454843] bg-[#131313] hover:bg-[#1c1b1b]"
+                        ? "border-[#0284C7] bg-[#E0F2FE]"
+                        : "border-[#CBDCEB] bg-[#FFFFFF] hover:bg-[#F8FBFE]"
                     }`}
                   >
                     <div className="flex items-center justify-between">
-                      <span className="text-xs font-bold text-[#F5F5F0]">{cam.id}</span>
+                      <span className="text-xs font-bold text-[#0F172A]">{cam.id}</span>
                       <StatusPill type={cam.status} size="sm" />
                     </div>
-                    <h4 className="text-xs text-[#c5c7c1] font-semibold mt-1 truncate">
+                    <h4 className="text-xs text-[#475569] font-bold mt-1 truncate">
                       {cam.name}
                     </h4>
-                    <div className="flex items-center justify-between text-[10px] text-[#8f918c] mt-2">
+                    <div className="flex items-center justify-between text-[10px] text-[#64748B] mt-2">
                       <span>{cam.sector}</span>
-                      <span className="text-[#F5F5F0] uppercase font-bold">{cam.type}</span>
+                      <span className="text-[#0284C7] uppercase font-bold">{cam.type}</span>
                     </div>
                   </div>
                 );
@@ -187,67 +187,67 @@ export default function CameraManagementPage() {
             <TacticalCard title="DETECTION LOGIC & AUTOMATION CONFIGURATION">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
                 {/* AI Models Toggles */}
-                <div className="space-y-2.5 p-3.5 bg-[#1c1b1b] border border-[#454843]">
-                  <span className="text-[10px] text-[#8f918c] font-bold uppercase tracking-widest block">
+                <div className="space-y-2.5 p-3.5 bg-[#F0F6FC] border border-[#CBDCEB]">
+                  <span className="text-[10px] text-[#475569] font-bold uppercase tracking-widest block">
                     ACTIVE AI DETECTION MODELS
                   </span>
 
-                  <div className="flex items-center justify-between p-2 bg-[#131313] border border-[#454843]">
-                    <span className="text-[#c5c7c1] font-bold">Master AI Active</span>
+                  <div className="flex items-center justify-between p-2 bg-[#FFFFFF] border border-[#CBDCEB]">
+                    <span className="text-[#0F172A] font-bold">Master AI Active</span>
                     <button
                       onClick={() => handleToggle("aiActive", !selectedCamera.aiActive)}
                       className={`px-3 py-1 text-[10px] font-bold uppercase rounded-none border ${
                         selectedCamera.aiActive
-                          ? "bg-[#F5F5F0] text-[#121212] border-[#F5F5F0]"
-                          : "bg-[#1c1b1b] text-[#8f918c] border-[#454843]"
+                          ? "bg-[#0284C7] text-white border-[#0284C7]"
+                          : "bg-[#F1F5F9] text-[#64748B] border-[#CBDCEB]"
                       }`}
                     >
                       {selectedCamera.aiActive ? "ENABLED" : "DISABLED"}
                     </button>
                   </div>
 
-                  <div className="flex items-center justify-between p-2 bg-[#131313] border border-[#454843]">
-                    <span className="text-[#c5c7c1]">Human / Intrusion Detection</span>
+                  <div className="flex items-center justify-between p-2 bg-[#FFFFFF] border border-[#CBDCEB]">
+                    <span className="text-[#475569] font-bold">Human / Intrusion Detection</span>
                     <button
                       onClick={() =>
                         handleToggle("personDetection", !selectedCamera.personDetection)
                       }
                       className={`px-3 py-1 text-[10px] font-bold uppercase rounded-none border ${
                         selectedCamera.personDetection
-                          ? "bg-[#F5F5F0] text-[#121212] border-[#F5F5F0]"
-                          : "bg-[#1c1b1b] text-[#8f918c] border-[#454843]"
+                          ? "bg-[#0284C7] text-white border-[#0284C7]"
+                          : "bg-[#F1F5F9] text-[#64748B] border-[#CBDCEB]"
                       }`}
                     >
                       {selectedCamera.personDetection ? "ON" : "OFF"}
                     </button>
                   </div>
 
-                  <div className="flex items-center justify-between p-2 bg-[#131313] border border-[#454843]">
-                    <span className="text-[#c5c7c1]">Vehicle / Transport ANPR</span>
+                  <div className="flex items-center justify-between p-2 bg-[#FFFFFF] border border-[#CBDCEB]">
+                    <span className="text-[#475569] font-bold">Vehicle / Transport ANPR</span>
                     <button
                       onClick={() =>
                         handleToggle("vehicleDetection", !selectedCamera.vehicleDetection)
                       }
                       className={`px-3 py-1 text-[10px] font-bold uppercase rounded-none border ${
                         selectedCamera.vehicleDetection
-                          ? "bg-[#F5F5F0] text-[#121212] border-[#F5F5F0]"
-                          : "bg-[#1c1b1b] text-[#8f918c] border-[#454843]"
+                          ? "bg-[#0284C7] text-white border-[#0284C7]"
+                          : "bg-[#F1F5F9] text-[#64748B] border-[#CBDCEB]"
                       }`}
                     >
                       {selectedCamera.vehicleDetection ? "ON" : "OFF"}
                     </button>
                   </div>
 
-                  <div className="flex items-center justify-between p-2 bg-[#131313] border border-[#454843]">
-                    <span className="text-[#c5c7c1]">Firearms & Weapon Contour</span>
+                  <div className="flex items-center justify-between p-2 bg-[#FFFFFF] border border-[#CBDCEB]">
+                    <span className="text-[#475569] font-bold">Firearms & Weapon Contour</span>
                     <button
                       onClick={() =>
                         handleToggle("weaponDetection", !selectedCamera.weaponDetection)
                       }
                       className={`px-3 py-1 text-[10px] font-bold uppercase rounded-none border ${
                         selectedCamera.weaponDetection
-                          ? "bg-[#93000a] text-[#ffdad6] border-[#ffb4ab]"
-                          : "bg-[#1c1b1b] text-[#8f918c] border-[#454843]"
+                          ? "bg-[#DC2626] text-white border-[#DC2626]"
+                          : "bg-[#F1F5F9] text-[#64748B] border-[#CBDCEB]"
                       }`}
                     >
                       {selectedCamera.weaponDetection ? "ON" : "OFF"}
@@ -256,15 +256,15 @@ export default function CameraManagementPage() {
                 </div>
 
                 {/* Thresholds & Trigger Action */}
-                <div className="space-y-2.5 p-3.5 bg-[#1c1b1b] border border-[#454843]">
-                  <span className="text-[10px] text-[#8f918c] font-bold uppercase tracking-widest block">
+                <div className="space-y-2.5 p-3.5 bg-[#F0F6FC] border border-[#CBDCEB]">
+                  <span className="text-[10px] text-[#475569] font-bold uppercase tracking-widest block">
                     SENSITIVITY & TRIGGER AUTOMATION
                   </span>
 
                   <div className="space-y-1">
                     <div className="flex justify-between text-[11px]">
-                      <span className="text-[#8f918c]">Confidence Threshold:</span>
-                      <span className="text-[#F5F5F0] font-bold">
+                      <span className="text-[#475569] font-semibold">Confidence Threshold:</span>
+                      <span className="text-[#0284C7] font-bold">
                         {selectedCamera.confidenceThreshold}%
                       </span>
                     </div>
@@ -276,14 +276,14 @@ export default function CameraManagementPage() {
                       onChange={(e) =>
                         handleSliderChange("confidenceThreshold", Number(e.target.value))
                       }
-                      className="w-full accent-[#F5F5F0] cursor-pointer"
+                      className="w-full accent-[#0284C7] cursor-pointer"
                     />
                   </div>
 
                   <div className="space-y-1">
                     <div className="flex justify-between text-[11px]">
-                      <span className="text-[#8f918c]">Min Object Size (px):</span>
-                      <span className="text-[#F5F5F0] font-bold">
+                      <span className="text-[#475569] font-semibold">Min Object Size (px):</span>
+                      <span className="text-[#0284C7] font-bold">
                         {selectedCamera.minObjectSizePx} px
                       </span>
                     </div>
@@ -295,18 +295,18 @@ export default function CameraManagementPage() {
                       onChange={(e) =>
                         handleSliderChange("minObjectSizePx", Number(e.target.value))
                       }
-                      className="w-full accent-[#F5F5F0] cursor-pointer"
+                      className="w-full accent-[#0284C7] cursor-pointer"
                     />
                   </div>
 
                   <div className="space-y-1 pt-1">
-                    <label className="text-[10px] text-[#8f918c] font-bold uppercase tracking-widest block">
+                    <label className="text-[10px] text-[#475569] font-bold uppercase tracking-widest block">
                       AUTOMATED ESCALATION ACTION:
                     </label>
                     <select
                       value={selectedCamera.triggerAction}
                       onChange={(e) => handleActionChange(e.target.value as TriggerAction)}
-                      className="w-full bg-[#131313] border border-[#454843] rounded-none p-2 text-xs text-[#F5F5F0] font-bold focus:border-[#F5F5F0] font-mono"
+                      className="w-full bg-[#FFFFFF] border border-[#CBDCEB] rounded-none p-2 text-xs text-[#0F172A] font-bold focus:border-[#0284C7] font-mono"
                     >
                       <option value="QRF Dispatch">QRF Quick Reaction Dispatch</option>
                       <option value="Siren Alarm">High-Decibel Siren Alarm</option>
@@ -321,10 +321,10 @@ export default function CameraManagementPage() {
         </div>
       ) : (
         /* Registry Table */
-        <div className="bg-[#131313] border border-[#454843] rounded-none overflow-hidden">
+        <div className="bg-[#FFFFFF] border border-[#CBDCEB] rounded-none overflow-hidden shadow-sm">
           <div className="overflow-x-auto">
             <table className="w-full text-left text-xs font-mono">
-              <thead className="bg-[#1c1b1b] border-b border-[#454843] text-[10px] text-[#8f918c] uppercase tracking-widest">
+              <thead className="bg-[#F0F6FC] border-b border-[#CBDCEB] text-[10px] text-[#475569] uppercase tracking-widest font-bold">
                 <tr>
                   <th className="py-3 px-3.5">STATUS</th>
                   <th className="py-3 px-3">CAMERA ID</th>
@@ -337,7 +337,7 @@ export default function CameraManagementPage() {
                   <th className="py-3 px-3 text-right">ACTION</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-[#454843]">
+              <tbody className="divide-y divide-[#CBDCEB]">
                 {filteredCameras.map((cam) => (
                   <tr
                     key={cam.id}
@@ -345,20 +345,20 @@ export default function CameraManagementPage() {
                       setSelectedCameraId(cam.id);
                       setActiveTab("detection_studio");
                     }}
-                    className="hover:bg-[#1c1b1b] cursor-pointer transition-colors"
+                    className="hover:bg-[#F8FBFE] cursor-pointer transition-colors"
                   >
                     <td className="py-3 px-3.5">
                       <StatusPill type={cam.status} size="sm" />
                     </td>
-                    <td className="py-3 px-3 font-bold text-[#F5F5F0]">{cam.id}</td>
-                    <td className="py-3 px-3 text-[#c5c7c1] font-semibold">{cam.name}</td>
-                    <td className="py-3 px-3 text-[#8f918c]">{cam.sector}</td>
-                    <td className="py-3 px-3 uppercase text-[#F5F5F0] font-bold">{cam.type}</td>
-                    <td className="py-3 px-3 text-[#F5F5F0] font-bold">{cam.fps} FPS</td>
-                    <td className="py-3 px-3 text-[#8f918c]">{cam.resolution}</td>
-                    <td className="py-3 px-3 text-[#c5c7c1]">{cam.triggerAction}</td>
+                    <td className="py-3 px-3 font-bold text-[#0284C7]">{cam.id}</td>
+                    <td className="py-3 px-3 text-[#0F172A] font-bold">{cam.name}</td>
+                    <td className="py-3 px-3 text-[#475569]">{cam.sector}</td>
+                    <td className="py-3 px-3 uppercase text-[#0F172A] font-bold">{cam.type}</td>
+                    <td className="py-3 px-3 text-[#0F172A] font-bold">{cam.fps} FPS</td>
+                    <td className="py-3 px-3 text-[#475569]">{cam.resolution}</td>
+                    <td className="py-3 px-3 text-[#0F172A] font-semibold">{cam.triggerAction}</td>
                     <td className="py-3 px-3 text-right">
-                      <button className="px-3 py-1 bg-[#1c1b1b] hover:bg-[#2a2a2a] text-[#F5F5F0] border border-[#454843] text-[10px] font-bold uppercase tracking-wider">
+                      <button className="px-3 py-1 bg-[#F0F6FC] hover:bg-[#E0F2FE] text-[#0369A1] border border-[#CBDCEB] text-[10px] font-bold uppercase tracking-wider">
                         CONFIGURE
                       </button>
                     </td>

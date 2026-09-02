@@ -63,9 +63,9 @@ export const ZonePolygonEditor: React.FC<ZonePolygonEditorProps> = ({
       <div
         ref={containerRef}
         onClick={handleCanvasClick}
-        className="relative w-full aspect-video bg-[#0e0e0e] border border-[#454843] rounded-none cursor-crosshair overflow-hidden select-none"
+        className="relative w-full aspect-video bg-[#0B1320] border border-[#CBDCEB] rounded-none cursor-crosshair overflow-hidden select-none shadow-sm"
       >
-        <div className="absolute top-2 left-2 z-10 text-[10px] bg-[#131313] border border-[#454843] px-2 py-1 text-[#F5F5F0]">
+        <div className="absolute top-2 left-2 z-10 text-[10px] bg-[#0F172A]/90 border border-[#38BDF8]/40 px-2 py-1 text-white">
           DETECTION_ZONE_GEOFENCE: {cameraId}
         </div>
 
@@ -78,7 +78,7 @@ export const ZonePolygonEditor: React.FC<ZonePolygonEditorProps> = ({
           {polygon.length > 2 && (
             <polygon
               points={pointsString}
-              className="fill-[#F5F5F0]/15 stroke-[#F5F5F0] stroke-[0.8]"
+              className="fill-[#0284C7]/30 stroke-[#38BDF8] stroke-[1]"
             />
           )}
 
@@ -88,14 +88,15 @@ export const ZonePolygonEditor: React.FC<ZonePolygonEditorProps> = ({
                 cx={p.x}
                 cy={p.y}
                 r="1.8"
-                className="fill-[#F5F5F0] stroke-[#121212] stroke-[0.5]"
+                className="fill-[#0284C7] stroke-white stroke-[0.6]"
               />
               <text
                 x={p.x + 2.5}
                 y={p.y + 2.5}
-                fill="#F5F5F0"
+                fill="#38BDF8"
                 fontSize="4.5"
                 fontFamily="monospace"
+                fontWeight="bold"
               >
                 P{idx + 1}
               </text>
@@ -103,7 +104,7 @@ export const ZonePolygonEditor: React.FC<ZonePolygonEditorProps> = ({
           ))}
         </svg>
 
-        <div className="absolute bottom-2 right-2 text-[10px] text-[#8f918c] bg-[#131313]/90 px-2 py-1 border border-[#454843]">
+        <div className="absolute bottom-2 right-2 text-[10px] text-[#BAE6FD] bg-[#0F172A]/90 px-2 py-1 border border-[#38BDF8]/30">
           CLICK TO ADD VERTEX // {polygon.length} VERTICES
         </div>
       </div>
@@ -131,7 +132,7 @@ export const ZonePolygonEditor: React.FC<ZonePolygonEditorProps> = ({
 
         <div className="flex items-center gap-2">
           {committedSuccess && (
-            <span className="text-[10px] text-[#F5F5F0] font-bold flex items-center gap-1">
+            <span className="text-[10px] text-[#16A34A] font-bold flex items-center gap-1">
               <CheckCircle2 className="w-3.5 h-3.5" /> GEOFENCE COMMITTED
             </span>
           )}

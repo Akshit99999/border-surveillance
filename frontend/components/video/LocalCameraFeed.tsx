@@ -35,8 +35,8 @@ const sourceButtonClass = (active: boolean) =>
   cn(
     "inline-flex items-center justify-center gap-1.5 rounded-none border px-2.5 py-1.5 text-[10px] font-bold uppercase tracking-wider transition-colors font-mono",
     active
-      ? "border-[#F5F5F0] bg-[#F5F5F0] text-[#121212]"
-      : "border-[#454843] bg-[#1c1b1b] text-[#8f918c] hover:border-[#8f918c] hover:text-[#F5F5F0]"
+      ? "border-[#0284C7] bg-[#0284C7] text-white shadow-sm"
+      : "border-[#CBDCEB] bg-[#FFFFFF] text-[#475569] hover:border-[#0284C7] hover:text-[#0F172A]"
   );
 
 export const LocalCameraFeed: React.FC<LocalCameraFeedProps> = ({ className }) => {
@@ -363,26 +363,26 @@ export const LocalCameraFeed: React.FC<LocalCameraFeedProps> = ({ className }) =
   return (
     <section
       className={cn(
-        "relative bg-[#131313] border border-[#454843] rounded-none overflow-hidden flex flex-col font-mono",
+        "relative bg-[#FFFFFF] border border-[#CBDCEB] rounded-none overflow-hidden flex flex-col font-mono shadow-sm",
         className
       )}
     >
-      <div className="absolute top-0 inset-x-0 z-10 bg-[#131313]/90 border-b border-[#454843]/60 p-3 flex items-center justify-between text-[11px] pointer-events-none">
+      <div className="absolute top-0 inset-x-0 z-10 bg-[#0F172A]/90 border-b border-[#38BDF8]/40 p-3 flex items-center justify-between text-[11px] pointer-events-none text-white">
         <div className="flex items-center gap-2 min-w-0">
-          <span className={cn("w-2 h-2 rounded-full shrink-0", isLive ? "bg-[#F5F5F0] animate-pulse" : "bg-[#8f918c]")} />
-          <span className="font-bold tracking-widest text-[#F5F5F0] truncate uppercase">
+          <span className={cn("w-2 h-2 rounded-full shrink-0", isLive ? "bg-[#0284C7] animate-pulse" : "bg-[#94A3B8]")} />
+          <span className="font-bold tracking-widest text-white truncate uppercase">
             {activeSource === "screen" ? "SCREEN TEST SOURCE" : sourceLabel}
           </span>
         </div>
-        <span className={cn("text-[10px] font-bold uppercase tracking-wider", isLive ? "text-[#F5F5F0]" : "text-[#8f918c]")}>
+        <span className={cn("text-[10px] font-bold uppercase tracking-wider", isLive ? "text-[#38BDF8]" : "text-[#94A3B8]")}>
           {isLive ? "LIVE // ACTIVE" : cameraState === "starting" ? "INITIALIZING" : cameraState === "error" ? "UNAVAILABLE" : "STANDBY"}
         </span>
       </div>
 
       {/* Top Source Mode Selector */}
-      <div className="border-b border-[#454843] bg-[#1c1b1b] px-4 pt-3 pb-3 space-y-2.5">
+      <div className="border-b border-[#CBDCEB] bg-[#F0F6FC] px-4 pt-3 pb-3 space-y-2.5">
         <div className="flex flex-wrap items-center gap-2">
-          <span className="text-[10px] text-[#F5F5F0] font-bold uppercase tracking-widest mr-1">INPUT_SOURCE</span>
+          <span className="text-[10px] text-[#0F172A] font-bold uppercase tracking-widest mr-1">INPUT_SOURCE</span>
           <button type="button" className={sourceButtonClass(sourceMode === "camera")} onClick={() => chooseSourceMode("camera")}>
             <Camera className="w-3.5 h-3.5" /> DEVICE CAMERA
           </button>
@@ -400,7 +400,7 @@ export const LocalCameraFeed: React.FC<LocalCameraFeedProps> = ({ className }) =
               <select
                 value={selectedDeviceId}
                 onChange={(event) => setSelectedDeviceId(event.target.value)}
-                className="min-w-0 flex-1 bg-[#131313] border border-[#454843] rounded-none px-2.5 py-1.5 text-[11px] text-[#F5F5F0] font-mono"
+                className="min-w-0 flex-1 bg-[#FFFFFF] border border-[#CBDCEB] rounded-none px-2.5 py-1.5 text-[11px] text-[#0F172A] font-mono"
                 aria-label="Select local camera"
               >
                 {devices.map((device, index) => (
@@ -430,7 +430,7 @@ export const LocalCameraFeed: React.FC<LocalCameraFeedProps> = ({ className }) =
 
         {sourceMode === "file" && (
           <div className="flex flex-wrap items-center gap-2">
-            <label className="inline-flex items-center gap-1.5 cursor-pointer rounded-none border border-[#F5F5F0] bg-[#F5F5F0] px-3 py-1.5 text-[10px] font-bold text-[#121212] uppercase tracking-wider">
+            <label className="inline-flex items-center gap-1.5 cursor-pointer rounded-none border border-[#0284C7] bg-[#0284C7] px-3 py-1.5 text-[10px] font-bold text-white uppercase tracking-wider shadow-sm hover:bg-[#0369A1] transition-colors">
               <Upload className="w-3.5 h-3.5" /> SELECT VIDEO
               <input
                 type="file"
@@ -439,7 +439,7 @@ export const LocalCameraFeed: React.FC<LocalCameraFeedProps> = ({ className }) =
                 onChange={(event) => loadVideoFile(event.target.files?.[0])}
               />
             </label>
-            <span className="text-[10px] text-[#8f918c] truncate max-w-full">
+            <span className="text-[10px] text-[#64748B] truncate max-w-full">
               {fileName || "MP4, WebM format supported"}
             </span>
           </div>
@@ -448,7 +448,7 @@ export const LocalCameraFeed: React.FC<LocalCameraFeedProps> = ({ className }) =
         {sourceMode === "network" && (
           <div className="flex flex-col sm:flex-row gap-2">
             <div className="flex items-center gap-2 flex-1 min-w-0">
-              <Link2 className="w-3.5 h-3.5 text-[#8f918c] shrink-0" />
+              <Link2 className="w-3.5 h-3.5 text-[#64748B] shrink-0" />
               <input
                 value={networkUrl}
                 onChange={(event) => setNetworkUrl(event.target.value)}
@@ -456,7 +456,7 @@ export const LocalCameraFeed: React.FC<LocalCameraFeedProps> = ({ className }) =
                   if (event.key === "Enter") connectNetwork();
                 }}
                 placeholder="http://192.168.1.50:8080/video"
-                className="w-full min-w-0 bg-[#131313] border border-[#454843] rounded-none px-3 py-1.5 text-[11px] text-[#F5F5F0] placeholder:text-[#8f918c]/60 focus:border-[#F5F5F0] font-mono"
+                className="w-full min-w-0 bg-[#FFFFFF] border border-[#CBDCEB] rounded-none px-3 py-1.5 text-[11px] text-[#0F172A] placeholder:text-[#64748B] focus:border-[#0284C7] font-mono"
                 aria-label="CCTV network stream URL"
               />
             </div>
@@ -468,7 +468,7 @@ export const LocalCameraFeed: React.FC<LocalCameraFeedProps> = ({ className }) =
       </div>
 
       {/* Video Display Area */}
-      <div className="relative aspect-video min-h-[220px] bg-[#0e0e0e] flex items-center justify-center overflow-hidden">
+      <div className="relative aspect-video min-h-[220px] bg-[#0B1320] flex items-center justify-center overflow-hidden">
         <video
           ref={videoRef}
           src={activeSourceUrl || undefined}
@@ -494,7 +494,7 @@ export const LocalCameraFeed: React.FC<LocalCameraFeedProps> = ({ className }) =
             {detections.map((detection, index) => (
               <div
                 key={`${detection.source}-${detection.label}-${index}`}
-                className="absolute border border-[#F5F5F0] pointer-events-none rounded-none"
+                className="absolute border-2 border-[#38BDF8] pointer-events-none rounded-none"
                 style={{
                   left: `${detection.box.x}%`,
                   top: `${detection.box.y}%`,
@@ -503,7 +503,7 @@ export const LocalCameraFeed: React.FC<LocalCameraFeedProps> = ({ className }) =
                 }}
               >
                 <span
-                  className="absolute -top-5 left-0 whitespace-nowrap bg-[#F5F5F0] text-[#121212] px-1 py-0.2 text-[9px] font-mono font-bold uppercase rounded-none"
+                  className="absolute -top-5 left-0 whitespace-nowrap bg-[#0284C7] text-white px-1.5 py-0.5 text-[9px] font-mono font-bold uppercase rounded-none shadow-sm"
                 >
                   {detection.attributes?.plate_number
                     ? String(detection.attributes.plate_number)
@@ -512,7 +512,7 @@ export const LocalCameraFeed: React.FC<LocalCameraFeedProps> = ({ className }) =
                 </span>
               </div>
             ))}
-            <div className="absolute top-12 left-3 bg-[#131313]/90 border border-[#454843] rounded-none px-2 py-1 text-[10px] text-[#F5F5F0] font-mono">
+            <div className="absolute top-12 left-3 bg-[#0F172A]/90 border border-[#38BDF8]/40 rounded-none px-2 py-1 text-[10px] text-white font-mono">
               AI_{inferenceState === "analyzing" ? "ANALYZING" : inferenceState === "error" ? "UNAVAILABLE" : "ACTIVE"} // {detections.length} TARGET{detections.length === 1 ? "" : "S"}
             </div>
           </>
@@ -520,13 +520,13 @@ export const LocalCameraFeed: React.FC<LocalCameraFeedProps> = ({ className }) =
         {!isLive && (
           <div className="p-6 text-center max-w-md font-mono">
             {cameraState === "error" ? (
-              <CameraOff className="w-8 h-8 mx-auto mb-3 text-[#ffb4ab]" />
+              <CameraOff className="w-8 h-8 mx-auto mb-3 text-[#DC2626]" />
             ) : activeSource === "screen" ? (
-              <Monitor className="w-8 h-8 mx-auto mb-3 text-[#F5F5F0] opacity-70" />
+              <Monitor className="w-8 h-8 mx-auto mb-3 text-[#38BDF8] opacity-70" />
             ) : (
-              <Camera className="w-8 h-8 mx-auto mb-3 text-[#F5F5F0] opacity-70" />
+              <Camera className="w-8 h-8 mx-auto mb-3 text-[#38BDF8] opacity-70" />
             )}
-            <p className="text-xs text-[#e5e2e1] uppercase tracking-wider font-bold">
+            <p className="text-xs text-[#0F172A] uppercase tracking-wider font-bold">
               {cameraState === "starting"
                 ? activeSource === "screen"
                 ? "Requesting screen share"
@@ -549,29 +549,29 @@ export const LocalCameraFeed: React.FC<LocalCameraFeedProps> = ({ className }) =
       </div>
 
       {/* AI Pipeline Modules */}
-      <div className="border-t border-[#454843] bg-[#1c1b1b] px-4 py-3 font-mono">
-        <div className="flex items-center justify-between gap-2 text-[10px] text-[#8f918c] uppercase tracking-widest">
-          <span className="text-[#F5F5F0] font-bold">AI_MODULE_PIPELINE</span>
-          <span className="truncate">{modelName || "AWAITING FRAME DATA"}</span>
+      <div className="border-t border-[#CBDCEB] bg-[#F0F6FC] px-4 py-3 font-mono">
+        <div className="flex items-center justify-between gap-2 text-[10px] text-[#475569] uppercase tracking-widest">
+          <span className="text-[#0F172A] font-bold">AI_MODULE_PIPELINE</span>
+          <span className="truncate font-semibold text-[#0284C7]">{modelName || "AWAITING FRAME DATA"}</span>
         </div>
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 mt-2.5">
           {modules.length === 0 && (
-            <div className="sm:col-span-3 border border-[#454843] bg-[#131313] px-3 py-2 text-[10px] text-[#8f918c]">
+            <div className="sm:col-span-3 border border-[#CBDCEB] bg-[#FFFFFF] px-3 py-2 text-[10px] text-[#64748B]">
               Activate camera, screen share, or video file to engage person tracking, face detection, and ANPR inference.
             </div>
           )}
           {modules.map((module) => (
-            <div key={module.id} className="border border-[#454843] rounded-none bg-[#131313] p-2 min-w-0">
+            <div key={module.id} className="border border-[#CBDCEB] rounded-none bg-[#FFFFFF] p-2 min-w-0 shadow-sm">
               <div className="flex items-center justify-between gap-2">
-                <span className="text-[10px] text-[#F5F5F0] font-bold truncate uppercase">{module.label}</span>
+                <span className="text-[10px] text-[#0F172A] font-bold truncate uppercase">{module.label}</span>
                 <span className={cn(
                   "text-[9px] font-bold uppercase",
-                  module.status === "active" ? "text-[#F5F5F0]" : "text-[#8f918c]"
+                  module.status === "active" ? "text-[#16A34A]" : "text-[#64748B]"
                 )}>{module.status}</span>
               </div>
-              <div className="flex items-center justify-between gap-2 mt-1 text-[9px] text-[#8f918c]">
+              <div className="flex items-center justify-between gap-2 mt-1 text-[9px] text-[#64748B]">
                 <span className="truncate">{module.model}</span>
-                <span>{module.detectionCount} DETECTIONS</span>
+                <span className="font-bold text-[#0284C7]">{module.detectionCount} DETECTIONS</span>
               </div>
             </div>
           ))}
@@ -579,10 +579,10 @@ export const LocalCameraFeed: React.FC<LocalCameraFeedProps> = ({ className }) =
       </div>
 
       {/* Footer Status Bar */}
-      <div className="border-t border-[#454843] bg-[#131313] px-4 py-2 flex flex-wrap items-center justify-between gap-2 text-[10px] text-[#8f918c]">
+      <div className="border-t border-[#CBDCEB] bg-[#FFFFFF] px-4 py-2 flex flex-wrap items-center justify-between gap-2 text-[10px] text-[#475569]">
         <span className="flex items-center gap-1.5 min-w-0">
-          {isLive ? <CheckCircle2 className="w-3.5 h-3.5 text-[#F5F5F0] shrink-0" /> : <ShieldAlert className="w-3.5 h-3.5 text-[#8f918c] shrink-0" />}
-          <span className="truncate uppercase font-bold">
+          {isLive ? <CheckCircle2 className="w-3.5 h-3.5 text-[#16A34A] shrink-0" /> : <ShieldAlert className="w-3.5 h-3.5 text-[#64748B] shrink-0" />}
+          <span className="truncate uppercase font-bold text-[#0F172A]">
             {!isLive
               ? sourceMode === "network"
                 ? "WAITING FOR CCTV STREAM"
