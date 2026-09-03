@@ -13,8 +13,14 @@ export function getStoredTheme(): ConsoleTheme {
 
 export function applyTheme(theme: ConsoleTheme): void {
   if (typeof document === "undefined") return;
-  document.documentElement.classList.toggle("dark", theme === "dark");
-  document.documentElement.dataset.theme = theme;
+  const root = document.documentElement;
+  const previousTheme = root.dataset.theme as ConsoleTheme | undefined;
+  root.classList.toggle("dark", theme === "dark");
+  root.dataset.theme = theme;
   window.localStorage.setItem(THEME_STORAGE_KEY, theme);
-  window.dispatchEvent(new CustomEvent("borderlens-theme-change", { detail: theme }));
+  // ThemeController listens for this event. Only emit when the value really
+  // changed; otherwise the listener would call applyTheme again forever.
+  if (previousTheme !== theme) {
+    window.dispatchEvent(new CustomEvent("borderlens-theme-change", { detail: theme }));
+  }
 }
