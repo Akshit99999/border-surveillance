@@ -413,7 +413,15 @@ export const LocalCameraFeed: React.FC<LocalCameraFeedProps> = ({ className }) =
         const frame = await canvasToBlob(canvas);
         if (!frame) throw new Error("Could not encode the source frame.");
         const result = await backendApi.analyzeFrame(frame, INFERENCE_MODULES);
-        const evidenceFrame = canvas.toDataURL("image/jpeg", 0.68);
+        let evidenceFrame = "";
+        try {
+          // Cross-origin CCTV streams may be drawable but still prevent the
+          // browser from exporting a canvas. Inference should keep running;
+          // the alert view will use its safe placeholder evidence instead.
+          evidenceFrame = canvas.toDataURL("image/jpeg", 0.68);
+        } catch {
+          evidenceFrame = "";
+        }
         if (!cancelled) applyResult(result, evidenceFrame);
       } catch (analysisError) {
         if (!cancelled) {
