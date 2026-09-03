@@ -44,6 +44,7 @@ export type ActionType =
   | "shift_ended"
   | "alert_acknowledged"
   | "alert_escalated"
+  | "guard_created"
   | "patrol_checkin"
   | "lockdown_initiated"
   | "zone_map_committed"
