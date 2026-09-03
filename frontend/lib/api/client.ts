@@ -6,6 +6,9 @@ import {
   GuardStatus,
   Sector,
   Shift,
+  WatchlistEntry,
+  WatchlistStatus,
+  WatchlistType,
 } from "@/lib/types";
 import { AuthSession, getAuthSession } from "@/lib/auth";
 
@@ -54,6 +57,7 @@ export interface BootstrapData {
   sectors: Sector[];
   pois?: unknown[];
   anprRecords?: unknown[];
+  watchlistEntries: WatchlistEntry[];
   system: {
     lockdownActive: boolean;
     defconLevel: 1 | 2 | 3 | 4 | 5;
@@ -87,6 +91,14 @@ export interface CreateGuardPayload {
   emergencyContactRelation?: string;
   shiftStart?: string;
   shiftEnd?: string;
+}
+
+export interface CreateWatchlistPayload {
+  type: WatchlistType;
+  value: string;
+  label: string;
+  reason?: string;
+  status?: WatchlistStatus;
 }
 
 export interface FrameDetection {
@@ -178,10 +190,15 @@ export const backendApi = {
     ),
   verifyAlert: (alertId: string) =>
     request<{ verification: VerificationResult }>(`/alerts/${encodeURIComponent(alertId)}/verification`),
-  actionAlert: (alertId: string, action: "acknowledge" | "escalate", actorName: string) =>
+  actionAlert: (alertId: string, action: "acknowledge" | "escalate" | "resolve", actorName: string) =>
     request(`/alerts/${encodeURIComponent(alertId)}/action`, {
       method: "POST",
       body: JSON.stringify({ action, actorName }),
+    }),
+  dispatchAlert: (alertId: string, guardId: string, actorName: string) =>
+    request(`/alerts/${encodeURIComponent(alertId)}/dispatch`, {
+      method: "POST",
+      body: JSON.stringify({ guardId, actorName }),
     }),
   createAlert: (alert: Alert) =>
     request(`/alerts`, { method: "POST", body: JSON.stringify(alert) }),
@@ -191,6 +208,15 @@ export const backendApi = {
     request<{ guard: Guard; accessTier: string }>("/guards", {
       method: "POST",
       body: JSON.stringify(payload),
+    }),
+  createWatchlistEntry: (payload: CreateWatchlistPayload) =>
+    request<{ entry: WatchlistEntry }>("/watchlist", {
+      method: "POST",
+      body: JSON.stringify(payload),
+    }),
+  deleteWatchlistEntry: (entryId: string) =>
+    request<{ deleted: string }>(`/watchlist/${encodeURIComponent(entryId)}`, {
+      method: "DELETE",
     }),
   updateGuard: (guardId: string, changes: Partial<Guard>) =>
     request(`/guards/${encodeURIComponent(guardId)}`, {

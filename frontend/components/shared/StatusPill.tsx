@@ -17,6 +17,8 @@ export type StatusPillType =
   | "blacklisted"
   | "authorized"
   | "suspicious"
+  | "resolved"
+  | "dispatched"
   | "flagged";
 
 interface StatusPillProps {
@@ -64,9 +66,11 @@ export const StatusPill: React.FC<StatusPillProps> = ({
     case "medium":
     case "patrolling":
     case "elevated":
+    case "dispatched":
       colorClasses = "bg-[#E0F2FE] text-[#0369A1] border-[#BAE6FD]";
       dotClass = "bg-[#0284C7]";
       if (normalizedType === "patrolling") displayLabel = label || "PATROLLING";
+      if (normalizedType === "dispatched") displayLabel = label || "DISPATCHED";
       break;
 
     case "online":
@@ -77,6 +81,12 @@ export const StatusPill: React.FC<StatusPillProps> = ({
       dotClass = "bg-[#16A34A]";
       if (normalizedType === "on_post") displayLabel = label || "ON POST";
       if (normalizedType === "online") displayLabel = label || "ONLINE";
+      break;
+
+    case "resolved":
+      colorClasses = "bg-[#DCFCE7] text-[#166534] border-[#86EFAC]";
+      dotClass = "bg-[#16A34A]";
+      displayLabel = label || "RESOLVED";
       break;
 
     case "offline":

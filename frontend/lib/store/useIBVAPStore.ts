@@ -8,10 +8,11 @@ import {
   Sector,
   GuardStatus,
   Point2D,
+  WatchlistEntry,
 } from "../types";
 import { tacticalSound } from "../sound";
 import { generateId } from "../utils";
-import { backendApi, BlockchainStatus, BootstrapData, CreateGuardPayload, FirebaseStatus } from "../api/client";
+import { backendApi, BlockchainStatus, BootstrapData, CreateGuardPayload, CreateWatchlistPayload, FirebaseStatus } from "../api/client";
 
 interface UserProfile {
   name: string;
@@ -47,6 +48,7 @@ interface IBVAPState {
   alerts: Alert[];
   cameras: Camera[];
   sectors: Sector[];
+  watchlistEntries: WatchlistEntry[];
 
   offlineQueue: Alert[];
   offlineLogQueue: ActivityLogEntry[];
@@ -70,8 +72,12 @@ interface IBVAPState {
 
   acknowledgeAlert: (alertId: string, actorName?: string) => void;
   escalateAlert: (alertId: string, actorName?: string) => void;
+  resolveAlert: (alertId: string, actorName?: string) => void;
+  dispatchAlert: (alertId: string, guardId: string, actorName?: string) => Promise<void>;
   addAlert: (alert: Omit<Alert, "id" | "timestamp" | "status" | "acknowledgedBy">) => void;
   addGuard: (payload: CreateGuardPayload) => Promise<Guard>;
+  addWatchlistEntry: (payload: CreateWatchlistPayload) => Promise<WatchlistEntry>;
+  removeWatchlistEntry: (entryId: string) => Promise<void>;
 
   updateGuardStatus: (guardId: string, status: GuardStatus) => void;
   quickHandover: (outgoingGuardId: string, incomingGuardId: string, notes?: string) => void;
@@ -112,6 +118,7 @@ const applyBackendData = (
   alerts: data.alerts,
   cameras: data.cameras,
   sectors: data.sectors,
+  watchlistEntries: data.watchlistEntries || [],
   currentUser: data.currentUser,
   lockdownActive: data.system.lockdownActive,
   defconLevel: data.system.defconLevel,
@@ -145,6 +152,7 @@ export const useIBVAPStore = create<IBVAPState>((set, get) => {
     alerts: [],
     cameras: [],
     sectors: [],
+    watchlistEntries: [],
 
     offlineQueue: [],
     offlineLogQueue: [],
@@ -283,7 +291,7 @@ export const useIBVAPStore = create<IBVAPState>((set, get) => {
       addLocalActivity({
         actorId: get().currentUser.badgeId,
         actorName: actor,
-        actionType: "alert_acknowledged",
+        actionType: "alert_resolved",
         targetType: "alert",
         targetId: alertId,
         sector: target.sector,
@@ -317,6 +325,66 @@ export const useIBVAPStore = create<IBVAPState>((set, get) => {
       });
       if (get().backendStatus !== "offline") {
         refreshAfter(backendApi.actionAlert(alertId, "escalate", actor));
+      }
+    },
+
+    resolveAlert: (alertId, actorName) => {
+      tacticalSound.playClick();
+      const actor = actorName || get().currentUser.name;
+      const target = get().alerts.find((alert) => alert.id === alertId);
+      if (!target) return;
+      set((state) => ({
+        alerts: state.alerts.map((alert) =>
+          alert.id === alertId
+            ? { ...alert, status: "resolved", dispatchStatus: "resolved", acknowledgedBy: actor }
+            : alert
+        ),
+      }));
+      addLocalActivity({
+        actorId: get().currentUser.badgeId,
+        actorName: actor,
+        actionType: "alert_acknowledged",
+        targetType: "alert",
+        targetId: alertId,
+        sector: target.sector,
+        details: `Resolved alert ${alertId}: ${target.eventType}.`,
+      });
+      if (get().backendStatus !== "offline") {
+        refreshAfter(backendApi.actionAlert(alertId, "resolve", actor));
+      }
+    },
+
+    dispatchAlert: async (alertId, guardId, actorName) => {
+      const target = get().alerts.find((alert) => alert.id === alertId);
+      const guard = get().guards.find((item) => item.id === guardId);
+      if (!target || !guard) throw new Error("Choose a valid incident and guard.");
+      const actor = actorName || get().currentUser.name;
+      const dispatchedAt = new Date().toISOString();
+      set((state) => ({
+        alerts: state.alerts.map((alert) =>
+          alert.id === alertId
+            ? {
+                ...alert,
+                assignedGuardId: guard.id,
+                assignedGuardName: guard.name,
+                dispatchStatus: "dispatched",
+                dispatchedAt,
+              }
+            : alert
+        ),
+      }));
+      addLocalActivity({
+        actorId: get().currentUser.badgeId,
+        actorName: actor,
+        actionType: "guard_dispatched",
+        targetType: "alert",
+        targetId: alertId,
+        sector: target.sector,
+        details: `Dispatched ${guard.name} to ${target.eventType}.`,
+      });
+      if (get().backendStatus !== "offline") {
+        await backendApi.dispatchAlert(alertId, guardId, actor);
+        await get().hydrateFromBackend();
       }
     },
 
@@ -359,6 +427,26 @@ export const useIBVAPStore = create<IBVAPState>((set, get) => {
         details: `Created ${response.guard.rank} guard ${response.guard.name} with ${response.accessTier} access.`,
       });
       return response.guard;
+    },
+
+    addWatchlistEntry: async (payload) => {
+      const response = await backendApi.createWatchlistEntry(payload);
+      set((state) => ({ watchlistEntries: [response.entry, ...state.watchlistEntries] }));
+      addLocalActivity({
+        actorId: get().currentUser.badgeId,
+        actorName: get().currentUser.name,
+        actionType: "watchlist_updated",
+        targetType: "system",
+        targetId: response.entry.id,
+        sector: "All Sectors",
+        details: `Added ${response.entry.type} watchlist entry ${response.entry.value}.`,
+      });
+      return response.entry;
+    },
+
+    removeWatchlistEntry: async (entryId) => {
+      await backendApi.deleteWatchlistEntry(entryId);
+      set((state) => ({ watchlistEntries: state.watchlistEntries.filter((entry) => entry.id !== entryId) }));
     },
 
     updateGuardStatus: (guardId, status) => {
@@ -514,6 +602,7 @@ export const useIBVAPStore = create<IBVAPState>((set, get) => {
         alerts: [],
         cameras: [],
         sectors: [],
+        watchlistEntries: [],
         offlineQueue: [],
         offlineLogQueue: [],
         lockdownActive: false,
