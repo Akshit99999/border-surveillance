@@ -1,6 +1,136 @@
 # BorderLens — Border Surveillance Command Center
 
-This repository contains a Django API in `backend/` and a Next.js command-center UI in `frontend/`. The local API stores demo state in `backend/.localdata/`; that directory and all credentials/model weights are intentionally ignored by Git.
+BorderLens is a full-stack command-center demonstration for border operations. It combines a Django API, a Next.js console, local AI inference, an optional Firebase Firestore alert history, an optional blockchain evidence anchor, geotagged operational records, and a satellite imagery basemap for geographic context.
+
+> **Important scope note:** BorderLens is a demonstration and decision-support interface. AI output requires human review. The satellite layer is static or periodically updated imagery, not a live satellite feed or live surveillance video. Camera video is supplied separately through a local device, uploaded file, or browser-compatible CCTV/IP stream.
+
+## At a glance
+
+| Area | Current implementation | Operational value |
+| --- | --- | --- |
+| Operator access | Signed Django token plus Admin/Command/Field tiers | Limits sensitive actions by rank |
+| Video inputs | Device camera, local video file, browser-playable CCTV/IP URL | One operator workflow for three source types |
+| AI modules | Person tracking, face detection, ANPR, OCR fallback | Turns frames into reviewable detections |
+| Alerting | Watchlist match, acknowledge, escalate, resolve, dispatch | Connects detection to response |
+| Geospatial context | Latitude/longitude records, custom tactical map, sector overlays | Shows where an event occurred |
+| Satellite context | Toggleable Esri World Imagery basemap | Adds terrain/road context beneath overlays |
+| Cloud history | Optional Firebase Admin → Firestore `alerts` collection | Preserves historical alert review |
+| Evidence | Captured frame, SHA-256 digest, printable report, CSV export | Supports traceability and handover |
+| Integrity | Optional backend-only blockchain anchor and verification | Records an immutable evidence reference |
+| Administration | Guard credentials, watchlist rules, camera controls | Keeps configuration operator-managed |
+| Resilience | Local JSON fallback and offline queues | Keeps the demo usable without cloud services |
+| Presentation | Existing light tactical theme plus persisted dark mode | Better operator readability in different environments |
+
+## Documentation map
+
+| If you want to... | Read this section |
+| --- | --- |
+| Run BorderLens on macOS or Windows | [Local setup](#macos-setup-zsh-or-bash), [Windows setup](#windows-setup-powershell) |
+| Understand the product workflow | [Full BorderLens workflow](#full-borderlens-workflow) |
+| Explain the project in a presentation | [Architecture](#system-architecture), [Geospatial workflow](#geospatial-workflow), [Demo runbook](#demo-runbook) |
+| Connect video or a CCTV camera | [Video, CCTV, IP, and LAN operation](#video-cctv-ip-and-lan-operation) |
+| Configure AI models | [AI and detection pipeline](#ai-and-detection-pipeline), [Local configuration](#local-configuration) |
+| Explain Firebase and evidence | [Firebase alert history](#firebase-alert-history), [Evidence and blockchain path](#evidence-and-blockchain-path) |
+| Add guards or watchlist records | [Administration workflows](#administration-workflows) |
+| Understand every abbreviation | [Definitions and full forms](#definitions-and-full-forms) |
+| Troubleshoot an installation | [Troubleshooting](#troubleshooting) |
+| Contribute safely | [Security and privacy checklist](#security-and-privacy-checklist), [Contributing locally](#contributing-locally) |
+
+## System architecture
+
+```mermaid
+flowchart TB
+    subgraph Browser[Operator browser]
+        UI[Next.js command console]
+        Sources[Device camera<br/>Video file<br/>CCTV/IP URL]
+        Map[Operational map<br/>overlays + satellite context]
+    end
+
+    subgraph API[Django backend]
+        Auth[Signed auth + rank checks]
+        Bootstrap[Bootstrap and operational API]
+        Inference[Frame inference service]
+        Repository[Local state repository]
+        Evidence[Evidence and sync adapters]
+    end
+
+    Models[Local AI model weights]
+    Firestore[(Firebase Firestore<br/>alerts history)]
+    Chain[(Optional evidence registry<br/>blockchain)]
+    Relay[Optional LAN relay<br/>RTSP → HLS/WebRTC]
+
+    Sources -->|browser-readable media| UI
+    Relay -->|HLS/WebRTC| UI
+    UI -->|login, CRUD, actions| Auth
+    UI -->|bootstrap, alerts, guards| Bootstrap
+    UI -->|JPEG frame| Inference
+    Inference --> Models
+    Bootstrap --> Repository
+    Evidence --> Repository
+    Evidence --> Firestore
+    Evidence --> Chain
+    UI --> Map
+```
+
+### Event lifecycle graph
+
+```mermaid
+stateDiagram-v2
+    [*] --> Detected: AI result or operator event
+    Detected --> Open: watchlist match creates alert
+    Open --> Acknowledged: operator acknowledges
+    Open --> Escalated: operator escalates
+    Acknowledged --> Dispatched: command/admin assigns guard
+    Escalated --> Dispatched: command/admin assigns guard
+    Dispatched --> Resolved: operator confirms outcome
+    Open --> Resolved: operator resolves
+    Resolved --> [*]
+```
+
+### Capability matrix
+
+| Capability | Browser | Django API | Local model/runtime | Firebase | Blockchain |
+| --- | :---: | :---: | :---: | :---: | :---: |
+| Login and rank routing | ✓ | ✓ | — | — | — |
+| Video preview | ✓ | — | — | — | — |
+| Frame inference | ✓ | ✓ | ✓ | — | — |
+| Watchlist comparison | ✓ | ✓ | — | — | — |
+| Alert persistence | ✓ | ✓ | — | Optional | — |
+| Historical alert merge | ✓ | ✓ | — | Optional | — |
+| Guard dispatch | ✓ | ✓ | — | Optional sync | — |
+| Satellite basemap | ✓ | — | — | — | — |
+| Evidence report | ✓ | ✓ | — | Optional sync | — |
+| Evidence anchoring | ✓ request | ✓ | — | Optional sync | Optional |
+
+### Where data lives
+
+| Data | Local development | Optional cloud path | Sensitive? |
+| --- | --- | --- | --- |
+| Guard profiles | `backend/.localdata/api_state.json` | Database/storage chosen for deployment | Operational |
+| Password hashes | Backend-only `authUsers` state | Production identity provider recommended | Yes |
+| Watchlist entries | Local API state | Database chosen for deployment | Operationally sensitive |
+| Alerts | Local API state | Firestore `alerts` collection | Operationally sensitive |
+| Model weights | Ignored local model directory | Private object storage or image layer | Proprietary |
+| Firebase credentials | `backend/.env` only | Deployment secret manager | Secret |
+| Blockchain signer | `backend/.env`/secret manager only | Deployment secret manager | Secret |
+| Satellite tiles | Public provider request in browser | Provider terms apply | Public context |
+
+## Demo runbook
+
+| Phase | Operator action | Visible result |
+| ---: | --- | --- |
+| 1 | Start Django and Next.js | Health endpoint and console load |
+| 2 | Sign in as `ADMIN-001` | Full administrator console appears |
+| 3 | Open `/admin` | Guard registry and watchlist controls are available |
+| 4 | Open `/live-feed` | Choose device, file, or CCTV/IP source |
+| 5 | Run an approved video/model | Detection boxes and timeline update |
+| 6 | Match a watchlist plate | New alert with location, source, and evidence appears |
+| 7 | Open `/alerts` | Acknowledge/escalate/resolve or dispatch a guard |
+| 8 | Open `/map` | Toggle satellite context under the operational overlays |
+| 9 | Open `/analytics` | Review event and response charts |
+| 10 | Export/report | Download CSV or print a PDF-style incident report |
+
+For a reliable presentation, use the built-in demo incident control first, then show the real video workflow separately. This makes it clear which screen is demonstrating the alert lifecycle and which screen is demonstrating live model input.
 
 ## Prerequisites
 
@@ -136,6 +266,31 @@ The live pipeline supports:
 - `AI_ANPR_FRAME_INTERVAL=5`: run plate detection every fifth pipeline frame.
 - `AI_INFERENCE_MAX_DIM=960`: resize only oversized model inputs and scale boxes back to the original frame coordinates. The larger default preserves more detail for small plates.
 
+### Configuration reference
+
+| Group | Environment variable | Purpose | Safe example/default |
+| --- | --- | --- | --- |
+| Django | `DJANGO_DEBUG` | Enables development diagnostics | `false` for deployment |
+| Django | `DJANGO_ALLOWED_HOSTS` | Hosts accepted by Django | `127.0.0.1,localhost` |
+| Django | `CORS_ALLOWED_ORIGINS` | Browser origins allowed to call the API | Localhost frontend + deployed frontend |
+| Storage | `API_STATE_PATH` | Local JSON state path | `.localdata/api_state.json` |
+| Firebase | `GOOGLE_APPLICATION_CREDENTIALS` | Path to a server-side service-account file | Empty unless configured |
+| Firebase | `FIREBASE_*` | Inline service-account values | Backend secret manager only |
+| Firebase | `FIREBASE_ALERTS_COLLECTION` | Firestore alert collection | `alerts` |
+| AI | `PERSON_MODEL_PATH` | Person/tracking model | Empty until a local model is supplied |
+| AI | `FACE_MODEL_PATH` | Approved face detector | OpenCV fallback when empty |
+| AI | `ANPR_VEHICLE_MODEL_PATH` | Vehicle model for ANPR pipeline | Empty until configured |
+| AI | `ANPR_PLATE_MODEL_PATH` | Dedicated plate detector | OCR fallback when empty |
+| AI | `AI_DEVICE` | Inference device selection | `cuda`, `mps`, or `cpu` |
+| AI | `AI_*_CONFIDENCE` | Detection thresholds | Project defaults in `.env.example` |
+| AI | `AI_*_FRAME_INTERVAL` | How often a module analyzes a frame | Face `3`, ANPR `5` |
+| Blockchain | `BLOCKCHAIN_RPC_URL` | Smart-contract network endpoint | Empty placeholder |
+| Blockchain | `BLOCKCHAIN_CONTRACT_ADDRESS` | Evidence registry contract | Empty placeholder |
+| Blockchain | `BLOCKCHAIN_SIGNER_PRIVATE_KEY` | Backend transaction signer | Never expose or commit |
+| Frontend | `NEXT_PUBLIC_API_BASE_URL` | Django API base URL visible to browser | `http://127.0.0.1:8000/api` |
+
+Only variables prefixed with `NEXT_PUBLIC_` are intended for the browser. Firebase Admin, blockchain, and camera credentials must remain server-side.
+
 ## Troubleshooting
 
 ### Django starts with the wrong Python version
@@ -169,12 +324,6 @@ The browser only accepts video formats and protocols supported by that browser. 
 ### npm reports audit warnings
 
 The current lockfile builds successfully, but `npm audit` reports a high PostCSS issue and a critical Next.js issue for the pinned Next.js 14.2.15 dependency. Resolving them requires a major Next.js upgrade according to npm, so test that upgrade separately before using this demo in production.
-
-## API and frontend routes
-
-The main backend routes are `/api/health`, `/api/auth/login`, `/api/bootstrap`, `/api/guards`, `/api/alerts`, `/api/activity`, `/api/guards/<id>`, `/api/cameras/<id>`, `/api/shifts/<id>`, `/api/sync`, `/api/reset`, and `/api/inference/frame`.
-
-The frontend pages are `/`, `/login`, `/dashboard`, `/live-feed`, `/alerts`, `/map`, `/analytics`, `/guard-duty`, `/camera-management`, and `/admin`. The `/guard-duty/schedule`, `/guard-duty/activity-log`, `/guard-duty/<guardId>`, `/logistics`, and `/intelligence` routes are present redirect/detail pages, so navigation does not point at missing pages.
 
 ## Product scope and boundaries
 
@@ -362,6 +511,68 @@ The operator can request an anchor from the alert dossier. The backend calculate
 
 Satellite data is periodic/static imagery and can be hours or days old. It does not show moving people, vehicles, or a live border feed. Attribution is displayed in the map UI. For a production deployment, review the provider's current usage and attribution terms before relying on the public demo endpoint at scale.
 
+## Geospatial workflow
+
+BorderLens uses coordinates as an incident-context field, not as a substitute for a certified GPS device. Demo cameras, guards, sectors, and alerts carry latitude/longitude values that the map renderer converts into visual positions. A real deployment should replace demo coordinates with a trusted camera/GPS/NVR integration and document its accuracy and update interval.
+
+```mermaid
+flowchart LR
+    Coordinate[Latitude + longitude] --> Record[Alert / camera / guard record]
+    Record --> Project[Map coordinate projection]
+    Base[Normal map or satellite basemap] --> Stack[Basemap layer]
+    Project --> Overlay[Operational overlays]
+    Stack --> Final[Operator map]
+    Overlay --> Final
+    Final --> Detail[Selected marker details]
+```
+
+### Map layer stack
+
+| Layer order | Layer | Examples | Stays visible when satellite is enabled? |
+| ---: | --- | --- | :---: |
+| 1 | Geographic basemap | Normal tactical map or Esri World Imagery | Selected base only |
+| 2 | Sector geometry | Sector polygons and labels | ✓ |
+| 3 | Security geometry | Tripwire/fence zones | ✓ |
+| 4 | Infrastructure | Camera nodes and points of interest | ✓ |
+| 5 | Personnel | Guard positions and post details | ✓ |
+| 6 | Incidents | Alert markers and selected incident | ✓ |
+
+### What a geotagged alert contains
+
+| Field | Meaning | Example display |
+| --- | --- | --- |
+| `coordinates.lat` | North/south position | `31.6500` |
+| `coordinates.lng` | East/west position | `74.8800` |
+| `sector` | Operational area label | `Sector Alpha` |
+| `sourceCameraId` | Camera or source identity | `CAM-01` / `LOCAL-FEED` |
+| `timestamp` | Event time in ISO format | `2026-09-03T...Z` |
+| `evidenceUrl` | Captured or fallback evidence | Frame/report reference |
+| `assignedGuardId` | Response owner after dispatch | `G-SSB-2041` |
+
+The satellite toggle changes only the base layer. It does not move markers, modify alert coordinates, or turn imagery into a video stream. This separation is important for both the operator experience and the presentation claim.
+
+## Deployment decision chart
+
+| Option | Cost profile | Models | Persistent storage | Always-on video | BorderLens fit |
+| --- | --- | --- | --- | --- | --- |
+| Local Mac/PC | Existing hardware | Best local compatibility | Local disk | Good for one/few sources | Best for development/demo |
+| Free CPU host | Low/possibly free | CPU only; model memory may be tight | Often limited/ephemeral | Poor | API/UI proof of concept |
+| Small paid x86 VPS | Low monthly cost | Good CPU compatibility | Persistent volume | Suitable for light use | Best low-cost full demo |
+| GPU cloud VM | Highest cost | Best real-time inference | Persistent volume | Best for multiple streams | Scale-up option |
+| Serverless frontend only | Low frontend cost | No local backend models | No backend state | No | UI-only preview |
+
+```mermaid
+flowchart TD
+    Need[Need full BorderLens deployment?] --> Sources{How many live sources?}
+    Sources -->|Demo or one source| CPU[Small x86 CPU VPS<br/>Django + Next.js + models]
+    Sources -->|Several continuous sources| GPU[GPU VM<br/>Django + model worker + storage]
+    Sources -->|No AI/backend yet| Static[Frontend host only<br/>UI preview, no inference]
+    CPU --> Data[Firebase for alert history<br/>persistent volume for models/state]
+    GPU --> Data
+```
+
+This chart describes suitability, not a guaranteed provider price. Recheck the selected host's current CPU/RAM, disk, egress, GPU availability, and free-tier conditions before deployment.
+
 ## Definitions and full forms
 
 | Term | Full form / meaning |
@@ -432,6 +643,90 @@ All routes are served below the backend host, for example `http://127.0.0.1:8000
 | POST | `/api/reset` | Reset operational demo state while preserving auth/watchlist config |
 | GET | `/api/firebase/status` | Safe Firebase configuration/initialization status |
 | GET | `/api/blockchain/status` | Safe blockchain configuration/connection status |
+
+## API examples
+
+These examples use the local ports and demo credentials. In a deployed environment, replace the host and keep tokens out of shell history and screenshots.
+
+### Health and bootstrap
+
+```bash
+curl http://127.0.0.1:8000/api/health
+curl http://127.0.0.1:8000/api/bootstrap
+curl http://127.0.0.1:8000/api/firebase/status
+```
+
+### Login and protected administration action
+
+```bash
+LOGIN_RESPONSE=$(curl -sS -X POST http://127.0.0.1:8000/api/auth/login \
+  -H 'Content-Type: application/json' \
+  -d '{"operatorId":"ADMIN-001","passcode":"BL-ADMIN-2026"}')
+
+TOKEN=$(python -c 'import json,sys; print(json.load(sys.stdin)["token"])' <<< "$LOGIN_RESPONSE")
+
+curl -sS -X POST http://127.0.0.1:8000/api/watchlist \
+  -H "Authorization: Bearer $TOKEN" \
+  -H 'Content-Type: application/json' \
+  -d '{"type":"plate","value":"DL09XY1234","label":"Demo review vehicle","status":"Suspicious","reason":"Added during a controlled demonstration"}'
+```
+
+### Send a frame for inference
+
+```bash
+curl -X POST 'http://127.0.0.1:8000/api/inference/frame?modules=person_tracking,face_detection,anpr' \
+  -H 'Content-Type: image/jpeg' \
+  --data-binary '@sample-frame.jpg'
+```
+
+The frontend sends the same JPEG bytes from the browser. For cross-origin development it uses a simple content type so every video frame does not trigger an unnecessary preflight request.
+
+## Verification and acceptance matrix
+
+| Check | Command/action | Pass condition |
+| --- | --- | --- |
+| Python environment | `python --version` | Python 3.12 or newer |
+| Django configuration | `python manage.py check` | No system-check errors |
+| Database state | `python manage.py migrate --check` | No unapplied migration error |
+| Demo data | `python manage.py seed_demo` | Deterministic demo state is reported |
+| Backend tests | `python -m unittest discover -s backend/tests -t . -v` | All tests pass |
+| Frontend dependencies | `npm ci` | Lockfile installs without error |
+| Frontend build | `npm run build` | TypeScript/build completes successfully |
+| API reachability | `curl /api/health` | JSON status is `ok` |
+| Authentication | Login with demo account | Signed token is returned |
+| Guard security | Open bootstrap response | No `authUsers` or password hashes appear |
+| Firebase | `curl /api/firebase/status` | `initialized: true` when configured, standby otherwise |
+| Video source | Select file/device/IP URL | Browser preview starts or gives a clear format/CORS error |
+| Satellite map | Toggle `SATELLITE VIEW` | Basemap changes while overlays remain visible |
+| Report export | Use CSV/PDF controls | CSV downloads or print dialog opens |
+
+## Observability and demo metrics
+
+The console exposes the following useful operational signals. These are measurements to collect during a real evaluation, not fabricated benchmark claims.
+
+| Metric | Where to observe | Why it matters |
+| --- | --- | --- |
+| API availability | `/api/health`, browser backend status | Confirms the console can reach Django |
+| Inference latency | Live-feed inference module card / `inferenceMs` | Shows whether the selected device can keep up |
+| Frame dimensions | Inference response | Helps diagnose small-plate accuracy and resize behavior |
+| Module state | Live-feed module cards | Distinguishes active, disabled, unavailable, and fallback modes |
+| Alert volume | Dashboard and Analytics | Shows event load over the selected data |
+| Alert age | Alerts page timestamps | Highlights response backlog |
+| Dispatch coverage | Alert dispatch state and guard roster | Connects incidents to response ownership |
+| Firebase state | Header/status card and `/api/firebase/status` | Distinguishes cloud history from local fallback |
+| Chain-of-custody state | Alert evidence card | Shows hash and optional blockchain confirmation |
+
+### Presentation-ready metric story
+
+```text
+Source availability → Inference latency → Detection confidence
+       ↓                       ↓                    ↓
+  Usable frame          Operator trust        Review decision
+       ↓                       ↓                    ↓
+Alert created → Guard dispatched → Incident resolved → Evidence exported
+```
+
+For a quantified evaluation, record the same short test clip under the same lighting and camera angle, then report: processed frames, inference time, detected plates, correct plate reads, false matches, alert creation time, dispatch time, and Firebase sync status. Do not present synthetic demo values as field accuracy.
 
 ## Project structure
 
